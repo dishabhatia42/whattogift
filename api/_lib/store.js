@@ -1,5 +1,5 @@
 // Storage for the gift finder: one JSON document in Vercel Blob holding
-// Disha's own picks and the sponsored ad slots. Needs BLOB_READ_WRITE_TOKEN,
+// the products Disha adds herself and the sponsored ad slots. Needs BLOB_READ_WRITE_TOKEN,
 // which Vercel adds automatically when a Blob store is connected to the project.
 import { get, put } from "@vercel/blob";
 
@@ -8,16 +8,16 @@ const DATA_PATH = "gift-finder/data.json";
 export const RECIPIENT_IDS = ["her", "him", "boyfriend", "best-friend", "parents", "couple"];
 export const OCCASION_IDS = ["birthday", "anniversary", "wedding", "just-because"];
 export const AD_SLOTS = 5;
-const MAX_PICKS = 200;
+const MAX_PRODUCTS = 200;
 
 export async function readData() {
   const result = await get(DATA_PATH, { access: "public", useCache: false });
-  if (!result || result.statusCode !== 200) return { picks: [], ads: [] };
+  if (!result || result.statusCode !== 200) return { products: [], ads: [] };
   const text = await new Response(result.stream).text();
   try {
     return clean(JSON.parse(text));
   } catch {
-    return { picks: [], ads: [] };
+    return { products: [], ads: [] };
   }
 }
 
@@ -45,7 +45,7 @@ export async function saveImage(buffer, contentType) {
 
 // Everything that goes in or out passes through here, so a bad save can't break the public page.
 export function clean(data) {
-  const picks = (Array.isArray(data?.picks) ? data.picks : []).slice(0, MAX_PICKS).map((p) => ({
+  const products = (Array.isArray(data?.products) ? data.products : []).slice(0, MAX_PRODUCTS).map((p) => ({
     id: str(p.id, 40) || randomId(),
     name: str(p.name, 120),
     note: str(p.note, 300),
@@ -76,7 +76,7 @@ export function clean(data) {
     });
   }
   const ads = [...bySlot.values()].filter((a) => a.brand && a.title && a.url).sort((x, y) => x.slot - y.slot);
-  return { picks, ads };
+  return { products, ads };
 }
 
 function str(v, max) {

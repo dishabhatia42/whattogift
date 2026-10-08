@@ -1,7 +1,8 @@
-// Owner-only: read and save picks/ads, upload images. Every request must carry
+// Owner-only: read and save ad slots, upload images. Every request must carry
 // the ADMIN_PASSWORD (set in Vercel's environment variables) in x-admin-key.
 import { createHash, timingSafeEqual } from "node:crypto";
 import { readData, writeData, saveImage } from "./_lib/store.js";
+import { autofill, UserError } from "./_lib/autofill.js";
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
@@ -37,10 +38,13 @@ export default async function handler(req, res) {
         if (buffer.length > MAX_IMAGE_BYTES) return res.status(413).json({ error: "Image is too large (2 MB max)." });
         return res.status(200).json({ url: await saveImage(buffer, body.contentType) });
       }
+      case "autofill":
+        return res.status(200).json(await autofill(body.url));
       default:
         return res.status(400).json({ error: "Unknown action." });
     }
   } catch (err) {
+    if (err instanceof UserError) return res.status(400).json({ error: err.message });
     console.error(err);
     return res.status(500).json({ error: "Couldn't reach storage. Is a Blob store connected to this project?" });
   }

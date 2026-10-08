@@ -86,10 +86,15 @@
   </form>
 
   <div id="app" hidden style="display:flex;flex-direction:column;gap:28px">
-    <!-- picks -->
+    <!-- products -->
     <section class="panel">
-      <div class="row" style="justify-content:space-between"><h2>My picks</h2><span class="muted" id="pick-count"></span></div>
-      <p class="muted">Products you found yourself. They show up as "Disha's pick" above the AI ideas for the occasions you tick.</p>
+      <div class="row" style="justify-content:space-between"><h2>Products</h2><span class="muted" id="pick-count"></span></div>
+      <p class="muted">Good finds you want people to see. They're mixed into the normal results, looking just like the other ideas, whenever they fit the person, occasion, budget and interests someone searched for.</p>
+      <form id="autofill" class="row" style="align-items:flex-end">
+        <label class="f" style="flex:1 1 260px">Paste a product link<input type="url" id="af-url" required placeholder="https://www.amazon.in/…"></label>
+        <button class="primary" type="submit" id="af-go">Fill in for me</button>
+      </form>
+      <p class="muted" id="af-note" hidden></p>
       <form id="pick-form" style="display:flex;flex-direction:column;gap:10px">
         <input type="hidden" name="id">
         <div class="grid">
@@ -97,8 +102,8 @@
           <label class="f">Price<input type="text" name="price" maxlength="40" placeholder="₹1,499"></label>
         </div>
         <label class="f">Link to buy * (your affiliate link is fine)<input type="url" name="url" required placeholder="https://"></label>
-        <label class="f">Why you love it<textarea name="note" maxlength="300"></textarea></label>
-        <label class="f">Keywords (comma separated, matched to what shoppers type)<input type="text" name="tags" placeholder="clothes, minimal, office"></label>
+        <label class="f">What makes it a good gift (helps it show up for the right searches)<textarea name="note" maxlength="300"></textarea></label>
+        <label class="f">Keywords (comma separated, e.g. what kind of person would love it)<input type="text" name="tags" placeholder="clothes, minimal, office"></label>
         <div class="f">Show for (nothing ticked in a row = all)<div data-occ style="display:flex;flex-direction:column;gap:6px"></div></div>
         <div class="row">
           <img class="preview" data-preview hidden alt="">
@@ -106,7 +111,7 @@
           <input type="hidden" name="image">
         </div>
         <div class="row">
-          <button class="primary" type="submit">Save pick</button>
+          <button class="primary" type="submit">Save product</button>
           <button type="button" data-cancel hidden>Cancel edit</button>
         </div>
       </form>
@@ -116,7 +121,7 @@
     <!-- ads -->
     <section class="panel">
       <h2>Ad slots</h2>
-      <p class="muted">Five slots, shown in a "Sponsored" row on the gift finder. Each ad is labelled "Ad" so shoppers know it's paid.</p>
+      <p class="muted">Five slots. Each search shows up to two matching ads inside the results (after the 2nd and 6th idea), rotating so every slot gets seen. They're labelled "Sponsored".</p>
       <div id="ad-slots" style="display:flex;flex-direction:column;gap:16px"></div>
     </section>
 
@@ -131,7 +136,7 @@
   const OCCASIONS = [["birthday", "Birthday"], ["anniversary", "Anniversary"], ["wedding", "Wedding"], ["just-because", "Just because"]];
   const SLOTS = 5;
   let key = "";
-  let data = { picks: [], ads: [] };
+  let data = { products: [], ads: [] };
   const $ = (s, el = document) => el.querySelector(s);
 
   try { key = sessionStorage.getItem("gf-admin") || ""; } catch {}
@@ -155,10 +160,11 @@
 
   async function unlock() {
     try {
-      data = await call({ action: "load" });
+      const loaded = await call({ action: "load" });
+      data = { products: loaded.products || [], ads: loaded.ads || [] };
       try { sessionStorage.setItem("gf-admin", key); } catch {}
       $("#login").hidden = true; $("#app").hidden = false;
-      renderPicks(); renderAds();
+      renderProducts(); renderAds();
     } catch (e) { toast(e.message, true); }
   }
   function signOut() {
@@ -169,7 +175,7 @@
   $("#logout").addEventListener("click", signOut);
 
   async function save(next) {
-    try { data = await call({ action: "save", data: next }); renderPicks(); renderAds(); toast("Saved. Live within a minute."); return true; }
+    try { const saved = await call({ action: "save", data: next }); data = { products: saved.products || [], ads: saved.ads || [] }; renderProducts(); renderAds(); toast("Saved. Live within a minute."); return true; }
     catch (e) { toast(e.message, true); return false; }
   }
 
@@ -223,7 +229,7 @@
     return `${who} · ${why}`;
   }
 
-  // ---- picks
+  // ---- products
   const pickForm = $("#pick-form");
   occasionBoxes($("[data-occ]", pickForm));
   wireImage(pickForm);
@@ -232,6 +238,24 @@
     occasionBoxes($("[data-occ]", pickForm)); $("[data-cancel]", pickForm).hidden = true;
   }
   $("[data-cancel]", pickForm).addEventListener("click", resetPickForm);
+
+  // Paste a link -> the server reads the page and fills the form for review.
+  $("#autofill").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = $("#af-go"), note = $("#af-note");
+    btn.disabled = true; btn.textContent = "Reading the page…"; note.hidden = true;
+    try {
+      const p = await call({ action: "autofill", url: $("#af-url").value });
+      resetPickForm();
+      const f = pickForm.elements;
+      f.name.value = p.name; f.price.value = p.price; f.url.value = p.url; f.note.value = p.note; f.tags.value = p.tags.join(", ");
+      setImage(pickForm, p.image); occasionBoxes($("[data-occ]", pickForm), p);
+      note.textContent = p.check ? "Check before saving: " + p.check : "All filled in from the page. Have a quick look, then save.";
+      note.hidden = false; $("#af-url").value = "";
+      pickForm.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (err) { toast(err.message, true); }
+    finally { btn.disabled = false; btn.textContent = "Fill in for me"; }
+  });
   pickForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = pickForm.elements;
@@ -241,23 +265,23 @@
       tags: f.tags.value.split(",").map((t) => t.trim()).filter(Boolean),
       recipients: checked(pickForm, "recipients"), occasions: checked(pickForm, "occasions"), active: true,
     };
-    const existing = data.picks.find((p) => p.id === pick.id);
+    const existing = data.products.find((p) => p.id === pick.id);
     if (existing) pick.active = existing.active;
-    const picks = existing ? data.picks.map((p) => p.id === pick.id ? pick : p) : [pick, ...data.picks];
-    if (await save({ ...data, picks })) resetPickForm();
+    const picks = existing ? data.products.map((p) => p.id === pick.id ? pick : p) : [pick, ...data.products];
+    if (await save({ ...data, products: picks })) { resetPickForm(); $("#af-note").hidden = true; }
   });
-  function renderPicks() {
+  function renderProducts() {
     const list = $("#pick-list"); list.textContent = "";
-    $("#pick-count").textContent = `${data.picks.length} saved`;
-    for (const p of data.picks) {
+    $("#pick-count").textContent = `${data.products.length} saved`;
+    for (const p of data.products) {
       const row = document.createElement("div"); row.className = "item" + (p.active ? "" : " off");
       row.innerHTML = `<div class="ph"></div><div class="txt"><strong></strong><span></span></div><button type="button" data-edit>Edit</button><button type="button" data-toggle></button><button type="button" class="danger" data-del>Delete</button>`;
       if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = ""; row.firstChild.replaceWith(img); }
       $("strong", row).textContent = p.name;
       $("span", row).textContent = [p.price, describeTargets(p)].filter(Boolean).join(" · ");
       $("[data-toggle]", row).textContent = p.active ? "Hide" : "Show";
-      $("[data-toggle]", row).addEventListener("click", () => save({ ...data, picks: data.picks.map((x) => x.id === p.id ? { ...x, active: !x.active } : x) }));
-      $("[data-del]", row).addEventListener("click", () => { if (confirm(`Delete "${p.name}"?`)) save({ ...data, picks: data.picks.filter((x) => x.id !== p.id) }); });
+      $("[data-toggle]", row).addEventListener("click", () => save({ ...data, products: data.products.map((x) => x.id === p.id ? { ...x, active: !x.active } : x) }));
+      $("[data-del]", row).addEventListener("click", () => { if (confirm(`Delete "${p.name}"?`)) save({ ...data, products: data.products.filter((x) => x.id !== p.id) }); });
       $("[data-edit]", row).addEventListener("click", () => {
         const f = pickForm.elements;
         f.id.value = p.id; f.name.value = p.name; f.price.value = p.price; f.url.value = p.url; f.note.value = p.note; f.tags.value = p.tags.join(", ");
@@ -297,7 +321,7 @@
         f.brand.value = ad.brand; f.title.value = ad.title; f.tagline.value = ad.tagline; f.url.value = ad.url; f.endsOn.value = ad.endsOn;
         setImage(form, ad.image);
         const expired = ad.endsOn && ad.endsOn < new Date().toISOString().slice(0, 10);
-        st.textContent = !ad.active ? "Paused" : expired ? "Ended" : "Live";
+        st.textContent = (!ad.active ? "Paused" : expired ? "Ended" : "Live") + " · " + describeTargets(ad);
         const tg = $("[data-toggle]", form); tg.hidden = false; tg.textContent = ad.active ? "Pause" : "Resume";
         tg.addEventListener("click", () => save({ ...data, ads: data.ads.map((a) => a.slot === slot ? { ...a, active: !a.active } : a) }));
         const cl = $("[data-clear]", form); cl.hidden = false;

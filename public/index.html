@@ -22,7 +22,7 @@
   :root {
     --bg: #fafaf8; --fg: #1f1e1c; --body: #4a4844; --muted: #8a867e; --line: #e8e6e1;
     --chip: #f1efea; --card: #ffffff; --petal: #f2b200; --on-petal: #1f1e1c;
-    --sun: #fdf1cc; --sun-ink: #8a5a00; --err: #b3261e;
+    --sun: #fdf1cc; --sun-ink: #8a5a00; --err: #b3261e; --ad-bg: #fffaeb; --ad-line: #f0dfae;
     --font-display: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -30,13 +30,13 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #121311; --fg: #eeede9; --body: #c4c2bc; --muted: #8d8a83; --line: #2a2b28;
-      --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --sun-ink: #f6c432; --err: #f2b8b5;
+      --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --sun-ink: #f6c432; --err: #f2b8b5; --ad-bg: #1f1c12; --ad-line: #3a3220;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
     --bg: #121311; --fg: #eeede9; --body: #c4c2bc; --muted: #8d8a83; --line: #2a2b28;
-    --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --sun-ink: #f6c432; --err: #f2b8b5;
+    --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --sun-ink: #f6c432; --err: #f2b8b5; --ad-bg: #1f1c12; --ad-line: #3a3220;
     color-scheme: dark;
   }
 
@@ -163,24 +163,13 @@
   @keyframes shimmer { to { transform: translateX(100%); } }
   @media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
 
-  .card .thumb { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; background: var(--chip); display: block; }
-  .card.pick { border-color: var(--petal); }
-  .card.pick .chip { color: var(--sun-ink); }
-  .sub-head { margin: 8px 0 0; font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--fg); }
-
-  /* sponsored slots */
-  .ads { display: flex; flex-direction: column; gap: 12px; }
-  .ads-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(220px, 1fr); gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; }
-  .ad {
-    scroll-snap-align: start; text-decoration: none; color: inherit;
-    background: var(--card); border: 1px dashed var(--line); border-radius: 16px; padding: 14px;
-    display: flex; flex-direction: column; gap: 6px;
-  }
-  .ad:hover { border-color: var(--muted); }
-  .ad img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; background: var(--chip); }
-  .ad .brand { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  .ad strong { font-family: var(--font-display); font-weight: 600; font-size: 16px; color: var(--fg); line-height: 1.35; }
-  .ad span.tl { font-size: 14px; }
+  /* sponsored card: sits inside the results grid, same shape as an idea, clearly labelled */
+  .card.ad { background: var(--ad-bg); border-color: var(--ad-line); }
+  .card.ad .chip { color: var(--sun-ink); }
+  .card.ad .brand { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .card .thumb, .card.ad img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; background: var(--chip); display: block; }
+  .card.ad a.shop { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .card.ad a.shop:hover { opacity: .85; background: var(--fg); }
 
   footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 20px; }
   footer p { margin: 0 0 6px; }
@@ -232,16 +221,8 @@
       <h2 id="results-title">Ideas for you</h2>
       <button class="link-btn" id="again">Show different ideas</button>
     </div>
-    <h3 class="sub-head" id="picks-head" hidden>Handpicked by Disha</h3>
-    <div class="cards" id="picks"></div>
-    <h3 class="sub-head" id="ai-head" hidden>More ideas</h3>
     <div class="cards" id="cards"></div>
-    <p class="note">Prices are estimates. Links open a store search, so check reviews and delivery dates before buying.</p>
-  </section>
-
-  <section class="ads" id="ads" aria-label="Sponsored" hidden>
-    <span class="label">Sponsored</span>
-    <div class="ads-row" id="ads-row"></div>
+    <p class="note">Cards marked "Sponsored" are paid placements. Prices are estimates. Links open a store search, so check reviews and delivery dates before buying.</p>
   </section>
 
   <footer>
@@ -284,56 +265,33 @@
     { id: "7000-plus", t: "₹7k+" },
   ];
 
-  const state = { recipient: null, occasion: null, tags: [], budget: null, busy: false };
-  let catalog = { picks: [], ads: [] };
+  const state = { recipient: null, occasion: null, tags: [], budget: null, busy: false, variant: 1, lastKey: "" };
+  let ads = [];
   fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((d) => {
-    if (d && Array.isArray(d.picks) && Array.isArray(d.ads)) { catalog = d; renderAds(); }
+    if (d && Array.isArray(d.ads)) ads = d.ads;
   }).catch(() => {});
 
-  // An item with nothing ticked for a field matches everything for that field.
+  // An ad with nothing ticked for a field matches everything for that field.
   const matches = (item) =>
     (!item.recipients.length || item.recipients.includes(state.recipient)) &&
     (!item.occasions.length || item.occasions.includes(state.occasion));
   const safeHref = (u) => /^https:\/\//.test(u || "") ? u : null;
 
-  function renderAds() {
-    const row = $("ads-row"); row.textContent = "";
-    const ads = catalog.ads.filter((a) => !state.recipient || matches(a));
-    for (const ad of ads) {
-      const href = safeHref(ad.url); if (!href) continue;
-      const a = document.createElement("a");
-      a.className = "ad"; a.href = href; a.target = "_blank"; a.rel = "sponsored noopener noreferrer";
-      if (safeHref(ad.image)) { const img = document.createElement("img"); img.src = ad.image; img.alt = ""; img.loading = "lazy"; a.appendChild(img); }
-      const brand = document.createElement("span"); brand.className = "brand"; brand.textContent = ad.brand + " · Ad";
-      const title = document.createElement("strong"); title.textContent = ad.title;
-      a.append(brand, title);
-      if (ad.tagline) { const t = document.createElement("span"); t.className = "tl"; t.textContent = ad.tagline; a.appendChild(t); }
-      row.appendChild(a);
-    }
-    $("ads").hidden = !row.children.length;
+  // Up to two matching ads per search, shuffled so every slot gets seen.
+  function pickAds() {
+    const pool = ads.filter((a) => matches(a) && safeHref(a.url));
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    return pool.slice(0, 2);
   }
-
-  // Disha's picks for this person and occasion, the ones matching the shopper's keywords first.
-  function matchingPicks() {
-    const wanted = state.tags.map((t) => t.toLowerCase());
-    const score = (p) => p.tags.filter((t) => wanted.some((w) => t.toLowerCase().includes(w) || w.includes(t.toLowerCase()))).length;
-    return catalog.picks.filter(matches).map((p) => [score(p), p]).sort((a, b) => b[0] - a[0]).slice(0, 6).map(([, p]) => p);
-  }
-  function showPicks() {
-    const box = $("picks"); box.textContent = "";
-    for (const p of matchingPicks()) {
-      const href = safeHref(p.url); if (!href) continue;
-      const c = document.createElement("article"); c.className = "card pick";
-      if (safeHref(p.image)) { const img = document.createElement("img"); img.className = "thumb"; img.src = p.image; img.alt = ""; img.loading = "lazy"; c.appendChild(img); }
-      c.insertAdjacentHTML("beforeend", `<div class="meta"><span class="chip">Disha's pick</span><span class="price"></span></div><h3></h3><p></p><a class="shop" target="_blank" rel="noopener noreferrer">View product ↗</a>`);
-      c.querySelector(".price").textContent = p.price;
-      c.querySelector("h3").textContent = p.name;
-      c.querySelector("p").textContent = p.note;
-      c.querySelector("a").href = href;
-      box.appendChild(c);
-    }
-    $("picks-head").hidden = !box.children.length;
-    $("ai-head").hidden = !box.children.length;
+  function adCard(ad) {
+    const c = document.createElement("article"); c.className = "card ad";
+    c.innerHTML = `<div class="meta"><span class="chip">Sponsored</span><span class="brand"></span></div><h3></h3><p></p><a class="shop" target="_blank" rel="sponsored noopener noreferrer"></a>`;
+    if (safeHref(ad.image)) { const img = document.createElement("img"); img.src = ad.image; img.alt = ""; img.loading = "lazy"; c.querySelector(".meta").after(img); }
+    c.querySelector(".brand").textContent = ad.brand;
+    c.querySelector("h3").textContent = ad.title;
+    c.querySelector("p").textContent = ad.tagline;
+    const a = c.querySelector("a"); a.href = ad.url; a.textContent = `Shop ${ad.brand} ↗`;
+    return c;
   }
   const $ = (id) => document.getElementById(id);
 
@@ -347,7 +305,7 @@
       state.recipient = r.id;
       const allowed = occasionsFor(r.id);
       if (!allowed.some((o) => o.id === state.occasion)) state.occasion = allowed[0].id;
-      render(); renderAds();
+      render();
     });
     $("recipients").appendChild(b);
   }
@@ -385,7 +343,7 @@
     for (const o of occasionsFor(state.recipient)) {
       const b = document.createElement("button");
       b.type = "button"; b.className = "pill"; b.textContent = o.t; b.setAttribute("aria-pressed", String(o.id === state.occasion));
-      b.addEventListener("click", () => { state.occasion = o.id; render(); renderAds(); });
+      b.addEventListener("click", () => { state.occasion = o.id; render(); });
       occBox.appendChild(b);
     }
     $("occasion-step").classList.toggle("dim", !state.recipient);
@@ -424,32 +382,33 @@
     results.hidden = false;
     $("results-title").textContent = "Finding ideas…";
     cards.textContent = "";
-    showPicks();
     for (let i = 0; i < 4; i++) { const s = document.createElement("div"); s.className = "card skeleton"; cards.appendChild(s); }
     results.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 
     try {
-      const r = await fetch("/api/gift-ideas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipient: state.recipient, occasion: state.occasion, tags: state.tags, budget: state.budget }),
-      });
+      // Same search, same URL: lets the server's cache answer repeat searches for free.
+      const key = searchKey();
+      state.variant = key === state.lastKey ? (state.variant % 3) + 1 : 1;
+      state.lastKey = key;
+      const r = await fetch(`/api/gift-ideas?${key}&v=${state.variant}`);
       const data = await r.json().catch(() => ({}));
       if (!r.ok || !Array.isArray(data.ideas)) throw new Error(data.error || "Something went wrong. Please try again.");
       showIdeas(data.ideas);
     } catch (err) {
-      // Keep Disha's picks on screen even if the AI ideas failed.
-      if ($("picks").children.length) {
-        cards.textContent = ""; $("ai-head").hidden = true;
-        $("results-title").textContent = "Ideas for you";
-      } else {
-        results.hidden = true;
-      }
+      results.hidden = true;
       $("error").textContent = err.message || "Something went wrong. Please try again.";
       $("error").hidden = false;
     } finally {
       state.busy = false; render();
     }
+  }
+
+  function searchKey() {
+    const p = new URLSearchParams({ recipient: state.recipient, occasion: state.occasion });
+    if (state.budget) p.set("budget", state.budget);
+    const tags = [...new Set(state.tags.map((t) => t.toLowerCase()))].sort();
+    if (tags.length) p.set("tags", tags.join(","));
+    return p.toString();
   }
 
   const STORE_NAMES = { amazon: "Amazon", myntra: "Myntra", nykaa: "Nykaa", flipkart: "Flipkart" };
@@ -461,7 +420,11 @@
   function showIdeas(ideas) {
     $("results-title").textContent = resultsTitle();
     const cards = $("cards"); cards.textContent = "";
-    for (const idea of ideas) {
+    const [adA, adB] = pickAds();
+    ideas.forEach((idea, i) => {
+      // Ads go after the 2nd and 6th idea: seen, but never the first thing.
+      if (i === 2 && adA) cards.appendChild(adCard(adA));
+      if (i === 6 && adB) cards.appendChild(adCard(adB));
       const c = document.createElement("article"); c.className = "card";
       c.innerHTML = `<div class="meta"><span class="chip"></span><span class="price"></span></div><h3></h3><p></p><a class="shop" target="_blank" rel="noopener noreferrer"></a>`;
       c.querySelector(".chip").textContent = idea.tag || "";
@@ -469,10 +432,17 @@
       c.querySelector("h3").textContent = idea.name;
       c.querySelector("p").textContent = idea.why;
       const a = c.querySelector("a");
-      a.href = /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com)\//.test(idea.url) ? idea.url : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
-      a.textContent = `Find on ${STORE_NAMES[idea.store] || "Amazon"} ↗`;
+      if (idea.own && safeHref(idea.url)) {
+        // A product added in the admin: real product link and photo, otherwise looks like any idea.
+        a.href = idea.url; a.textContent = "View product ↗";
+        if (safeHref(idea.image)) { const img = document.createElement("img"); img.className = "thumb"; img.src = idea.image; img.alt = ""; img.loading = "lazy"; c.querySelector(".meta").after(img); }
+      } else {
+        a.href = /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com)\//.test(idea.url) ? idea.url : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
+        a.textContent = `Find on ${STORE_NAMES[idea.store] || "Amazon"} ↗`;
+      }
       cards.appendChild(c);
-    }
+    });
+    if (adA && ideas.length <= 2) cards.appendChild(adCard(adA));
   }
 
   $("go").addEventListener("click", findIdeas);
