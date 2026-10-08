@@ -8,13 +8,18 @@ import { readData } from "./_lib/store.js";
 const client = new Anthropic();
 
 const RECIPIENTS = {
-  her: "a woman (friend, sister, colleague, etc.)",
-  him: "a man (friend, brother, colleague, etc.)",
-  boyfriend: "the shopper's boyfriend",
-  "best-friend": "the shopper's best friend",
-  parents: "the shopper's parents (one gift they can both enjoy, or for either parent)",
+  partner: "the shopper's romantic partner",
+  friend: "a friend of the shopper",
+  mom: "the shopper's mother",
+  dad: "the shopper's father",
+  parents: "the shopper's parents (one gift they can both enjoy)",
+  sibling: "the shopper's sibling",
+  colleague: "a work colleague (keep it professional and not too personal)",
   couple: "a couple (one shared gift for both)",
+  child: "a child (age-appropriate and safe)",
 };
+
+const GENDERS = { him: "male", her: "female" };
 
 const OCCASIONS = {
   birthday: "birthday",
@@ -80,6 +85,7 @@ export default async function handler(req, res) {
   const q = req.query || {};
   const body = {
     recipient: q.recipient,
+    gender: q.gender,
     occasion: q.occasion,
     budget: q.budget,
     tags: typeof q.tags === "string" ? q.tags.split(",") : [],
@@ -96,7 +102,7 @@ export default async function handler(req, res) {
 
   const curated = await curatedProducts(body.recipient, body.occasion);
   const prompt = [
-    `Gift for: ${recipient}`,
+    `Gift for: ${recipient}${GENDERS[body.gender] ? ` (${GENDERS[body.gender]})` : ""}`,
     `Occasion: ${occasion}`,
     `Interests / keywords: ${tags.length ? tags.join(", ") : "none given, suggest broadly loved gifts"}`,
     `Budget: ${budget || "not specified, spread across price points"}`,

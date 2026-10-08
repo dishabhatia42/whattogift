@@ -5,7 +5,7 @@ import { get, put } from "@vercel/blob";
 
 const DATA_PATH = "gift-finder/data.json";
 
-export const RECIPIENT_IDS = ["her", "him", "boyfriend", "best-friend", "parents", "couple"];
+export const RECIPIENT_IDS = ["partner", "friend", "mom", "dad", "parents", "sibling", "colleague", "couple", "child"];
 export const OCCASION_IDS = ["birthday", "anniversary", "wedding", "just-because"];
 export const AD_SLOTS = 5;
 const MAX_PRODUCTS = 200;

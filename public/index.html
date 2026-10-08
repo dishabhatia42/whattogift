@@ -78,6 +78,9 @@
   .pill:active { transform: scale(.97); }
   .pill[aria-pressed="true"] { background: var(--tint); border-color: var(--primary); color: var(--primary); font-weight: 500; }
 
+  .gender { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 15px; color: var(--muted); }
+  .gender .pill { padding: 6px 14px; font-size: 14px; }
+
   /* own interests: a borderless line, added ones show as pills */
   .tagbox { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-bottom: 1.5px solid var(--line); padding-bottom: 6px; }
   .tagbox:focus-within { border-color: var(--primary); }
@@ -153,6 +156,10 @@
   <section class="step" aria-labelledby="s1">
     <h2 id="s1">Who's it for?</h2>
     <div class="suggest" id="recipients" role="group" aria-labelledby="s1"></div>
+    <div class="gender" id="gender-row" hidden>
+      <span>Are they…</span>
+      <div class="suggest" id="genders" role="group" aria-label="Him, her or either"></div>
+    </div>
   </section>
 
   <section class="step" id="occasion-step" hidden aria-labelledby="s1b">
@@ -196,30 +203,41 @@
 
 <script>
 (() => {
+  // Who: relationships only. Gender is a separate, optional follow-up where it matters.
   const RECIPIENTS = [
-    { id: "her", e: "👩", t: "Her" },
-    { id: "him", e: "👨", t: "Him" },
-    { id: "boyfriend", e: "💛", t: "Boyfriend" },
-    { id: "best-friend", e: "👯", t: "Best friend" },
-    { id: "parents", e: "🏡", t: "Parents" },
-    { id: "couple", e: "💑", t: "A couple" },
+    { id: "partner", t: "Partner", ask: true },
+    { id: "friend", t: "Friend", ask: true },
+    { id: "mom", t: "Mom" },
+    { id: "dad", t: "Dad" },
+    { id: "parents", t: "Parents" },
+    { id: "sibling", t: "Sibling", ask: true },
+    { id: "colleague", t: "Colleague", ask: true },
+    { id: "couple", t: "A couple" },
+    { id: "child", t: "A child", ask: true },
   ];
+  const GENDERS = [{ id: "him", t: "Him" }, { id: "her", t: "Her" }, { id: "any", t: "Either" }];
   const OCCASIONS = [
     { id: "birthday", t: "Birthday" },
     { id: "anniversary", t: "Anniversary" },
     { id: "wedding", t: "Wedding" },
     { id: "just-because", t: "Just because" },
   ];
-  // A couple doesn't share a birthday, so skip that option for them.
-  const occasionsFor = (r) => r === "couple" ? OCCASIONS.filter((o) => o.id !== "birthday") : OCCASIONS;
+  // A couple doesn't share a birthday; a child has no anniversary or wedding.
+  const occasionsFor = (r) =>
+    r === "couple" ? OCCASIONS.filter((o) => o.id !== "birthday")
+    : r === "child" ? OCCASIONS.filter((o) => o.id === "birthday" || o.id === "just-because")
+    : OCCASIONS;
   const SUGGESTIONS = {
     default: ["Clothes", "Tech", "Books", "Experiences", "Home decor", "Fitness", "Food", "Handmade"],
-    her: ["Clothes", "Skincare", "Jewellery", "Books", "Experiences", "Home decor", "Plants"],
-    him: ["Clothes", "Tech", "Gaming", "Grooming", "Fitness", "Books", "Gadgets"],
-    boyfriend: ["Clothes", "Tech", "Toys", "Gaming", "Fitness", "Grooming", "Experiences"],
-    "best-friend": ["Clothes", "Skincare", "Jewellery", "Memories", "Experiences", "Books", "Snacks"],
+    partner: ["Clothes", "Tech", "Jewellery", "Experiences", "Grooming", "Skincare", "Gaming", "Personalised"],
+    friend: ["Clothes", "Skincare", "Books", "Memories", "Experiences", "Tech", "Snacks"],
+    mom: ["Saree & ethnic wear", "Skincare", "Kitchen", "Jewellery", "Health", "Spiritual", "Plants"],
+    dad: ["Tech he'll use", "Grooming", "Health", "Watches", "Books", "Travel", "Comfort"],
     parents: ["Health", "Comfort", "Tech they'll use", "Spiritual", "Home", "Travel", "Gardening"],
+    sibling: ["Clothes", "Tech", "Gaming", "Skincare", "Books", "Fitness", "Snacks"],
+    colleague: ["Desk & office", "Coffee & tea", "Books", "Stationery", "Plants", "Snacks"],
     couple: ["Kitchen", "Home decor", "Personalised", "Dinnerware", "Experiences", "Travel"],
+    child: ["Toys", "Books", "Art & craft", "Games", "Outdoor play", "Learning"],
   };
   const BUDGETS = [
     { id: "under-1000", t: "Under ₹1k" },
@@ -228,7 +246,7 @@
     { id: "7000-plus", t: "₹7k+" },
   ];
 
-  const state = { recipient: null, occasion: null, tags: [], budget: null, busy: false, variant: 1, lastKey: "" };
+  const state = { recipient: null, gender: null, occasion: null, tags: [], budget: null, busy: false, variant: 1, lastKey: "" };
   let ads = [];
   fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((d) => {
     if (d && Array.isArray(d.ads)) ads = d.ads;
@@ -264,12 +282,21 @@
     b.type = "button"; b.className = "pill"; b.dataset.id = r.id; b.setAttribute("aria-pressed", "false");
     b.textContent = r.t;
     b.addEventListener("click", () => {
+      if (state.recipient !== r.id) state.gender = null;
       state.recipient = r.id;
       const allowed = occasionsFor(r.id);
       if (!allowed.some((o) => o.id === state.occasion)) state.occasion = allowed[0].id;
       render();
     });
     $("recipients").appendChild(b);
+  }
+
+  // ---- him / her / either, only for relationships where it isn't obvious
+  for (const g of GENDERS) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "pill"; b.dataset.id = g.id; b.textContent = g.t;
+    b.addEventListener("click", () => { state.gender = state.gender === g.id ? null : g.id; render(); });
+    $("genders").appendChild(b);
   }
 
   // ---- budget pills
@@ -309,6 +336,8 @@
       occBox.appendChild(b);
     }
     $("occasion-step").hidden = !state.recipient;
+    $("gender-row").hidden = !RECIPIENTS.find((r) => r.id === state.recipient)?.ask;
+    for (const b of $("genders").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.gender));
     for (const b of $("budgets").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.budget));
 
     const box = $("tagbox"), input = $("taginput");
@@ -369,6 +398,7 @@
 
   function searchKey() {
     const p = new URLSearchParams({ recipient: state.recipient, occasion: state.occasion });
+    if (RECIPIENTS.find((r) => r.id === state.recipient)?.ask && (state.gender === "him" || state.gender === "her")) p.set("gender", state.gender);
     if (state.budget) p.set("budget", state.budget);
     const tags = [...new Set(state.tags.map((t) => t.toLowerCase()))].sort();
     if (tags.length) p.set("tags", tags.join(","));
@@ -377,7 +407,14 @@
 
   const STORE_NAMES = { amazon: "Amazon", myntra: "Myntra", nykaa: "Nykaa", flipkart: "Flipkart" };
   function resultsTitle() {
-    const who = { her: "her", him: "him", boyfriend: "your boyfriend", "best-friend": "your best friend", parents: "your parents", couple: "the couple" }[state.recipient];
+    const g = state.gender === "him" || state.gender === "her" ? state.gender : null;
+    const who = {
+      partner: g === "him" ? "your boyfriend or husband" : g === "her" ? "your girlfriend or wife" : "your partner",
+      friend: "your friend", mom: "your mom", dad: "your dad", parents: "your parents",
+      sibling: g === "him" ? "your brother" : g === "her" ? "your sister" : "your sibling",
+      colleague: "a colleague", couple: "the couple",
+      child: g === "him" ? "a little boy" : g === "her" ? "a little girl" : "a child",
+    }[state.recipient];
     const why = { birthday: "birthday", anniversary: "anniversary", wedding: "wedding", "just-because": "" }[state.occasion];
     return why ? `${why[0].toUpperCase() + why.slice(1)} ideas for ${who}` : `Ideas for ${who}, just because`;
   }
