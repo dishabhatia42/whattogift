@@ -107,11 +107,11 @@ export default async function handler(req, res) {
   ].filter(Boolean).join("\n");
 
   try {
-    const response = await client.beta.messages.create({
-      model: "claude-opus-5-5",
+    // Haiku: ~30x cheaper than Opus and plenty for picking 8 gift ideas.
+    // It has no server-side refusal fallback; a refusal gets the friendly 422 below.
+    const response = await client.messages.create({
+      model: "claude-haiku-5-5",
       max_tokens: 6000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
       output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
       system: SYSTEM,
       messages: [{ role: "user", content: prompt }],
