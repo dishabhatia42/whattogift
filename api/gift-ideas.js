@@ -137,7 +137,7 @@ export default async function handler(req, res) {
     const used = new Set();
     const ideas = data.ideas.map(({ product_id, ...idea }) => {
       const product = byId.get(product_id);
-      if (!product || used.has(product.id)) return { ...idea, url: storeUrl(idea.store, idea.search_query) };
+      if (!product || used.has(product.id)) return { ...idea, url: storeUrl(idea.store, idea.search_query?.trim() || idea.name) };
       used.add(product.id);
       return { ...idea, name: product.name, price_range: product.price || idea.price_range, url: product.url, image: product.image, own: true };
     });
