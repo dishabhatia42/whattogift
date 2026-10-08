@@ -248,8 +248,10 @@
 
   const state = { recipient: null, gender: null, occasion: null, tags: [], budget: null, busy: false, variant: 1, lastKey: "" };
   let ads = [];
-  fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((d) => {
+  let catalogVersion = "";
+  const catalogReady = fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((d) => {
     if (d && Array.isArray(d.ads)) ads = d.ads;
+    if (d && d.version) catalogVersion = d.version;
   }).catch(() => {});
 
   // An ad with nothing ticked for a field matches everything for that field.
@@ -383,7 +385,9 @@
       const key = searchKey();
       state.variant = key === state.lastKey ? (state.variant % 3) + 1 : 1;
       state.lastKey = key;
-      const r = await fetch(`/api/gift-ideas?${key}&v=${state.variant}`);
+      // The catalog version busts cached searches whenever products or ads change.
+      await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
+      const r = await fetch(`/api/gift-ideas?${key}&v=${state.variant}${catalogVersion ? `&cv=${encodeURIComponent(catalogVersion)}` : ""}`);
       const data = await r.json().catch(() => ({}));
       if (!r.ok || !Array.isArray(data.ideas)) throw new Error(data.error || "Something went wrong. Please try again.");
       showIdeas(data.ideas);

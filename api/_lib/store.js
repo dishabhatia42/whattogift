@@ -15,14 +15,17 @@ export async function readData() {
   if (!result || result.statusCode !== 200) return { products: [], ads: [] };
   const text = await new Response(result.stream).text();
   try {
-    return clean(JSON.parse(text));
+    const parsed = JSON.parse(text);
+    return { ...clean(parsed), updatedAt: Number(parsed.updatedAt) || 0 };
   } catch {
     return { products: [], ads: [] };
   }
 }
 
 export async function writeData(data) {
-  const safe = clean(data);
+  // updatedAt changes on every save; the page adds it to search URLs so cached
+  // searches refresh as soon as products or ads change.
+  const safe = { ...clean(data), updatedAt: Date.now() };
   await put(DATA_PATH, JSON.stringify(safe), {
     access: "public",
     contentType: "application/json",
