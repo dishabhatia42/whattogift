@@ -14,22 +14,22 @@
   body { margin: 0; }
   [hidden] { display: none !important; }
   :root {
-    --bg: #fafaf8; --fg: #1f1e1c; --body: #4a4844; --muted: #8a867e; --line: #e8e6e1;
-    --chip: #f1efea; --card: #ffffff; --petal: #f2b200; --sun: #fdf1cc; --err: #b3261e; --ok: #2e7d32;
+    --bg: #faf6f2; --fg: #1e1915; --body: #4d443e; --muted: #736860; --line: #eae2db;
+    --chip: #f2ebe5; --card: #ffffff; --petal: #8c2d3a; --sun: #f7e6e8; --err: #a3262f; --ok: #2e7d32;
     --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
     --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
     --font-mono: "Geist Mono", ui-monospace, Menlo, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #121311; --fg: #eeede9; --body: #c4c2bc; --muted: #8d8a83; --line: #2a2b28;
-      --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --err: #f2b8b5; --ok: #8bc78f;
+      --bg: #1e1915; --fg: #f7f0eb; --body: #d4c9c1; --muted: #9a8f87; --line: #342c27;
+      --chip: #2a231f; --card: #25201b; --petal: #e58c97; --sun: #3a2226; --err: #f2a7ad; --ok: #8bc78f;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #121311; --fg: #eeede9; --body: #c4c2bc; --muted: #8d8a83; --line: #2a2b28;
-    --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --err: #f2b8b5; --ok: #8bc78f;
+    --bg: #1e1915; --fg: #f7f0eb; --body: #d4c9c1; --muted: #9a8f87; --line: #342c27;
+    --chip: #2a231f; --card: #25201b; --petal: #e58c97; --sun: #3a2226; --err: #f2a7ad; --ok: #8bc78f;
     color-scheme: dark;
   }
   body { background: var(--bg); color: var(--body); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
@@ -54,7 +54,7 @@
     appearance: none; font: inherit; cursor: pointer; border-radius: 999px; padding: 9px 16px;
     border: 1.5px solid var(--line); background: var(--card); color: var(--fg); font-weight: 500;
   }
-  button.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); font-family: var(--font-display); font-weight: 700; }
+  button.primary { background: var(--petal); color: var(--bg); border-color: var(--petal); font-family: var(--font-display); font-weight: 700; }
   button.danger { color: var(--err); }
   button:disabled { opacity: .4; cursor: not-allowed; }
   button:focus-visible, input:focus-visible { outline: 2px solid var(--petal); outline-offset: 2px; }

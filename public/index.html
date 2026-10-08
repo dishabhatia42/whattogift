@@ -8,7 +8,7 @@
 <meta name="description" content="Pick who it's for and the occasion, add what they love, and get gift ideas you can actually buy.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Inter:wght@400;500&display=swap">
 <meta property="og:title" content="What to Gift · Gift ideas you can actually buy">
 <meta property="og:description" content="Pick who it's for and the occasion, add what they love, and get gift ideas you can actually buy.">
 <meta property="og:url" content="https://whattogift.vercel.app/">
@@ -19,24 +19,26 @@
   body { margin: 0; }
   [hidden] { display: none !important; }
 
+  /* Warm Luxury Concierge: burgundy primary, gold accent, terracotta links, warm neutrals */
   :root {
-    --bg: #fafaf8; --fg: #1f1e1c; --body: #4a4844; --muted: #8a867e; --line: #e8e6e1;
-    --chip: #f1efea; --card: #ffffff; --petal: #f2b200; --on-petal: #1f1e1c;
-    --sun: #fdf1cc; --sun-ink: #8a5a00; --err: #b3261e; --ad-bg: #fffaeb; --ad-line: #f0dfae;
+    --bg: #faf6f2; --fg: #1e1915; --body: #4d443e; --muted: #736860; --line: #eae2db;
+    --chip: #f2ebe5; --primary: #8c2d3a; --on-primary: #ffffff; --tint: #f7e6e8;
+    --link: #a84e38; --gold: #d4af37; --on-gold: #1e1915; --ad-bg: #f5eee7; --err: #a3262f;
     --font-display: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #121311; --fg: #eeede9; --body: #c4c2bc; --muted: #8d8a83; --line: #2a2b28;
-      --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --sun-ink: #f6c432; --err: #f2b8b5; --ad-bg: #1f1c12; --ad-line: #3a3220;
+      --bg: #1e1915; --fg: #f7f0eb; --body: #d4c9c1; --muted: #9a8f87; --line: #342c27;
+      --chip: #2a231f; --primary: #e58c97; --on-primary: #1e1915; --tint: #3a2226;
+      --link: #e89478; --gold: #d4af37; --on-gold: #1e1915; --ad-bg: #28211c; --err: #f2a7ad;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #121311; --fg: #eeede9; --body: #c4c2bc; --muted: #8d8a83; --line: #2a2b28;
-    --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --sun-ink: #f6c432; --err: #f2b8b5; --ad-bg: #1f1c12; --ad-line: #3a3220;
+    --bg: #1e1915; --fg: #f7f0eb; --body: #d4c9c1; --muted: #9a8f87; --line: #342c27;
+    --chip: #2a231f; --primary: #e58c97; --on-primary: #1e1915; --tint: #3a2226;
+    --link: #e89478; --gold: #d4af37; --on-gold: #1e1915; --ad-bg: #28211c; --err: #f2a7ad;
     color-scheme: dark;
   }
 
@@ -47,166 +49,127 @@
     -webkit-font-smoothing: antialiased;
   }
   .page {
-    max-width: 680px; margin: 0 auto;
-    padding-inline: 16px; padding-block: 32px 96px;
-    display: flex; flex-direction: column; gap: 40px;
+    max-width: 640px; margin: 0 auto;
+    padding-inline: 16px; padding-block: 28px 80px;
+    display: flex; flex-direction: column; gap: 32px;
   }
-  .label {
-    font-family: var(--font-mono); font-size: 12.5px; font-weight: 500;
-    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
-  }
-  .top { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-  .top a { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
-  .top a:hover { color: var(--fg); }
+  .brandline { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--primary); letter-spacing: -0.01em; }
+  .brandline i { font-style: normal; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-left: 4px; vertical-align: middle; }
 
   h1 {
     margin: 0; font-family: var(--font-display); font-weight: 700;
     font-size: clamp(28px, 6vw, 36px); line-height: 1.2; letter-spacing: -0.02em; color: var(--fg);
     text-wrap: balance;
   }
-  h1 mark { color: inherit; background: linear-gradient(transparent 58%, var(--sun) 58%, var(--sun) 92%, transparent 92%); padding-inline: 2px; }
-  .lede { margin: 12px 0 0; max-width: 52ch; }
+  h1 span { color: var(--primary); }
+  .lede { margin: 10px 0 0; max-width: 46ch; }
 
-  .step { display: flex; flex-direction: column; gap: 14px; }
-  .step h2 {
-    margin: 0; display: flex; align-items: baseline; gap: 10px;
-    font-family: var(--font-display); font-weight: 700; font-size: 19px; color: var(--fg);
-  }
-  .step h2 .n { font-family: var(--font-mono); font-size: 12.5px; color: var(--sun-ink); font-weight: 500; }
-  .step h2 .opt { font-family: var(--font-body); font-weight: 400; font-size: 14px; color: var(--muted); }
+  .step { display: flex; flex-direction: column; gap: 12px; }
+  .step h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 17px; color: var(--fg); }
 
-  /* occasion tiles */
-  .occasions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .occ {
-    appearance: none; font: inherit; color: var(--fg); text-align: left; cursor: pointer;
-    background: var(--card); border: 1.5px solid var(--line); border-radius: 14px;
-    padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
-    transition: border-color .15s, transform .15s, background .15s;
+  /* every choice is the same quiet pill */
+  .suggest { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill {
+    appearance: none; font: inherit; font-size: 15px; cursor: pointer;
+    background: var(--chip); color: var(--fg); border: 1.5px solid transparent; border-radius: 999px; padding: 8px 16px;
+    transition: background .15s, border-color .15s, color .15s, transform .1s;
   }
-  .occ:hover { border-color: var(--muted); }
-  .occ:active { transform: scale(0.98); }
-  .occ .e { font-size: 24px; line-height: 1; }
-  .occ .t { font-family: var(--font-display); font-weight: 600; font-size: 15px; line-height: 1.25; }
-  .step-occasion { transition: opacity .2s; }
-  .step-occasion.dim { opacity: .4; pointer-events: none; }
-  .occ[aria-pressed="true"] { border-color: var(--petal); background: var(--sun); }
+  .pill:hover { border-color: var(--line); }
+  .pill:active { transform: scale(.97); }
+  .pill[aria-pressed="true"] { background: var(--tint); border-color: var(--primary); color: var(--primary); font-weight: 500; }
 
-  /* tags */
-  .tagbox {
-    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-    background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 10px;
-  }
-  .tagbox:focus-within { border-color: var(--petal); }
-  .tagbox input {
-    flex: 1 1 140px; min-width: 0; border: 0; outline: 0; background: transparent;
-    font: inherit; color: var(--fg); padding: 4px 6px;
-  }
+  /* own interests: a borderless line, added ones show as pills */
+  .tagbox { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-bottom: 1.5px solid var(--line); padding-bottom: 6px; }
+  .tagbox:focus-within { border-color: var(--primary); }
+  .tagbox input { flex: 1 1 160px; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; color: var(--fg); padding: 6px 0; }
   .tagbox input::placeholder { color: var(--muted); }
   .tag {
     display: inline-flex; align-items: center; gap: 6px;
-    background: var(--petal); color: var(--on-petal); border-radius: 999px;
+    background: var(--tint); color: var(--primary); border-radius: 999px;
     padding: 4px 6px 4px 12px; font-size: 14px; font-weight: 500;
   }
   .tag button {
-    appearance: none; border: 0; background: rgba(0,0,0,.12); color: inherit; cursor: pointer;
-    width: 20px; height: 20px; border-radius: 50%; font-size: 14px; line-height: 1; display: grid; place-items: center;
+    appearance: none; border: 0; background: transparent; color: inherit; cursor: pointer;
+    width: 20px; height: 20px; border-radius: 50%; font-size: 15px; line-height: 1; display: grid; place-items: center;
   }
-  .suggest { display: flex; flex-wrap: wrap; gap: 8px; }
-  .pill {
-    appearance: none; font: inherit; font-size: 14px; cursor: pointer;
-    background: var(--chip); color: var(--body); border: 1px solid transparent; border-radius: 999px; padding: 6px 12px;
-  }
-  .pill:hover { color: var(--fg); border-color: var(--line); }
-  .pill[aria-pressed="true"] { background: var(--sun); color: var(--fg); border-color: var(--petal); }
 
   .go {
     appearance: none; font: inherit; cursor: pointer; align-self: flex-start;
     font-family: var(--font-display); font-weight: 700; font-size: 16px;
-    background: var(--fg); color: var(--bg); border: 0; border-radius: 999px; padding: 14px 26px;
+    background: var(--primary); color: var(--on-primary); border: 0; border-radius: 999px; padding: 14px 28px;
     transition: opacity .15s, transform .15s;
   }
   .go:hover { transform: translateY(-1px); }
-  .go:disabled { opacity: .35; cursor: not-allowed; transform: none; }
-  button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--petal); outline-offset: 3px; }
+  .go:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
   .note { font-size: 14px; color: var(--muted); margin: 0; }
   .error { color: var(--err); font-size: 15px; margin: 0; }
 
-  /* results */
-  .results { display: flex; flex-direction: column; gap: 16px; scroll-margin-top: 16px; }
+  /* results: a clean list with hairlines, no boxes */
+  .results { display: flex; flex-direction: column; gap: 12px; scroll-margin-top: 16px; }
   .results-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
   .results-head h2 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 21px; color: var(--fg); }
-  .link-btn { appearance: none; border: 0; background: none; font: inherit; font-size: 14px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
-  .link-btn:hover { color: var(--fg); }
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-  .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px;
-    display: flex; flex-direction: column; gap: 8px;
-  }
+  .link-btn { appearance: none; border: 0; background: none; font: inherit; font-size: 14px; color: var(--primary); cursor: pointer; font-weight: 500; }
+  .link-btn:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .cards { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+  .card { padding: 18px 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
   .card .meta { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-  .card .chip { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  .card .price { font-family: var(--font-mono); font-size: 13px; color: var(--sun-ink); white-space: nowrap; }
-  .card h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 17px; line-height: 1.35; color: var(--fg); }
-  .card p { margin: 0; font-size: 15px; flex: 1; }
-  .card a.shop {
-    margin-top: 4px; align-self: flex-start; text-decoration: none;
-    font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--fg);
-    border: 1.5px solid var(--line); border-radius: 999px; padding: 8px 14px;
-  }
-  .card a.shop:hover { border-color: var(--petal); background: var(--sun); }
+  .card .chip { font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .card .price { font-size: 14px; font-weight: 500; color: var(--fg); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .card h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 18px; line-height: 1.35; color: var(--fg); }
+  .card p { margin: 0; font-size: 15px; }
+  .card a.shop { align-self: flex-start; text-decoration: none; font-weight: 500; font-size: 15px; color: var(--link); }
+  .card a.shop:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-  .skeleton { min-height: 170px; position: relative; overflow: hidden; }
+  .skeleton { min-height: 120px; position: relative; overflow: hidden; }
   .skeleton::after {
-    content: ""; position: absolute; inset: 0;
+    content: ""; position: absolute; inset: 12px 0;
     background: linear-gradient(90deg, transparent, var(--chip), transparent);
     animation: shimmer 1.3s infinite; transform: translateX(-100%);
   }
   @keyframes shimmer { to { transform: translateX(100%); } }
   @media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
 
-  /* sponsored card: sits inside the results grid, same shape as an idea, clearly labelled */
-  .card.ad { background: var(--ad-bg); border-color: var(--ad-line); }
-  .card.ad .chip { color: var(--sun-ink); }
-  .card.ad .brand { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  .card .thumb, .card.ad img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; background: var(--chip); display: block; }
-  .card.ad a.shop { background: var(--fg); color: var(--bg); border-color: var(--fg); }
-  .card.ad a.shop:hover { opacity: .85; background: var(--fg); }
+  /* sponsored: soft panel inside the list with a small gold tag */
+  .card.ad { background: var(--ad-bg); border-radius: 14px; padding: 16px; margin: 10px 0; border-bottom: 0; }
+  .card.ad + .card { border-top: 1px solid var(--line); }
+  .card.ad .chip { background: var(--gold); color: var(--on-gold); padding: 2px 8px; border-radius: 999px; font-size: 11px; }
+  .card.ad .brand { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .card .thumb, .card.ad img { width: 100%; max-width: 360px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; background: var(--chip); display: block; margin: 4px 0; }
 
-  footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 20px; }
-  footer p { margin: 0 0 6px; }
-  footer a { color: inherit; }
+  footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 18px; }
+  footer p { margin: 0 0 4px; }
 </style>
 </head>
 <body>
 <main class="page">
-  <div class="top">
-    <span class="label">What to gift</span>
-  </div>
+  <div class="brandline">What to Gift<i aria-hidden="true"></i></div>
 
   <header>
-    <h1>What should I <mark>gift?</mark></h1>
-    <p class="lede">Tell us who it's for and why, add a few things they love, and get ideas you can actually buy.</p>
+    <h1>What should I <span>gift?</span></h1>
+    <p class="lede">A few taps and you'll have gift ideas you can actually buy.</p>
   </header>
 
   <section class="step" aria-labelledby="s1">
-    <h2 id="s1"><span class="n">01</span> Who's it for?</h2>
-    <div class="occasions" id="recipients" role="group" aria-labelledby="s1"></div>
+    <h2 id="s1">Who's it for?</h2>
+    <div class="suggest" id="recipients" role="group" aria-labelledby="s1"></div>
   </section>
 
-  <section class="step step-occasion dim" id="occasion-step" aria-labelledby="s1b">
-    <h2 id="s1b"><span class="n">02</span> What's the occasion?</h2>
+  <section class="step" id="occasion-step" hidden aria-labelledby="s1b">
+    <h2 id="s1b">What's the occasion?</h2>
     <div class="suggest" id="occasions" role="group" aria-labelledby="s1b"></div>
   </section>
 
   <section class="step" aria-labelledby="s2">
-    <h2 id="s2"><span class="n">03</span> What are they into? <span class="opt">Optional</span></h2>
-    <div class="tagbox" id="tagbox">
-      <input id="taginput" type="text" maxlength="30" placeholder="Add your own, e.g. cricket" aria-label="Add a keyword" enterkeyhint="done">
-    </div>
+    <h2 id="s2">What are they into?</h2>
     <div class="suggest" id="suggest" aria-label="Suggested keywords"></div>
+    <div class="tagbox" id="tagbox">
+      <input id="taginput" type="text" maxlength="30" placeholder="+ Add your own, e.g. cricket" aria-label="Add a keyword" enterkeyhint="done">
+    </div>
   </section>
 
   <section class="step" aria-labelledby="s3">
-    <h2 id="s3"><span class="n">04</span> Budget <span class="opt">Optional</span></h2>
+    <h2 id="s3">Budget</h2>
     <div class="suggest" id="budgets" role="group" aria-labelledby="s3"></div>
   </section>
 
@@ -298,9 +261,8 @@
   // ---- who it's for
   for (const r of RECIPIENTS) {
     const b = document.createElement("button");
-    b.type = "button"; b.className = "occ"; b.dataset.id = r.id; b.setAttribute("aria-pressed", "false");
-    b.innerHTML = `<span class="e" aria-hidden="true">${r.e}</span><span class="t"></span>`;
-    b.querySelector(".t").textContent = r.t;
+    b.type = "button"; b.className = "pill"; b.dataset.id = r.id; b.setAttribute("aria-pressed", "false");
+    b.textContent = r.t;
     b.addEventListener("click", () => {
       state.recipient = r.id;
       const allowed = occasionsFor(r.id);
@@ -346,12 +308,14 @@
       b.addEventListener("click", () => { state.occasion = o.id; render(); });
       occBox.appendChild(b);
     }
-    $("occasion-step").classList.toggle("dim", !state.recipient);
+    $("occasion-step").hidden = !state.recipient;
     for (const b of $("budgets").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.budget));
 
     const box = $("tagbox"), input = $("taginput");
     box.querySelectorAll(".tag").forEach((n) => n.remove());
-    for (const t of state.tags) {
+    // Suggested interests show as highlighted pills; only typed-in ones appear here.
+    const suggested = (SUGGESTIONS[state.recipient] || SUGGESTIONS.default).map((x) => x.toLowerCase());
+    for (const t of state.tags.filter((x) => !suggested.includes(x.toLowerCase()))) {
       const s = document.createElement("span"); s.className = "tag";
       const label = document.createElement("span"); label.textContent = t;
       const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", `Remove ${t}`);
@@ -363,7 +327,7 @@
     for (const t of SUGGESTIONS[state.recipient] || SUGGESTIONS.default) {
       const on = state.tags.some((x) => x.toLowerCase() === t.toLowerCase());
       const b = document.createElement("button");
-      b.type = "button"; b.className = "pill"; b.textContent = (on ? "✓ " : "+ ") + t; b.setAttribute("aria-pressed", String(on));
+      b.type = "button"; b.className = "pill"; b.textContent = t; b.setAttribute("aria-pressed", String(on));
       b.addEventListener("click", () => on ? removeTag(state.tags.find((x) => x.toLowerCase() === t.toLowerCase())) : addTag(t));
       sug.appendChild(b);
     }
