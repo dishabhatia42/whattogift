@@ -4,14 +4,20 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic();
 
+const RECIPIENTS = {
+  her: "a woman (friend, sister, colleague, etc.)",
+  him: "a man (friend, brother, colleague, etc.)",
+  boyfriend: "the shopper's boyfriend",
+  "best-friend": "the shopper's best friend",
+  parents: "the shopper's parents (one gift they can both enjoy, or for either parent)",
+  couple: "a couple (one shared gift for both)",
+};
+
 const OCCASIONS = {
-  "her-birthday": "her birthday (a woman: friend, colleague, sister, etc.)",
-  "his-birthday": "his birthday (a man: friend, colleague, brother, etc.)",
-  "best-friend-birthday": "best friend's birthday",
-  "boyfriend-birthday": "boyfriend's birthday",
-  "anniversary": "wedding anniversary (gift for spouse)",
-  "wedding": "wedding gift for a couple",
-  "parents": "gift for parents",
+  birthday: "birthday",
+  anniversary: "anniversary",
+  wedding: "wedding",
+  "just-because": "no special occasion, just because",
 };
 
 const BUDGETS = {
@@ -50,7 +56,7 @@ const SCHEMA = {
 const SYSTEM = `You suggest thoughtful, specific gift ideas for shoppers in India.
 Return 8 ideas. Each must be a concrete product type someone can actually buy online in India (e.g. "Bellavita unisex perfume gift set", not "something nice").
 - name: short product name, brand included when a well-known Indian-available brand fits.
-- why: one warm sentence on why it suits this occasion and these interests. No fluff.
+- why: one warm sentence on why it suits this person, occasion and interests. No fluff.
 - price_range: realistic Indian price range in rupees, e.g. "₹1,200 – ₹1,800".
 - search_query: a short query that will find this item on the chosen store (no URLs).
 - store: the best Indian store for it: amazon (default), myntra (fashion), nykaa (beauty), flipkart.
@@ -64,8 +70,9 @@ export default async function handler(req, res) {
   }
 
   const body = typeof req.body === "string" ? safeJson(req.body) : req.body || {};
+  const recipient = RECIPIENTS[body.recipient];
   const occasion = OCCASIONS[body.occasion];
-  if (!occasion) return res.status(400).json({ error: "Pick an occasion." });
+  if (!recipient || !occasion) return res.status(400).json({ error: "Pick who it's for and the occasion." });
 
   const tags = Array.isArray(body.tags)
     ? body.tags.filter((t) => typeof t === "string").map((t) => t.trim().slice(0, 30)).filter(Boolean).slice(0, 8)
@@ -73,6 +80,7 @@ export default async function handler(req, res) {
   const budget = BUDGETS[body.budget] || null;
 
   const prompt = [
+    `Gift for: ${recipient}`,
     `Occasion: ${occasion}`,
     `Interests / keywords: ${tags.length ? tags.join(", ") : "none given, suggest broadly loved gifts"}`,
     `Budget: ${budget || "not specified, spread across price points"}`,

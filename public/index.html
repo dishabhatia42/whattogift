@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>What to Gift</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%81%3C/text%3E%3C/svg%3E">
-<meta name="description" content="Pick the occasion, add a few things they love, and get gift ideas you can actually buy.">
+<meta name="description" content="Pick who it's for and the occasion, add what they love, and get gift ideas you can actually buy.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
 <meta property="og:title" content="What to Gift · Gift ideas you can actually buy">
-<meta property="og:description" content="Pick the occasion, add a few things they love, and get gift ideas you can actually buy.">
+<meta property="og:description" content="Pick who it's for and the occasion, add what they love, and get gift ideas you can actually buy.">
 <meta property="og:url" content="https://whattogift.vercel.app/">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
@@ -76,17 +76,19 @@
   .step h2 .opt { font-family: var(--font-body); font-weight: 400; font-size: 14px; color: var(--muted); }
 
   /* occasion tiles */
-  .occasions { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .occasions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .occ {
     appearance: none; font: inherit; color: var(--fg); text-align: left; cursor: pointer;
     background: var(--card); border: 1.5px solid var(--line); border-radius: 14px;
-    padding: 14px; display: flex; flex-direction: column; gap: 6px;
+    padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
     transition: border-color .15s, transform .15s, background .15s;
   }
   .occ:hover { border-color: var(--muted); }
   .occ:active { transform: scale(0.98); }
   .occ .e { font-size: 24px; line-height: 1; }
-  .occ .t { font-family: var(--font-display); font-weight: 600; font-size: 15px; line-height: 1.3; }
+  .occ .t { font-family: var(--font-display); font-weight: 600; font-size: 15px; line-height: 1.25; }
+  .step-occasion { transition: opacity .2s; }
+  .step-occasion.dim { opacity: .4; pointer-events: none; }
   .occ[aria-pressed="true"] { border-color: var(--petal); background: var(--sun); }
 
   /* tags */
@@ -193,30 +195,35 @@
 
   <header>
     <h1>What should I <mark>gift?</mark></h1>
-    <p class="lede">Pick the occasion, add a few things they love, and get ideas you can actually buy.</p>
+    <p class="lede">Tell us who it's for and why, add a few things they love, and get ideas you can actually buy.</p>
   </header>
 
   <section class="step" aria-labelledby="s1">
-    <h2 id="s1"><span class="n">01</span> What's the occasion?</h2>
-    <div class="occasions" id="occasions" role="group" aria-labelledby="s1"></div>
+    <h2 id="s1"><span class="n">01</span> Who's it for?</h2>
+    <div class="occasions" id="recipients" role="group" aria-labelledby="s1"></div>
+  </section>
+
+  <section class="step step-occasion dim" id="occasion-step" aria-labelledby="s1b">
+    <h2 id="s1b"><span class="n">02</span> What's the occasion?</h2>
+    <div class="suggest" id="occasions" role="group" aria-labelledby="s1b"></div>
   </section>
 
   <section class="step" aria-labelledby="s2">
-    <h2 id="s2"><span class="n">02</span> What are they into? <span class="opt">Optional</span></h2>
+    <h2 id="s2"><span class="n">03</span> What are they into? <span class="opt">Optional</span></h2>
     <div class="tagbox" id="tagbox">
-      <input id="taginput" type="text" maxlength="30" placeholder="Type and press Enter, e.g. clothes" aria-label="Add a keyword" enterkeyhint="done">
+      <input id="taginput" type="text" maxlength="30" placeholder="Add your own, e.g. cricket" aria-label="Add a keyword" enterkeyhint="done">
     </div>
     <div class="suggest" id="suggest" aria-label="Suggested keywords"></div>
   </section>
 
   <section class="step" aria-labelledby="s3">
-    <h2 id="s3"><span class="n">03</span> Budget <span class="opt">Optional</span></h2>
+    <h2 id="s3"><span class="n">04</span> Budget <span class="opt">Optional</span></h2>
     <div class="suggest" id="budgets" role="group" aria-labelledby="s3"></div>
   </section>
 
   <div class="step">
     <button class="go" id="go" disabled>Find gift ideas</button>
-    <p class="note" id="hint">Pick an occasion to start.</p>
+    <p class="note" id="hint">Pick who it's for to start.</p>
     <p class="error" id="error" role="alert" hidden></p>
   </div>
 
@@ -245,24 +252,30 @@
 
 <script>
 (() => {
-  const OCCASIONS = [
-    { id: "her-birthday", e: "🎂", t: "Her birthday" },
-    { id: "his-birthday", e: "🎉", t: "His birthday" },
-    { id: "best-friend-birthday", e: "👯", t: "Best friend's birthday" },
-    { id: "boyfriend-birthday", e: "💛", t: "Boyfriend's birthday" },
-    { id: "anniversary", e: "💍", t: "Wedding anniversary" },
-    { id: "wedding", e: "💐", t: "Wedding gift" },
-    { id: "parents", e: "🏡", t: "Gift for parents" },
+  const RECIPIENTS = [
+    { id: "her", e: "👩", t: "Her" },
+    { id: "him", e: "👨", t: "Him" },
+    { id: "boyfriend", e: "💛", t: "Boyfriend" },
+    { id: "best-friend", e: "👯", t: "Best friend" },
+    { id: "parents", e: "🏡", t: "Parents" },
+    { id: "couple", e: "💑", t: "A couple" },
   ];
+  const OCCASIONS = [
+    { id: "birthday", t: "Birthday" },
+    { id: "anniversary", t: "Anniversary" },
+    { id: "wedding", t: "Wedding" },
+    { id: "just-because", t: "Just because" },
+  ];
+  // A couple doesn't share a birthday, so skip that option for them.
+  const occasionsFor = (r) => r === "couple" ? OCCASIONS.filter((o) => o.id !== "birthday") : OCCASIONS;
   const SUGGESTIONS = {
     default: ["Clothes", "Tech", "Books", "Experiences", "Home decor", "Fitness", "Food", "Handmade"],
-    "her-birthday": ["Clothes", "Skincare", "Jewellery", "Books", "Experiences", "Home decor", "Plants"],
-    "best-friend-birthday": ["Clothes", "Skincare", "Jewellery", "Memories", "Experiences", "Books", "Snacks"],
-    "boyfriend-birthday": ["Clothes", "Tech", "Toys", "Gaming", "Fitness", "Grooming", "Experiences"],
-    "his-birthday": ["Clothes", "Tech", "Gaming", "Grooming", "Fitness", "Books", "Gadgets"],
-    "anniversary": ["Experiences", "Jewellery", "Personalised", "Travel", "Home", "Watches"],
-    "wedding": ["Kitchen", "Home decor", "Personalised", "Dinnerware", "Bedding", "Appliances"],
-    "parents": ["Health", "Comfort", "Tech they'll use", "Spiritual", "Home", "Travel", "Gardening"],
+    her: ["Clothes", "Skincare", "Jewellery", "Books", "Experiences", "Home decor", "Plants"],
+    him: ["Clothes", "Tech", "Gaming", "Grooming", "Fitness", "Books", "Gadgets"],
+    boyfriend: ["Clothes", "Tech", "Toys", "Gaming", "Fitness", "Grooming", "Experiences"],
+    "best-friend": ["Clothes", "Skincare", "Jewellery", "Memories", "Experiences", "Books", "Snacks"],
+    parents: ["Health", "Comfort", "Tech they'll use", "Spiritual", "Home", "Travel", "Gardening"],
+    couple: ["Kitchen", "Home decor", "Personalised", "Dinnerware", "Experiences", "Travel"],
   };
   const BUDGETS = [
     { id: "under-1000", t: "Under ₹1k" },
@@ -271,18 +284,21 @@
     { id: "7000-plus", t: "₹7k+" },
   ];
 
-  const state = { occasion: null, tags: [], budget: null, busy: false };
+  const state = { recipient: null, occasion: null, tags: [], budget: null, busy: false };
   let catalog = { picks: [], ads: [] };
   fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((d) => {
     if (d && Array.isArray(d.picks) && Array.isArray(d.ads)) { catalog = d; renderAds(); }
   }).catch(() => {});
 
-  const forOccasion = (item) => !item.occasions.length || item.occasions.includes(state.occasion);
+  // An item with nothing ticked for a field matches everything for that field.
+  const matches = (item) =>
+    (!item.recipients.length || item.recipients.includes(state.recipient)) &&
+    (!item.occasions.length || item.occasions.includes(state.occasion));
   const safeHref = (u) => /^https:\/\//.test(u || "") ? u : null;
 
   function renderAds() {
     const row = $("ads-row"); row.textContent = "";
-    const ads = catalog.ads.filter((a) => !state.occasion || forOccasion(a));
+    const ads = catalog.ads.filter((a) => !state.recipient || matches(a));
     for (const ad of ads) {
       const href = safeHref(ad.url); if (!href) continue;
       const a = document.createElement("a");
@@ -297,11 +313,11 @@
     $("ads").hidden = !row.children.length;
   }
 
-  // Disha's picks for this occasion, the ones matching the shopper's keywords first.
+  // Disha's picks for this person and occasion, the ones matching the shopper's keywords first.
   function matchingPicks() {
     const wanted = state.tags.map((t) => t.toLowerCase());
     const score = (p) => p.tags.filter((t) => wanted.some((w) => t.toLowerCase().includes(w) || w.includes(t.toLowerCase()))).length;
-    return catalog.picks.filter(forOccasion).map((p) => [score(p), p]).sort((a, b) => b[0] - a[0]).slice(0, 6).map(([, p]) => p);
+    return catalog.picks.filter(matches).map((p) => [score(p), p]).sort((a, b) => b[0] - a[0]).slice(0, 6).map(([, p]) => p);
   }
   function showPicks() {
     const box = $("picks"); box.textContent = "";
@@ -321,14 +337,19 @@
   }
   const $ = (id) => document.getElementById(id);
 
-  // ---- occasion tiles
-  for (const o of OCCASIONS) {
+  // ---- who it's for
+  for (const r of RECIPIENTS) {
     const b = document.createElement("button");
-    b.type = "button"; b.className = "occ"; b.dataset.id = o.id; b.setAttribute("aria-pressed", "false");
-    b.innerHTML = `<span class="e" aria-hidden="true">${o.e}</span><span class="t"></span>`;
-    b.querySelector(".t").textContent = o.t;
-    b.addEventListener("click", () => { state.occasion = o.id; render(); renderAds(); });
-    $("occasions").appendChild(b);
+    b.type = "button"; b.className = "occ"; b.dataset.id = r.id; b.setAttribute("aria-pressed", "false");
+    b.innerHTML = `<span class="e" aria-hidden="true">${r.e}</span><span class="t"></span>`;
+    b.querySelector(".t").textContent = r.t;
+    b.addEventListener("click", () => {
+      state.recipient = r.id;
+      const allowed = occasionsFor(r.id);
+      if (!allowed.some((o) => o.id === state.occasion)) state.occasion = allowed[0].id;
+      render(); renderAds();
+    });
+    $("recipients").appendChild(b);
   }
 
   // ---- budget pills
@@ -359,7 +380,15 @@
   $("tagbox").addEventListener("click", (e) => { if (e.target.id === "tagbox") $("taginput").focus(); });
 
   function render() {
-    for (const b of $("occasions").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.occasion));
+    for (const b of $("recipients").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.recipient));
+    const occBox = $("occasions"); occBox.textContent = "";
+    for (const o of occasionsFor(state.recipient)) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "pill"; b.textContent = o.t; b.setAttribute("aria-pressed", String(o.id === state.occasion));
+      b.addEventListener("click", () => { state.occasion = o.id; render(); renderAds(); });
+      occBox.appendChild(b);
+    }
+    $("occasion-step").classList.toggle("dim", !state.recipient);
     for (const b of $("budgets").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.budget));
 
     const box = $("tagbox"), input = $("taginput");
@@ -373,7 +402,7 @@
     }
 
     const sug = $("suggest"); sug.textContent = "";
-    for (const t of SUGGESTIONS[state.occasion] || SUGGESTIONS.default) {
+    for (const t of SUGGESTIONS[state.recipient] || SUGGESTIONS.default) {
       const on = state.tags.some((x) => x.toLowerCase() === t.toLowerCase());
       const b = document.createElement("button");
       b.type = "button"; b.className = "pill"; b.textContent = (on ? "✓ " : "+ ") + t; b.setAttribute("aria-pressed", String(on));
@@ -381,14 +410,14 @@
       sug.appendChild(b);
     }
 
-    $("go").disabled = !state.occasion || state.busy;
+    $("go").disabled = !state.recipient || !state.occasion || state.busy;
     $("go").textContent = state.busy ? "Finding ideas…" : "Find gift ideas";
-    $("hint").hidden = !!state.occasion;
+    $("hint").hidden = !!state.recipient;
   }
 
   // ---- fetch ideas
   async function findIdeas() {
-    if (!state.occasion || state.busy) return;
+    if (!state.recipient || !state.occasion || state.busy) return;
     state.busy = true; render();
     $("error").hidden = true;
     const results = $("results"), cards = $("cards");
@@ -403,7 +432,7 @@
       const r = await fetch("/api/gift-ideas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ occasion: state.occasion, tags: state.tags, budget: state.budget }),
+        body: JSON.stringify({ recipient: state.recipient, occasion: state.occasion, tags: state.tags, budget: state.budget }),
       });
       const data = await r.json().catch(() => ({}));
       if (!r.ok || !Array.isArray(data.ideas)) throw new Error(data.error || "Something went wrong. Please try again.");
@@ -424,9 +453,13 @@
   }
 
   const STORE_NAMES = { amazon: "Amazon", myntra: "Myntra", nykaa: "Nykaa", flipkart: "Flipkart" };
+  function resultsTitle() {
+    const who = { her: "her", him: "him", boyfriend: "your boyfriend", "best-friend": "your best friend", parents: "your parents", couple: "the couple" }[state.recipient];
+    const why = { birthday: "birthday", anniversary: "anniversary", wedding: "wedding", "just-because": "" }[state.occasion];
+    return why ? `${why[0].toUpperCase() + why.slice(1)} ideas for ${who}` : `Ideas for ${who}, just because`;
+  }
   function showIdeas(ideas) {
-    const occ = OCCASIONS.find((o) => o.id === state.occasion);
-    $("results-title").textContent = `Ideas for ${occ.t.toLowerCase()}`;
+    $("results-title").textContent = resultsTitle();
     const cards = $("cards"); cards.textContent = "";
     for (const idea of ideas) {
       const c = document.createElement("article"); c.className = "card";

@@ -99,7 +99,7 @@
         <label class="f">Link to buy * (your affiliate link is fine)<input type="url" name="url" required placeholder="https://"></label>
         <label class="f">Why you love it<textarea name="note" maxlength="300"></textarea></label>
         <label class="f">Keywords (comma separated, matched to what shoppers type)<input type="text" name="tags" placeholder="clothes, minimal, office"></label>
-        <div class="f">Occasions (none ticked = show for all)<div class="occ" data-occ></div></div>
+        <div class="f">Show for (nothing ticked in a row = all)<div data-occ style="display:flex;flex-direction:column;gap:6px"></div></div>
         <div class="row">
           <img class="preview" data-preview hidden alt="">
           <label class="f">Photo<input type="file" accept="image/*" data-file></label>
@@ -127,11 +127,8 @@
 
 <script>
 (() => {
-  const OCCASIONS = [
-    ["her-birthday", "Her birthday"], ["his-birthday", "His birthday"],
-    ["best-friend-birthday", "Best friend"], ["boyfriend-birthday", "Boyfriend"],
-    ["anniversary", "Anniversary"], ["wedding", "Wedding"], ["parents", "Parents"],
-  ];
+  const RECIPIENTS = [["her", "Her"], ["him", "Him"], ["boyfriend", "Boyfriend"], ["best-friend", "Best friend"], ["parents", "Parents"], ["couple", "A couple"]];
+  const OCCASIONS = [["birthday", "Birthday"], ["anniversary", "Anniversary"], ["wedding", "Wedding"], ["just-because", "Just because"]];
   const SLOTS = 5;
   let key = "";
   let data = { picks: [], ads: [] };
@@ -177,15 +174,21 @@
   }
 
   // ---- shared form helpers
-  function occasionBoxes(container, selected = []) {
+  // Two rows of checkboxes: who it's for, and the occasion. Nothing ticked in a row = all.
+  function occasionBoxes(container, item = {}) {
     container.textContent = "";
-    for (const [id, label] of OCCASIONS) {
+    container.append(boxRow("recipients", RECIPIENTS, item.recipients || []), boxRow("occasions", OCCASIONS, item.occasions || []));
+  }
+  function boxRow(field, options, selected) {
+    const row = document.createElement("div"); row.className = "occ"; row.dataset.field = field;
+    for (const [id, label] of options) {
       const l = document.createElement("label");
       const cb = document.createElement("input"); cb.type = "checkbox"; cb.value = id; cb.checked = selected.includes(id);
-      l.append(cb, document.createTextNode(label)); container.appendChild(l);
+      l.append(cb, document.createTextNode(label)); row.appendChild(l);
     }
+    return row;
   }
-  const checkedOccasions = (form) => [...form.querySelectorAll("[data-occ] input:checked")].map((c) => c.value);
+  const checked = (form, field) => [...form.querySelectorAll(`[data-field="${field}"] input:checked`)].map((c) => c.value);
 
   // Shrink photos in the browser so uploads stay small and fast.
   async function uploadImage(file) {
@@ -213,6 +216,13 @@
     const preview = $("[data-preview]", form); preview.hidden = !url; if (url) preview.src = url;
   }
 
+  const label = (list, ids) => ids.map((id) => list.find(([k]) => k === id)[1]).join(", ");
+  function describeTargets(item) {
+    const who = item.recipients.length ? label(RECIPIENTS, item.recipients) : "anyone";
+    const why = item.occasions.length ? label(OCCASIONS, item.occasions) : "any occasion";
+    return `${who} · ${why}`;
+  }
+
   // ---- picks
   const pickForm = $("#pick-form");
   occasionBoxes($("[data-occ]", pickForm));
@@ -229,7 +239,7 @@
       id: f.id.value || Math.random().toString(36).slice(2, 10),
       name: f.name.value, price: f.price.value, url: f.url.value, note: f.note.value, image: f.image.value,
       tags: f.tags.value.split(",").map((t) => t.trim()).filter(Boolean),
-      occasions: checkedOccasions(pickForm), active: true,
+      recipients: checked(pickForm, "recipients"), occasions: checked(pickForm, "occasions"), active: true,
     };
     const existing = data.picks.find((p) => p.id === pick.id);
     if (existing) pick.active = existing.active;
@@ -244,14 +254,14 @@
       row.innerHTML = `<div class="ph"></div><div class="txt"><strong></strong><span></span></div><button type="button" data-edit>Edit</button><button type="button" data-toggle></button><button type="button" class="danger" data-del>Delete</button>`;
       if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = ""; row.firstChild.replaceWith(img); }
       $("strong", row).textContent = p.name;
-      $("span", row).textContent = [p.price, p.occasions.length ? p.occasions.length + " occasions" : "all occasions"].filter(Boolean).join(" · ");
+      $("span", row).textContent = [p.price, describeTargets(p)].filter(Boolean).join(" · ");
       $("[data-toggle]", row).textContent = p.active ? "Hide" : "Show";
       $("[data-toggle]", row).addEventListener("click", () => save({ ...data, picks: data.picks.map((x) => x.id === p.id ? { ...x, active: !x.active } : x) }));
       $("[data-del]", row).addEventListener("click", () => { if (confirm(`Delete "${p.name}"?`)) save({ ...data, picks: data.picks.filter((x) => x.id !== p.id) }); });
       $("[data-edit]", row).addEventListener("click", () => {
         const f = pickForm.elements;
         f.id.value = p.id; f.name.value = p.name; f.price.value = p.price; f.url.value = p.url; f.note.value = p.note; f.tags.value = p.tags.join(", ");
-        setImage(pickForm, p.image); occasionBoxes($("[data-occ]", pickForm), p.occasions);
+        setImage(pickForm, p.image); occasionBoxes($("[data-occ]", pickForm), p);
         $("[data-cancel]", pickForm).hidden = false; pickForm.scrollIntoView({ behavior: "smooth" });
       });
       list.appendChild(row);
@@ -276,10 +286,10 @@
           <label class="f">Link *<input type="url" name="url" required placeholder="https://"></label>
           <label class="f">Runs until (optional)<input type="date" name="endsOn"></label>
         </div>
-        <div class="f">Occasions (none ticked = all)<div class="occ" data-occ></div></div>
+        <div class="f">Show for (nothing ticked in a row = all)<div data-occ style="display:flex;flex-direction:column;gap:6px"></div></div>
         <div class="row"><img class="preview" data-preview hidden alt=""><label class="f">Banner image<input type="file" accept="image/*" data-file></label><input type="hidden" name="image"></div>
         <div class="row"><button class="primary" type="submit">Save slot ${slot}</button><button type="button" data-toggle hidden></button><button type="button" class="danger" data-clear hidden>Clear slot</button></div>`;
-      occasionBoxes($("[data-occ]", form), ad ? ad.occasions : []);
+      occasionBoxes($("[data-occ]", form), ad || {});
       wireImage(form);
       const st = $("[data-state]", form);
       if (ad) {
@@ -300,7 +310,7 @@
         const f = form.elements;
         const next = {
           slot, brand: f.brand.value, title: f.title.value, tagline: f.tagline.value, url: f.url.value,
-          endsOn: f.endsOn.value, image: f.image.value, occasions: checkedOccasions(form), active: ad ? ad.active : true,
+          endsOn: f.endsOn.value, image: f.image.value, recipients: checked(form, "recipients"), occasions: checked(form, "occasions"), active: ad ? ad.active : true,
         };
         save({ ...data, ads: [...data.ads.filter((a) => a.slot !== slot), next] });
       });

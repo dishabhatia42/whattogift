@@ -5,10 +5,8 @@ import { get, put } from "@vercel/blob";
 
 const DATA_PATH = "gift-finder/data.json";
 
-export const OCCASION_IDS = [
-  "her-birthday", "his-birthday", "best-friend-birthday", "boyfriend-birthday",
-  "anniversary", "wedding", "parents",
-];
+export const RECIPIENT_IDS = ["her", "him", "boyfriend", "best-friend", "parents", "couple"];
+export const OCCASION_IDS = ["birthday", "anniversary", "wedding", "just-because"];
 export const AD_SLOTS = 5;
 const MAX_PICKS = 200;
 
@@ -54,7 +52,8 @@ export function clean(data) {
     price: str(p.price, 40),
     url: httpsUrl(p.url),
     image: httpsUrl(p.image),
-    occasions: occasions(p.occasions),
+    recipients: oneOf(p.recipients, RECIPIENT_IDS),
+    occasions: oneOf(p.occasions, OCCASION_IDS),
     tags: (Array.isArray(p.tags) ? p.tags : []).map((t) => str(t, 30)).filter(Boolean).slice(0, 10),
     active: p.active !== false,
   })).filter((p) => p.name && p.url);
@@ -70,7 +69,8 @@ export function clean(data) {
       tagline: str(a.tagline, 200),
       url: httpsUrl(a.url),
       image: httpsUrl(a.image),
-      occasions: occasions(a.occasions),
+      recipients: oneOf(a.recipients, RECIPIENT_IDS),
+      occasions: oneOf(a.occasions, OCCASION_IDS),
       endsOn: /^\d{4}-\d{2}-\d{2}$/.test(a.endsOn) ? a.endsOn : "",
       active: a.active !== false,
     });
@@ -91,8 +91,8 @@ function httpsUrl(v) {
     return "";
   }
 }
-function occasions(v) {
-  return (Array.isArray(v) ? v : []).filter((o) => OCCASION_IDS.includes(o));
+function oneOf(v, allowed) {
+  return (Array.isArray(v) ? v : []).filter((o) => allowed.includes(o));
 }
 function randomId() {
   return Math.random().toString(36).slice(2, 10);
