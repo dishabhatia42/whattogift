@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>What to Gift</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%81%3C/text%3E%3C/svg%3E">
+<meta name="description" content="Pick the occasion, add a few things they love, and get gift ideas you can actually buy.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
+<meta property="og:title" content="What to Gift · Gift ideas you can actually buy">
+<meta property="og:description" content="Pick the occasion, add a few things they love, and get gift ideas you can actually buy.">
+<meta property="og:url" content="https://whattogift.vercel.app/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  [hidden] { display: none !important; }
+
+  :root {
+    --bg: #fafaf8; --fg: #1f1e1c; --body: #4a4844; --muted: #8a867e; --line: #e8e6e1;
+    --chip: #f1efea; --card: #ffffff; --petal: #f2b200; --on-petal: #1f1e1c;
+    --sun: #fdf1cc; --sun-ink: #8a5a00; --err: #b3261e;
+    --font-display: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121311; --fg: #eeede9; --body: #c4c2bc; --muted: #8d8a83; --line: #2a2b28;
+      --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --sun-ink: #f6c432; --err: #f2b8b5;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121311; --fg: #eeede9; --body: #c4c2bc; --muted: #8d8a83; --line: #2a2b28;
+    --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --sun-ink: #f6c432; --err: #f2b8b5;
+    color-scheme: dark;
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg); color: var(--body);
+    font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    max-width: 680px; margin: 0 auto;
+    padding-inline: 16px; padding-block: 32px 96px;
+    display: flex; flex-direction: column; gap: 40px;
+  }
+  .label {
+    font-family: var(--font-mono); font-size: 12.5px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .top a { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+  .top a:hover { color: var(--fg); }
+
+  h1 {
+    margin: 0; font-family: var(--font-display); font-weight: 700;
+    font-size: clamp(28px, 6vw, 36px); line-height: 1.2; letter-spacing: -0.02em; color: var(--fg);
+    text-wrap: balance;
+  }
+  h1 mark { color: inherit; background: linear-gradient(transparent 58%, var(--sun) 58%, var(--sun) 92%, transparent 92%); padding-inline: 2px; }
+  .lede { margin: 12px 0 0; max-width: 52ch; }
+
+  .step { display: flex; flex-direction: column; gap: 14px; }
+  .step h2 {
+    margin: 0; display: flex; align-items: baseline; gap: 10px;
+    font-family: var(--font-display); font-weight: 700; font-size: 19px; color: var(--fg);
+  }
+  .step h2 .n { font-family: var(--font-mono); font-size: 12.5px; color: var(--sun-ink); font-weight: 500; }
+  .step h2 .opt { font-family: var(--font-body); font-weight: 400; font-size: 14px; color: var(--muted); }
+
+  /* occasion tiles */
+  .occasions { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .occ {
+    appearance: none; font: inherit; color: var(--fg); text-align: left; cursor: pointer;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 14px;
+    padding: 14px; display: flex; flex-direction: column; gap: 6px;
+    transition: border-color .15s, transform .15s, background .15s;
+  }
+  .occ:hover { border-color: var(--muted); }
+  .occ:active { transform: scale(0.98); }
+  .occ .e { font-size: 24px; line-height: 1; }
+  .occ .t { font-family: var(--font-display); font-weight: 600; font-size: 15px; line-height: 1.3; }
+  .occ[aria-pressed="true"] { border-color: var(--petal); background: var(--sun); }
+
+  /* tags */
+  .tagbox {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 10px;
+  }
+  .tagbox:focus-within { border-color: var(--petal); }
+  .tagbox input {
+    flex: 1 1 140px; min-width: 0; border: 0; outline: 0; background: transparent;
+    font: inherit; color: var(--fg); padding: 4px 6px;
+  }
+  .tagbox input::placeholder { color: var(--muted); }
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--petal); color: var(--on-petal); border-radius: 999px;
+    padding: 4px 6px 4px 12px; font-size: 14px; font-weight: 500;
+  }
+  .tag button {
+    appearance: none; border: 0; background: rgba(0,0,0,.12); color: inherit; cursor: pointer;
+    width: 20px; height: 20px; border-radius: 50%; font-size: 14px; line-height: 1; display: grid; place-items: center;
+  }
+  .suggest { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill {
+    appearance: none; font: inherit; font-size: 14px; cursor: pointer;
+    background: var(--chip); color: var(--body); border: 1px solid transparent; border-radius: 999px; padding: 6px 12px;
+  }
+  .pill:hover { color: var(--fg); border-color: var(--line); }
+  .pill[aria-pressed="true"] { background: var(--sun); color: var(--fg); border-color: var(--petal); }
+
+  .go {
+    appearance: none; font: inherit; cursor: pointer; align-self: flex-start;
+    font-family: var(--font-display); font-weight: 700; font-size: 16px;
+    background: var(--fg); color: var(--bg); border: 0; border-radius: 999px; padding: 14px 26px;
+    transition: opacity .15s, transform .15s;
+  }
+  .go:hover { transform: translateY(-1px); }
+  .go:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--petal); outline-offset: 3px; }
+  .note { font-size: 14px; color: var(--muted); margin: 0; }
+  .error { color: var(--err); font-size: 15px; margin: 0; }
+
+  /* results */
+  .results { display: flex; flex-direction: column; gap: 16px; scroll-margin-top: 16px; }
+  .results-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .results-head h2 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 21px; color: var(--fg); }
+  .link-btn { appearance: none; border: 0; background: none; font: inherit; font-size: 14px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  .link-btn:hover { color: var(--fg); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .card .meta { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .card .chip { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .card .price { font-family: var(--font-mono); font-size: 13px; color: var(--sun-ink); white-space: nowrap; }
+  .card h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 17px; line-height: 1.35; color: var(--fg); }
+  .card p { margin: 0; font-size: 15px; flex: 1; }
+  .card a.shop {
+    margin-top: 4px; align-self: flex-start; text-decoration: none;
+    font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--fg);
+    border: 1.5px solid var(--line); border-radius: 999px; padding: 8px 14px;
+  }
+  .card a.shop:hover { border-color: var(--petal); background: var(--sun); }
+
+  .skeleton { min-height: 170px; position: relative; overflow: hidden; }
+  .skeleton::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, var(--chip), transparent);
+    animation: shimmer 1.3s infinite; transform: translateX(-100%);
+  }
+  @keyframes shimmer { to { transform: translateX(100%); } }
+  @media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
+
+  .card .thumb { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; background: var(--chip); display: block; }
+  .card.pick { border-color: var(--petal); }
+  .card.pick .chip { color: var(--sun-ink); }
+  .sub-head { margin: 8px 0 0; font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--fg); }
+
+  /* sponsored slots */
+  .ads { display: flex; flex-direction: column; gap: 12px; }
+  .ads-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(220px, 1fr); gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; }
+  .ad {
+    scroll-snap-align: start; text-decoration: none; color: inherit;
+    background: var(--card); border: 1px dashed var(--line); border-radius: 16px; padding: 14px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .ad:hover { border-color: var(--muted); }
+  .ad img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; background: var(--chip); }
+  .ad .brand { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .ad strong { font-family: var(--font-display); font-weight: 600; font-size: 16px; color: var(--fg); line-height: 1.35; }
+  .ad span.tl { font-size: 14px; }
+
+  footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 20px; }
+  footer p { margin: 0 0 6px; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="top">
+    <span class="label">What to gift</span>
+  </div>
+
+  <header>
+    <h1>What should I <mark>gift?</mark></h1>
+    <p class="lede">Pick the occasion, add a few things they love, and get ideas you can actually buy.</p>
+  </header>
+
+  <section class="step" aria-labelledby="s1">
+    <h2 id="s1"><span class="n">01</span> What's the occasion?</h2>
+    <div class="occasions" id="occasions" role="group" aria-labelledby="s1"></div>
+  </section>
+
+  <section class="step" aria-labelledby="s2">
+    <h2 id="s2"><span class="n">02</span> What are they into? <span class="opt">Optional</span></h2>
+    <div class="tagbox" id="tagbox">
+      <input id="taginput" type="text" maxlength="30" placeholder="Type and press Enter, e.g. clothes" aria-label="Add a keyword" enterkeyhint="done">
+    </div>
+    <div class="suggest" id="suggest" aria-label="Suggested keywords"></div>
+  </section>
+
+  <section class="step" aria-labelledby="s3">
+    <h2 id="s3"><span class="n">03</span> Budget <span class="opt">Optional</span></h2>
+    <div class="suggest" id="budgets" role="group" aria-labelledby="s3"></div>
+  </section>
+
+  <div class="step">
+    <button class="go" id="go" disabled>Find gift ideas</button>
+    <p class="note" id="hint">Pick an occasion to start.</p>
+    <p class="error" id="error" role="alert" hidden></p>
+  </div>
+
+  <section class="results" id="results" aria-live="polite" hidden>
+    <div class="results-head">
+      <h2 id="results-title">Ideas for you</h2>
+      <button class="link-btn" id="again">Show different ideas</button>
+    </div>
+    <h3 class="sub-head" id="picks-head" hidden>Handpicked by Disha</h3>
+    <div class="cards" id="picks"></div>
+    <h3 class="sub-head" id="ai-head" hidden>More ideas</h3>
+    <div class="cards" id="cards"></div>
+    <p class="note">Prices are estimates. Links open a store search, so check reviews and delivery dates before buying.</p>
+  </section>
+
+  <section class="ads" id="ads" aria-label="Sponsored" hidden>
+    <span class="label">Sponsored</span>
+    <div class="ads-row" id="ads-row"></div>
+  </section>
+
+  <footer>
+    <p>Ideas are suggested by AI and can be imperfect. You know them best.</p>
+    <p>Made by Disha Bhatia.</p>
+  </footer>
+</main>
+
+<script>
+(() => {
+  const OCCASIONS = [
+    { id: "her-birthday", e: "🎂", t: "Her birthday" },
+    { id: "his-birthday", e: "🎉", t: "His birthday" },
+    { id: "best-friend-birthday", e: "👯", t: "Best friend's birthday" },
+    { id: "boyfriend-birthday", e: "💛", t: "Boyfriend's birthday" },
+    { id: "anniversary", e: "💍", t: "Wedding anniversary" },
+    { id: "wedding", e: "💐", t: "Wedding gift" },
+    { id: "parents", e: "🏡", t: "Gift for parents" },
+  ];
+  const SUGGESTIONS = {
+    default: ["Clothes", "Tech", "Books", "Experiences", "Home decor", "Fitness", "Food", "Handmade"],
+    "her-birthday": ["Clothes", "Skincare", "Jewellery", "Books", "Experiences", "Home decor", "Plants"],
+    "best-friend-birthday": ["Clothes", "Skincare", "Jewellery", "Memories", "Experiences", "Books", "Snacks"],
+    "boyfriend-birthday": ["Clothes", "Tech", "Toys", "Gaming", "Fitness", "Grooming", "Experiences"],
+    "his-birthday": ["Clothes", "Tech", "Gaming", "Grooming", "Fitness", "Books", "Gadgets"],
+    "anniversary": ["Experiences", "Jewellery", "Personalised", "Travel", "Home", "Watches"],
+    "wedding": ["Kitchen", "Home decor", "Personalised", "Dinnerware", "Bedding", "Appliances"],
+    "parents": ["Health", "Comfort", "Tech they'll use", "Spiritual", "Home", "Travel", "Gardening"],
+  };
+  const BUDGETS = [
+    { id: "under-1000", t: "Under ₹1k" },
+    { id: "1000-3000", t: "₹1k – 3k" },
+    { id: "3000-7000", t: "₹3k – 7k" },
+    { id: "7000-plus", t: "₹7k+" },
+  ];
+
+  const state = { occasion: null, tags: [], budget: null, busy: false };
+  let catalog = { picks: [], ads: [] };
+  fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((d) => {
+    if (d && Array.isArray(d.picks) && Array.isArray(d.ads)) { catalog = d; renderAds(); }
+  }).catch(() => {});
+
+  const forOccasion = (item) => !item.occasions.length || item.occasions.includes(state.occasion);
+  const safeHref = (u) => /^https:\/\//.test(u || "") ? u : null;
+
+  function renderAds() {
+    const row = $("ads-row"); row.textContent = "";
+    const ads = catalog.ads.filter((a) => !state.occasion || forOccasion(a));
+    for (const ad of ads) {
+      const href = safeHref(ad.url); if (!href) continue;
+      const a = document.createElement("a");
+      a.className = "ad"; a.href = href; a.target = "_blank"; a.rel = "sponsored noopener noreferrer";
+      if (safeHref(ad.image)) { const img = document.createElement("img"); img.src = ad.image; img.alt = ""; img.loading = "lazy"; a.appendChild(img); }
+      const brand = document.createElement("span"); brand.className = "brand"; brand.textContent = ad.brand + " · Ad";
+      const title = document.createElement("strong"); title.textContent = ad.title;
+      a.append(brand, title);
+      if (ad.tagline) { const t = document.createElement("span"); t.className = "tl"; t.textContent = ad.tagline; a.appendChild(t); }
+      row.appendChild(a);
+    }
+    $("ads").hidden = !row.children.length;
+  }
+
+  // Disha's picks for this occasion, the ones matching the shopper's keywords first.
+  function matchingPicks() {
+    const wanted = state.tags.map((t) => t.toLowerCase());
+    const score = (p) => p.tags.filter((t) => wanted.some((w) => t.toLowerCase().includes(w) || w.includes(t.toLowerCase()))).length;
+    return catalog.picks.filter(forOccasion).map((p) => [score(p), p]).sort((a, b) => b[0] - a[0]).slice(0, 6).map(([, p]) => p);
+  }
+  function showPicks() {
+    const box = $("picks"); box.textContent = "";
+    for (const p of matchingPicks()) {
+      const href = safeHref(p.url); if (!href) continue;
+      const c = document.createElement("article"); c.className = "card pick";
+      if (safeHref(p.image)) { const img = document.createElement("img"); img.className = "thumb"; img.src = p.image; img.alt = ""; img.loading = "lazy"; c.appendChild(img); }
+      c.insertAdjacentHTML("beforeend", `<div class="meta"><span class="chip">Disha's pick</span><span class="price"></span></div><h3></h3><p></p><a class="shop" target="_blank" rel="noopener noreferrer">View product ↗</a>`);
+      c.querySelector(".price").textContent = p.price;
+      c.querySelector("h3").textContent = p.name;
+      c.querySelector("p").textContent = p.note;
+      c.querySelector("a").href = href;
+      box.appendChild(c);
+    }
+    $("picks-head").hidden = !box.children.length;
+    $("ai-head").hidden = !box.children.length;
+  }
+  const $ = (id) => document.getElementById(id);
+
+  // ---- occasion tiles
+  for (const o of OCCASIONS) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "occ"; b.dataset.id = o.id; b.setAttribute("aria-pressed", "false");
+    b.innerHTML = `<span class="e" aria-hidden="true">${o.e}</span><span class="t"></span>`;
+    b.querySelector(".t").textContent = o.t;
+    b.addEventListener("click", () => { state.occasion = o.id; render(); renderAds(); });
+    $("occasions").appendChild(b);
+  }
+
+  // ---- budget pills
+  for (const bd of BUDGETS) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "pill"; b.textContent = bd.t; b.dataset.id = bd.id;
+    b.addEventListener("click", () => { state.budget = state.budget === bd.id ? null : bd.id; render(); });
+    $("budgets").appendChild(b);
+  }
+
+  // ---- tags
+  function addTag(raw) {
+    const t = raw.trim().replace(/\s+/g, " ").slice(0, 30);
+    if (!t || state.tags.length >= 8) return;
+    if (state.tags.some((x) => x.toLowerCase() === t.toLowerCase())) return;
+    state.tags.push(t); render();
+  }
+  function removeTag(t) { state.tags = state.tags.filter((x) => x !== t); render(); }
+  $("taginput").addEventListener("keydown", (e) => {
+    const input = e.currentTarget;
+    if ((e.key === "Enter" || e.key === ",") && input.value.trim()) {
+      e.preventDefault(); addTag(input.value); input.value = "";
+    } else if (e.key === "Backspace" && !input.value && state.tags.length) {
+      removeTag(state.tags[state.tags.length - 1]);
+    }
+  });
+  $("taginput").addEventListener("blur", (e) => { if (e.target.value.trim()) { addTag(e.target.value); e.target.value = ""; } });
+  $("tagbox").addEventListener("click", (e) => { if (e.target.id === "tagbox") $("taginput").focus(); });
+
+  function render() {
+    for (const b of $("occasions").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.occasion));
+    for (const b of $("budgets").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.budget));
+
+    const box = $("tagbox"), input = $("taginput");
+    box.querySelectorAll(".tag").forEach((n) => n.remove());
+    for (const t of state.tags) {
+      const s = document.createElement("span"); s.className = "tag";
+      const label = document.createElement("span"); label.textContent = t;
+      const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", `Remove ${t}`);
+      x.addEventListener("click", () => removeTag(t));
+      s.append(label, x); box.insertBefore(s, input);
+    }
+
+    const sug = $("suggest"); sug.textContent = "";
+    for (const t of SUGGESTIONS[state.occasion] || SUGGESTIONS.default) {
+      const on = state.tags.some((x) => x.toLowerCase() === t.toLowerCase());
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "pill"; b.textContent = (on ? "✓ " : "+ ") + t; b.setAttribute("aria-pressed", String(on));
+      b.addEventListener("click", () => on ? removeTag(state.tags.find((x) => x.toLowerCase() === t.toLowerCase())) : addTag(t));
+      sug.appendChild(b);
+    }
+
+    $("go").disabled = !state.occasion || state.busy;
+    $("go").textContent = state.busy ? "Finding ideas…" : "Find gift ideas";
+    $("hint").hidden = !!state.occasion;
+  }
+
+  // ---- fetch ideas
+  async function findIdeas() {
+    if (!state.occasion || state.busy) return;
+    state.busy = true; render();
+    $("error").hidden = true;
+    const results = $("results"), cards = $("cards");
+    results.hidden = false;
+    $("results-title").textContent = "Finding ideas…";
+    cards.textContent = "";
+    showPicks();
+    for (let i = 0; i < 4; i++) { const s = document.createElement("div"); s.className = "card skeleton"; cards.appendChild(s); }
+    results.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+
+    try {
+      const r = await fetch("/api/gift-ideas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ occasion: state.occasion, tags: state.tags, budget: state.budget }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !Array.isArray(data.ideas)) throw new Error(data.error || "Something went wrong. Please try again.");
+      showIdeas(data.ideas);
+    } catch (err) {
+      // Keep Disha's picks on screen even if the AI ideas failed.
+      if ($("picks").children.length) {
+        cards.textContent = ""; $("ai-head").hidden = true;
+        $("results-title").textContent = "Ideas for you";
+      } else {
+        results.hidden = true;
+      }
+      $("error").textContent = err.message || "Something went wrong. Please try again.";
+      $("error").hidden = false;
+    } finally {
+      state.busy = false; render();
+    }
+  }
+
+  const STORE_NAMES = { amazon: "Amazon", myntra: "Myntra", nykaa: "Nykaa", flipkart: "Flipkart" };
+  function showIdeas(ideas) {
+    const occ = OCCASIONS.find((o) => o.id === state.occasion);
+    $("results-title").textContent = `Ideas for ${occ.t.toLowerCase()}`;
+    const cards = $("cards"); cards.textContent = "";
+    for (const idea of ideas) {
+      const c = document.createElement("article"); c.className = "card";
+      c.innerHTML = `<div class="meta"><span class="chip"></span><span class="price"></span></div><h3></h3><p></p><a class="shop" target="_blank" rel="noopener noreferrer"></a>`;
+      c.querySelector(".chip").textContent = idea.tag || "";
+      c.querySelector(".price").textContent = idea.price_range || "";
+      c.querySelector("h3").textContent = idea.name;
+      c.querySelector("p").textContent = idea.why;
+      const a = c.querySelector("a");
+      a.href = /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com)\//.test(idea.url) ? idea.url : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
+      a.textContent = `Find on ${STORE_NAMES[idea.store] || "Amazon"} ↗`;
+      cards.appendChild(c);
+    }
+  }
+
+  $("go").addEventListener("click", findIdeas);
+  $("again").addEventListener("click", findIdeas);
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>What to Gift Admin</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%94%91%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700&family=Inter:wght@400;500&family=Geist+Mono:wght@500&display=swap">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  [hidden] { display: none !important; }
+  :root {
+    --bg: #fafaf8; --fg: #1f1e1c; --body: #4a4844; --muted: #8a867e; --line: #e8e6e1;
+    --chip: #f1efea; --card: #ffffff; --petal: #f2b200; --sun: #fdf1cc; --err: #b3261e; --ok: #2e7d32;
+    --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121311; --fg: #eeede9; --body: #c4c2bc; --muted: #8d8a83; --line: #2a2b28;
+      --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --err: #f2b8b5; --ok: #8bc78f;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121311; --fg: #eeede9; --body: #c4c2bc; --muted: #8d8a83; --line: #2a2b28;
+    --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --err: #f2b8b5; --ok: #8bc78f;
+    color-scheme: dark;
+  }
+  body { background: var(--bg); color: var(--body); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+  .page { max-width: 760px; margin: 0 auto; padding: 28px 16px 96px; display: flex; flex-direction: column; gap: 28px; }
+  h1 { margin: 0; font-family: var(--font-display); font-size: 26px; color: var(--fg); }
+  h2 { margin: 0; font-family: var(--font-display); font-size: 19px; color: var(--fg); }
+  .label { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .muted { color: var(--muted); font-size: 14px; margin: 0; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  label.f { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  input[type=text], input[type=url], input[type=password], input[type=date], textarea {
+    font: inherit; font-size: 15px; color: var(--fg); background: var(--bg);
+    border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 11px; width: 100%;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--petal); }
+  textarea { min-height: 64px; resize: vertical; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .occ { display: flex; flex-wrap: wrap; gap: 6px; }
+  .occ label { display: inline-flex; gap: 6px; align-items: center; background: var(--chip); border-radius: 999px; padding: 4px 10px; font-size: 13px; cursor: pointer; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  button {
+    appearance: none; font: inherit; cursor: pointer; border-radius: 999px; padding: 9px 16px;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--fg); font-weight: 500;
+  }
+  button.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); font-family: var(--font-display); font-weight: 700; }
+  button.danger { color: var(--err); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--petal); outline-offset: 2px; }
+  .item { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .item:last-child { border-bottom: 0; }
+  .item img, .item .ph { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; background: var(--chip); flex: none; }
+  .item .txt { flex: 1; min-width: 0; }
+  .item .txt strong { color: var(--fg); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .txt span { font-size: 13px; color: var(--muted); }
+  .off { opacity: .5; }
+  .preview { width: 96px; height: 72px; object-fit: cover; border-radius: 10px; background: var(--chip); }
+  #status { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; max-width: calc(100% - 32px); }
+  #status.err { background: var(--err); color: #fff; }
+</style>
+</head>
+<body>
+<main class="page">
+  <div>
+    <span class="label">Private · not linked from the site</span>
+    <h1>What to Gift admin</h1>
+  </div>
+
+  <!-- login -->
+  <form class="panel" id="login">
+    <h2>Sign in</h2>
+    <label class="f">Admin password<input type="password" id="pw" autocomplete="current-password" required></label>
+    <div class="row"><button class="primary" type="submit">Unlock</button></div>
+    <p class="muted">The password is checked on the server. Nothing can be changed without it.</p>
+  </form>
+
+  <div id="app" hidden style="display:flex;flex-direction:column;gap:28px">
+    <!-- picks -->
+    <section class="panel">
+      <div class="row" style="justify-content:space-between"><h2>My picks</h2><span class="muted" id="pick-count"></span></div>
+      <p class="muted">Products you found yourself. They show up as "Disha's pick" above the AI ideas for the occasions you tick.</p>
+      <form id="pick-form" style="display:flex;flex-direction:column;gap:10px">
+        <input type="hidden" name="id">
+        <div class="grid">
+          <label class="f">Product name *<input type="text" name="name" maxlength="120" required></label>
+          <label class="f">Price<input type="text" name="price" maxlength="40" placeholder="₹1,499"></label>
+        </div>
+        <label class="f">Link to buy * (your affiliate link is fine)<input type="url" name="url" required placeholder="https://"></label>
+        <label class="f">Why you love it<textarea name="note" maxlength="300"></textarea></label>
+        <label class="f">Keywords (comma separated, matched to what shoppers type)<input type="text" name="tags" placeholder="clothes, minimal, office"></label>
+        <div class="f">Occasions (none ticked = show for all)<div class="occ" data-occ></div></div>
+        <div class="row">
+          <img class="preview" data-preview hidden alt="">
+          <label class="f">Photo<input type="file" accept="image/*" data-file></label>
+          <input type="hidden" name="image">
+        </div>
+        <div class="row">
+          <button class="primary" type="submit">Save pick</button>
+          <button type="button" data-cancel hidden>Cancel edit</button>
+        </div>
+      </form>
+      <div id="pick-list"></div>
+    </section>
+
+    <!-- ads -->
+    <section class="panel">
+      <h2>Ad slots</h2>
+      <p class="muted">Five slots, shown in a "Sponsored" row on the gift finder. Each ad is labelled "Ad" so shoppers know it's paid.</p>
+      <div id="ad-slots" style="display:flex;flex-direction:column;gap:16px"></div>
+    </section>
+
+    <div class="row"><button type="button" id="logout">Sign out</button></div>
+  </div>
+</main>
+<div id="status" role="status" hidden></div>
+
+<script>
+(() => {
+  const OCCASIONS = [
+    ["her-birthday", "Her birthday"], ["his-birthday", "His birthday"],
+    ["best-friend-birthday", "Best friend"], ["boyfriend-birthday", "Boyfriend"],
+    ["anniversary", "Anniversary"], ["wedding", "Wedding"], ["parents", "Parents"],
+  ];
+  const SLOTS = 5;
+  let key = "";
+  let data = { picks: [], ads: [] };
+  const $ = (s, el = document) => el.querySelector(s);
+
+  try { key = sessionStorage.getItem("gf-admin") || ""; } catch {}
+
+  function toast(msg, isErr) {
+    const s = $("#status"); s.textContent = msg; s.className = isErr ? "err" : ""; s.hidden = false;
+    clearTimeout(toast.t); toast.t = setTimeout(() => { s.hidden = true; }, 3000);
+  }
+
+  async function call(payload) {
+    const r = await fetch("/api/admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-admin-key": key },
+      body: JSON.stringify(payload),
+    });
+    const body = await r.json().catch(() => ({}));
+    if (r.status === 401) { signOut(); throw new Error("Wrong password."); }
+    if (!r.ok) throw new Error(body.error || "Something went wrong.");
+    return body;
+  }
+
+  async function unlock() {
+    try {
+      data = await call({ action: "load" });
+      try { sessionStorage.setItem("gf-admin", key); } catch {}
+      $("#login").hidden = true; $("#app").hidden = false;
+      renderPicks(); renderAds();
+    } catch (e) { toast(e.message, true); }
+  }
+  function signOut() {
+    key = ""; try { sessionStorage.removeItem("gf-admin"); } catch {}
+    $("#app").hidden = true; $("#login").hidden = false;
+  }
+  $("#login").addEventListener("submit", (e) => { e.preventDefault(); key = $("#pw").value; unlock(); });
+  $("#logout").addEventListener("click", signOut);
+
+  async function save(next) {
+    try { data = await call({ action: "save", data: next }); renderPicks(); renderAds(); toast("Saved. Live within a minute."); return true; }
+    catch (e) { toast(e.message, true); return false; }
+  }
+
+  // ---- shared form helpers
+  function occasionBoxes(container, selected = []) {
+    container.textContent = "";
+    for (const [id, label] of OCCASIONS) {
+      const l = document.createElement("label");
+      const cb = document.createElement("input"); cb.type = "checkbox"; cb.value = id; cb.checked = selected.includes(id);
+      l.append(cb, document.createTextNode(label)); container.appendChild(l);
+    }
+  }
+  const checkedOccasions = (form) => [...form.querySelectorAll("[data-occ] input:checked")].map((c) => c.value);
+
+  // Shrink photos in the browser so uploads stay small and fast.
+  async function uploadImage(file) {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 1000 / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bmp.width * scale); canvas.height = Math.round(bmp.height * scale);
+    canvas.getContext("2d").drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+    const { url } = await call({ action: "upload", contentType: "image/jpeg", base64: dataUrl.split(",")[1] });
+    return url;
+  }
+  function wireImage(form) {
+    const file = $("[data-file]", form), preview = $("[data-preview]", form), hidden = form.elements.image;
+    file.addEventListener("change", async () => {
+      if (!file.files[0]) return;
+      toast("Uploading photo…");
+      try { hidden.value = await uploadImage(file.files[0]); preview.src = hidden.value; preview.hidden = false; toast("Photo ready."); }
+      catch (e) { toast(e.message, true); }
+      file.value = "";
+    });
+  }
+  function setImage(form, url) {
+    form.elements.image.value = url || "";
+    const preview = $("[data-preview]", form); preview.hidden = !url; if (url) preview.src = url;
+  }
+
+  // ---- picks
+  const pickForm = $("#pick-form");
+  occasionBoxes($("[data-occ]", pickForm));
+  wireImage(pickForm);
+  function resetPickForm() {
+    pickForm.reset(); pickForm.elements.id.value = ""; setImage(pickForm, "");
+    occasionBoxes($("[data-occ]", pickForm)); $("[data-cancel]", pickForm).hidden = true;
+  }
+  $("[data-cancel]", pickForm).addEventListener("click", resetPickForm);
+  pickForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = pickForm.elements;
+    const pick = {
+      id: f.id.value || Math.random().toString(36).slice(2, 10),
+      name: f.name.value, price: f.price.value, url: f.url.value, note: f.note.value, image: f.image.value,
+      tags: f.tags.value.split(",").map((t) => t.trim()).filter(Boolean),
+      occasions: checkedOccasions(pickForm), active: true,
+    };
+    const existing = data.picks.find((p) => p.id === pick.id);
+    if (existing) pick.active = existing.active;
+    const picks = existing ? data.picks.map((p) => p.id === pick.id ? pick : p) : [pick, ...data.picks];
+    if (await save({ ...data, picks })) resetPickForm();
+  });
+  function renderPicks() {
+    const list = $("#pick-list"); list.textContent = "";
+    $("#pick-count").textContent = `${data.picks.length} saved`;
+    for (const p of data.picks) {
+      const row = document.createElement("div"); row.className = "item" + (p.active ? "" : " off");
+      row.innerHTML = `<div class="ph"></div><div class="txt"><strong></strong><span></span></div><button type="button" data-edit>Edit</button><button type="button" data-toggle></button><button type="button" class="danger" data-del>Delete</button>`;
+      if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = ""; row.firstChild.replaceWith(img); }
+      $("strong", row).textContent = p.name;
+      $("span", row).textContent = [p.price, p.occasions.length ? p.occasions.length + " occasions" : "all occasions"].filter(Boolean).join(" · ");
+      $("[data-toggle]", row).textContent = p.active ? "Hide" : "Show";
+      $("[data-toggle]", row).addEventListener("click", () => save({ ...data, picks: data.picks.map((x) => x.id === p.id ? { ...x, active: !x.active } : x) }));
+      $("[data-del]", row).addEventListener("click", () => { if (confirm(`Delete "${p.name}"?`)) save({ ...data, picks: data.picks.filter((x) => x.id !== p.id) }); });
+      $("[data-edit]", row).addEventListener("click", () => {
+        const f = pickForm.elements;
+        f.id.value = p.id; f.name.value = p.name; f.price.value = p.price; f.url.value = p.url; f.note.value = p.note; f.tags.value = p.tags.join(", ");
+        setImage(pickForm, p.image); occasionBoxes($("[data-occ]", pickForm), p.occasions);
+        $("[data-cancel]", pickForm).hidden = false; pickForm.scrollIntoView({ behavior: "smooth" });
+      });
+      list.appendChild(row);
+    }
+  }
+
+  // ---- ad slots
+  function renderAds() {
+    const box = $("#ad-slots"); box.textContent = "";
+    for (let slot = 1; slot <= SLOTS; slot++) {
+      const ad = data.ads.find((a) => a.slot === slot);
+      const form = document.createElement("form");
+      form.style.cssText = "display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px";
+      form.innerHTML = `
+        <div class="row" style="justify-content:space-between"><strong style="color:var(--fg)">Slot ${slot}</strong><span class="muted" data-state></span></div>
+        <div class="grid">
+          <label class="f">Brand *<input type="text" name="brand" maxlength="60" required></label>
+          <label class="f">Headline *<input type="text" name="title" maxlength="120" required></label>
+        </div>
+        <label class="f">Short line<input type="text" name="tagline" maxlength="200"></label>
+        <div class="grid">
+          <label class="f">Link *<input type="url" name="url" required placeholder="https://"></label>
+          <label class="f">Runs until (optional)<input type="date" name="endsOn"></label>
+        </div>
+        <div class="f">Occasions (none ticked = all)<div class="occ" data-occ></div></div>
+        <div class="row"><img class="preview" data-preview hidden alt=""><label class="f">Banner image<input type="file" accept="image/*" data-file></label><input type="hidden" name="image"></div>
+        <div class="row"><button class="primary" type="submit">Save slot ${slot}</button><button type="button" data-toggle hidden></button><button type="button" class="danger" data-clear hidden>Clear slot</button></div>`;
+      occasionBoxes($("[data-occ]", form), ad ? ad.occasions : []);
+      wireImage(form);
+      const st = $("[data-state]", form);
+      if (ad) {
+        const f = form.elements;
+        f.brand.value = ad.brand; f.title.value = ad.title; f.tagline.value = ad.tagline; f.url.value = ad.url; f.endsOn.value = ad.endsOn;
+        setImage(form, ad.image);
+        const expired = ad.endsOn && ad.endsOn < new Date().toISOString().slice(0, 10);
+        st.textContent = !ad.active ? "Paused" : expired ? "Ended" : "Live";
+        const tg = $("[data-toggle]", form); tg.hidden = false; tg.textContent = ad.active ? "Pause" : "Resume";
+        tg.addEventListener("click", () => save({ ...data, ads: data.ads.map((a) => a.slot === slot ? { ...a, active: !a.active } : a) }));
+        const cl = $("[data-clear]", form); cl.hidden = false;
+        cl.addEventListener("click", () => { if (confirm(`Clear slot ${slot}?`)) save({ ...data, ads: data.ads.filter((a) => a.slot !== slot) }); });
+      } else {
+        st.textContent = "Empty";
+      }
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const f = form.elements;
+        const next = {
+          slot, brand: f.brand.value, title: f.title.value, tagline: f.tagline.value, url: f.url.value,
+          endsOn: f.endsOn.value, image: f.image.value, occasions: checkedOccasions(form), active: ad ? ad.active : true,
+        };
+        save({ ...data, ads: [...data.ads.filter((a) => a.slot !== slot), next] });
+      });
+      box.appendChild(form);
+    }
+  }
+
+  if (key) unlock();
+})();
+</script>
+</body>
+</html>

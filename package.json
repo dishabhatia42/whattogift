@@ -1,0 +1,9 @@
+{
+  "name": "whattogift",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.132.1",
+    "@vercel/blob": "^2.8.1"
+  }
+}
