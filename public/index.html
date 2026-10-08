@@ -5,230 +5,156 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>What to Gift</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%81%3C/text%3E%3C/svg%3E">
-<meta name="description" content="Pick who it's for and the occasion, add what they love, and get gift ideas you can actually buy.">
+<meta name="description" content="Tell us who it's for and why, and get gift ideas you can actually buy.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
-<meta property="og:title" content="What to Gift · Gift ideas you can actually buy">
-<meta property="og:description" content="Pick who it's for and the occasion, add what they love, and get gift ideas you can actually buy.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&display=swap">
+<meta property="og:title" content="What to Gift">
+<meta property="og:description" content="Tell us who it's for and why, and get gift ideas you can actually buy.">
 <meta property="og:url" content="https://whattogift.vercel.app/">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
 <style>
   *, *::before, *::after { box-sizing: border-box; }
-  body { margin: 0; }
+  body, h1, h2, h3, p { margin: 0; }
   [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 
+  /* Warm paper, ink, one terracotta accent. Instrument Serif for the voice, Geist for reading. */
   :root {
-    --bg: #fafaf8; --fg: #1f1e1c; --body: #4a4844; --muted: #8a867e; --line: #e8e6e1;
-    --chip: #f1efea; --card: #ffffff; --petal: #f2b200; --on-petal: #1f1e1c;
-    --sun: #fdf1cc; --sun-ink: #8a5a00; --err: #b3261e; --ad-bg: #fffaeb; --ad-line: #f0dfae;
-    --font-display: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --bg: #faf7f2; --ink: #1c1917; --body: #57534e; --muted: #a29b94; --line: #e7e2da;
+    --accent: #c4553a; --wash: #f3e6dd; --ad: #f3eee5;
+    --serif: "Instrument Serif", ui-serif, Georgia, serif;
+    --sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --ease: cubic-bezier(.2, .7, .2, 1);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #121311; --fg: #eeede9; --body: #c4c2bc; --muted: #8d8a83; --line: #2a2b28;
-      --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --sun-ink: #f6c432; --err: #f2b8b5; --ad-bg: #1f1c12; --ad-line: #3a3220;
-      color-scheme: dark;
+      --bg: #151311; --ink: #f5f0ea; --body: #c9c2b9; --muted: #7c756d; --line: #2c2824;
+      --accent: #e9805f; --wash: #2b201b; --ad: #1f1b17; color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #121311; --fg: #eeede9; --body: #c4c2bc; --muted: #8d8a83; --line: #2a2b28;
-    --chip: #1d1e1b; --card: #181917; --petal: #f6c432; --sun: #2a2412; --sun-ink: #f6c432; --err: #f2b8b5; --ad-bg: #1f1c12; --ad-line: #3a3220;
-    color-scheme: dark;
+    --bg: #151311; --ink: #f5f0ea; --body: #c9c2b9; --muted: #7c756d; --line: #2c2824;
+    --accent: #e9805f; --wash: #2b201b; --ad: #1f1b17; color-scheme: dark;
   }
 
   html { -webkit-text-size-adjust: 100%; }
   body {
     background: var(--bg); color: var(--body);
-    font-family: var(--font-body); font-size: 16px; line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
+    font-family: var(--sans); font-size: 16px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
   }
-  .page {
-    max-width: 680px; margin: 0 auto;
-    padding-inline: 16px; padding-block: 32px 96px;
-    display: flex; flex-direction: column; gap: 40px;
-  }
-  .label {
-    font-family: var(--font-mono); font-size: 12.5px; font-weight: 500;
-    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
-  }
-  .top { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-  .top a { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
-  .top a:hover { color: var(--fg); }
+  .page { max-width: 600px; margin: 0 auto; padding: 24px 20px 64px; min-height: 100svh; display: flex; flex-direction: column; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
 
-  h1 {
-    margin: 0; font-family: var(--font-display); font-weight: 700;
-    font-size: clamp(28px, 6vw, 36px); line-height: 1.2; letter-spacing: -0.02em; color: var(--fg);
-    text-wrap: balance;
-  }
-  h1 mark { color: inherit; background: linear-gradient(transparent 58%, var(--sun) 58%, var(--sun) 92%, transparent 92%); padding-inline: 2px; }
-  .lede { margin: 12px 0 0; max-width: 52ch; }
+  /* top bar */
+  .bar { display: flex; align-items: center; height: 40px; }
+  .brand { font-family: var(--serif); font-size: 22px; color: var(--ink); letter-spacing: -0.01em; }
+  .brand em { color: var(--accent); }
+  .back { font-size: 15px; color: var(--muted); padding: 8px 0; transition: color .2s; }
+  .back:hover { color: var(--ink); }
+  .progress { display: flex; gap: 6px; margin-top: 24px; }
+  .progress i { flex: 1; height: 2px; border-radius: 2px; background: var(--line); overflow: hidden; position: relative; }
+  .progress i::after { content: ""; position: absolute; inset: 0; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .5s var(--ease); }
+  .progress i.on::after { transform: scaleX(1); }
 
-  .step { display: flex; flex-direction: column; gap: 14px; }
-  .step h2 {
-    margin: 0; display: flex; align-items: baseline; gap: 10px;
-    font-family: var(--font-display); font-weight: 700; font-size: 19px; color: var(--fg);
+  /* screens */
+  .screen { padding-top: 40px; flex: 1; }
+  .eyebrow { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+  h1, h2 {
+    font-family: var(--serif); font-weight: 400; color: var(--ink);
+    font-size: clamp(40px, 9vw, 56px); line-height: 1.02; letter-spacing: -0.02em; text-wrap: balance;
   }
-  .step h2 .n { font-family: var(--font-mono); font-size: 12.5px; color: var(--sun-ink); font-weight: 500; }
-  .step h2 .opt { font-family: var(--font-body); font-weight: 400; font-size: 14px; color: var(--muted); }
+  h1 em, h2 em { color: var(--accent); }
+  .sub { margin-top: 14px; font-size: 17px; max-width: 34ch; }
 
-  /* occasion tiles */
-  .occasions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .occ {
-    appearance: none; font: inherit; color: var(--fg); text-align: left; cursor: pointer;
-    background: var(--card); border: 1.5px solid var(--line); border-radius: 14px;
-    padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
-    transition: border-color .15s, transform .15s, background .15s;
+  /* big word choices: no boxes, just type and hairlines */
+  .choices { list-style: none; padding: 0; margin: 32px 0 0; }
+  .choice {
+    width: 100%; text-align: left; display: flex; align-items: center; gap: 14px;
+    padding: 14px 0; border-bottom: 1px solid var(--line);
+    font-family: var(--serif); font-size: 30px; line-height: 1.15; color: var(--ink);
+    transition: color .2s, padding-left .3s var(--ease);
   }
-  .occ:hover { border-color: var(--muted); }
-  .occ:active { transform: scale(0.98); }
-  .occ .e { font-size: 24px; line-height: 1; }
-  .occ .t { font-family: var(--font-display); font-weight: 600; font-size: 15px; line-height: 1.25; }
-  .step-occasion { transition: opacity .2s; }
-  .step-occasion.dim { opacity: .4; pointer-events: none; }
-  .occ[aria-pressed="true"] { border-color: var(--petal); background: var(--sun); }
+  .choices li:first-child .choice { border-top: 1px solid var(--line); }
+  .choice .e { font-size: 22px; width: 30px; text-align: center; }
+  .choice .arrow { margin-left: auto; font-family: var(--sans); font-size: 18px; opacity: 0; transform: translateX(-6px); transition: opacity .2s, transform .3s var(--ease); }
+  .choice:hover, .choice[aria-pressed="true"] { color: var(--accent); padding-left: 6px; }
+  .choice:hover .arrow, .choice[aria-pressed="true"] .arrow { opacity: 1; transform: none; }
 
-  /* tags */
-  .tagbox {
-    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-    background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 10px;
+  /* interests: soft pills, no borders */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; }
+  .chip {
+    padding: 10px 16px; border-radius: 999px; background: var(--wash); color: var(--ink); font-size: 15px;
+    transition: background .2s, color .2s, transform .15s;
   }
-  .tagbox:focus-within { border-color: var(--petal); }
-  .tagbox input {
-    flex: 1 1 140px; min-width: 0; border: 0; outline: 0; background: transparent;
-    font: inherit; color: var(--fg); padding: 4px 6px;
+  .chip:active { transform: scale(.96); }
+  .chip[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .own {
+    margin-top: 20px; width: 100%; font: inherit; font-size: 17px; color: var(--ink);
+    background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 10px 0; outline: none;
+    transition: border-color .2s;
   }
-  .tagbox input::placeholder { color: var(--muted); }
-  .tag {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--petal); color: var(--on-petal); border-radius: 999px;
-    padding: 4px 6px 4px 12px; font-size: 14px; font-weight: 500;
+  .own:focus { border-color: var(--accent); }
+  .own::placeholder { color: var(--muted); }
+  .actions { display: flex; align-items: center; gap: 24px; margin-top: 36px; }
+  .cta {
+    background: var(--ink); color: var(--bg); border-radius: 999px; padding: 15px 28px; font-weight: 500; font-size: 16px;
+    transition: transform .2s var(--ease);
   }
-  .tag button {
-    appearance: none; border: 0; background: rgba(0,0,0,.12); color: inherit; cursor: pointer;
-    width: 20px; height: 20px; border-radius: 50%; font-size: 14px; line-height: 1; display: grid; place-items: center;
-  }
-  .suggest { display: flex; flex-wrap: wrap; gap: 8px; }
-  .pill {
-    appearance: none; font: inherit; font-size: 14px; cursor: pointer;
-    background: var(--chip); color: var(--body); border: 1px solid transparent; border-radius: 999px; padding: 6px 12px;
-  }
-  .pill:hover { color: var(--fg); border-color: var(--line); }
-  .pill[aria-pressed="true"] { background: var(--sun); color: var(--fg); border-color: var(--petal); }
+  .cta:hover { transform: translateY(-1px); }
+  .cta:active { transform: scale(.98); }
+  .quiet { color: var(--muted); font-size: 15px; transition: color .2s; }
+  .quiet:hover { color: var(--ink); }
 
-  .go {
-    appearance: none; font: inherit; cursor: pointer; align-self: flex-start;
-    font-family: var(--font-display); font-weight: 700; font-size: 16px;
-    background: var(--fg); color: var(--bg); border: 0; border-radius: 999px; padding: 14px 26px;
-    transition: opacity .15s, transform .15s;
-  }
-  .go:hover { transform: translateY(-1px); }
-  .go:disabled { opacity: .35; cursor: not-allowed; transform: none; }
-  button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--petal); outline-offset: 3px; }
-  .note { font-size: 14px; color: var(--muted); margin: 0; }
-  .error { color: var(--err); font-size: 15px; margin: 0; }
+  /* results: an editorial list, not a grid of boxes */
+  .summary { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; font-size: 15px; }
+  .link { color: var(--accent); }
+  .ideas { list-style: none; padding: 0; margin: 28px 0 0; }
+  .idea { padding: 22px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; }
+  .ideas .idea:first-child { border-top: 1px solid var(--line); }
+  .idea .kind { grid-column: 1 / -1; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .idea h3 { font-family: var(--serif); font-weight: 400; font-size: 27px; line-height: 1.12; color: var(--ink); }
+  .idea .price { font-size: 14px; white-space: nowrap; padding-top: 7px; font-variant-numeric: tabular-nums; }
+  .idea p { grid-column: 1 / -1; max-width: 46ch; }
+  .idea .go { grid-column: 1 / -1; margin-top: 6px; justify-self: start; font-weight: 500; color: var(--accent); text-decoration: none; display: inline-flex; gap: 6px; }
+  .idea .go span { display: inline-block; transition: transform .25s var(--ease); }
+  .idea .go:hover span { transform: translate(2px, -2px); }
+  .idea img { grid-column: 1 / -1; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 14px; margin: 8px 0 6px; background: var(--wash); }
+  .idea.ad { background: var(--ad); border-radius: 18px; padding: 20px; border: 0; margin: 12px 0; }
+  .idea.ad .kind { color: var(--accent); }
+  .idea.ad h3 { font-size: 24px; }
 
-  /* results */
-  .results { display: flex; flex-direction: column; gap: 16px; scroll-margin-top: 16px; }
-  .results-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-  .results-head h2 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 21px; color: var(--fg); }
-  .link-btn { appearance: none; border: 0; background: none; font: inherit; font-size: 14px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
-  .link-btn:hover { color: var(--fg); }
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-  .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px;
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  .card .meta { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-  .card .chip { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  .card .price { font-family: var(--font-mono); font-size: 13px; color: var(--sun-ink); white-space: nowrap; }
-  .card h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 17px; line-height: 1.35; color: var(--fg); }
-  .card p { margin: 0; font-size: 15px; flex: 1; }
-  .card a.shop {
-    margin-top: 4px; align-self: flex-start; text-decoration: none;
-    font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--fg);
-    border: 1.5px solid var(--line); border-radius: 999px; padding: 8px 14px;
-  }
-  .card a.shop:hover { border-color: var(--petal); background: var(--sun); }
-
-  .skeleton { min-height: 170px; position: relative; overflow: hidden; }
-  .skeleton::after {
-    content: ""; position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, var(--chip), transparent);
-    animation: shimmer 1.3s infinite; transform: translateX(-100%);
-  }
+  .bone { height: 12px; border-radius: 6px; background: var(--line); position: relative; overflow: hidden; grid-column: 1 / -1; }
+  .bone::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--bg), transparent); transform: translateX(-100%); animation: shimmer 1.4s infinite; }
   @keyframes shimmer { to { transform: translateX(100%); } }
-  @media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
+  .more { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; }
+  .fine { margin-top: 28px; font-size: 13px; color: var(--muted); max-width: 52ch; }
+  .error { margin-top: 28px; color: var(--accent); }
 
-  /* sponsored card: sits inside the results grid, same shape as an idea, clearly labelled */
-  .card.ad { background: var(--ad-bg); border-color: var(--ad-line); }
-  .card.ad .chip { color: var(--sun-ink); }
-  .card.ad .brand { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  .card .thumb, .card.ad img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; background: var(--chip); display: block; }
-  .card.ad a.shop { background: var(--fg); color: var(--bg); border-color: var(--fg); }
-  .card.ad a.shop:hover { opacity: .85; background: var(--fg); }
+  footer { margin-top: 56px; font-size: 13px; color: var(--muted); }
 
-  footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 20px; }
-  footer p { margin: 0 0 6px; }
-  footer a { color: inherit; }
+  /* entrance: content rises in gently, staggered */
+  .rise { animation: rise .55s var(--ease) both; animation-delay: calc(var(--i, 0) * 45ms); }
+  @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .rise, .bone::after { animation: none; }
+    *, *::after { transition-duration: 0s !important; }
+  }
 </style>
 </head>
 <body>
 <main class="page">
-  <div class="top">
-    <span class="label">What to gift</span>
+  <div class="bar">
+    <button class="back" id="back" type="button" hidden>← Back</button>
+    <span class="brand" id="brand">What to <em>gift</em></span>
   </div>
+  <div class="progress" id="progress" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 
-  <header>
-    <h1>What should I <mark>gift?</mark></h1>
-    <p class="lede">Tell us who it's for and why, add a few things they love, and get ideas you can actually buy.</p>
-  </header>
+  <section class="screen" id="screen" aria-live="polite"></section>
 
-  <section class="step" aria-labelledby="s1">
-    <h2 id="s1"><span class="n">01</span> Who's it for?</h2>
-    <div class="occasions" id="recipients" role="group" aria-labelledby="s1"></div>
-  </section>
-
-  <section class="step step-occasion dim" id="occasion-step" aria-labelledby="s1b">
-    <h2 id="s1b"><span class="n">02</span> What's the occasion?</h2>
-    <div class="suggest" id="occasions" role="group" aria-labelledby="s1b"></div>
-  </section>
-
-  <section class="step" aria-labelledby="s2">
-    <h2 id="s2"><span class="n">03</span> What are they into? <span class="opt">Optional</span></h2>
-    <div class="tagbox" id="tagbox">
-      <input id="taginput" type="text" maxlength="30" placeholder="Add your own, e.g. cricket" aria-label="Add a keyword" enterkeyhint="done">
-    </div>
-    <div class="suggest" id="suggest" aria-label="Suggested keywords"></div>
-  </section>
-
-  <section class="step" aria-labelledby="s3">
-    <h2 id="s3"><span class="n">04</span> Budget <span class="opt">Optional</span></h2>
-    <div class="suggest" id="budgets" role="group" aria-labelledby="s3"></div>
-  </section>
-
-  <div class="step">
-    <button class="go" id="go" disabled>Find gift ideas</button>
-    <p class="note" id="hint">Pick who it's for to start.</p>
-    <p class="error" id="error" role="alert" hidden></p>
-  </div>
-
-  <section class="results" id="results" aria-live="polite" hidden>
-    <div class="results-head">
-      <h2 id="results-title">Ideas for you</h2>
-      <button class="link-btn" id="again">Show different ideas</button>
-    </div>
-    <div class="cards" id="cards"></div>
-    <p class="note">Cards marked "Sponsored" are paid placements. Prices are estimates. Links open a store search, so check reviews and delivery dates before buying.</p>
-  </section>
-
-  <footer>
-    <p>Ideas are suggested by AI and can be imperfect. You know them best.</p>
-    <p>Made by Disha Bhatia.</p>
-  </footer>
+  <footer>Ideas are suggested by AI and can be imperfect. You know them best.</footer>
 </main>
 
 <script>
@@ -236,21 +162,20 @@
   const RECIPIENTS = [
     { id: "her", e: "👩", t: "Her" },
     { id: "him", e: "👨", t: "Him" },
-    { id: "boyfriend", e: "💛", t: "Boyfriend" },
-    { id: "best-friend", e: "👯", t: "Best friend" },
-    { id: "parents", e: "🏡", t: "Parents" },
+    { id: "boyfriend", e: "💛", t: "My boyfriend" },
+    { id: "best-friend", e: "👯", t: "My best friend" },
+    { id: "parents", e: "🏡", t: "My parents" },
     { id: "couple", e: "💑", t: "A couple" },
   ];
   const OCCASIONS = [
-    { id: "birthday", t: "Birthday" },
-    { id: "anniversary", t: "Anniversary" },
-    { id: "wedding", t: "Wedding" },
-    { id: "just-because", t: "Just because" },
+    { id: "birthday", e: "🎂", t: "Birthday" },
+    { id: "anniversary", e: "💍", t: "Anniversary" },
+    { id: "wedding", e: "💐", t: "Wedding" },
+    { id: "just-because", e: "✨", t: "Just because" },
   ];
   // A couple doesn't share a birthday, so skip that option for them.
   const occasionsFor = (r) => r === "couple" ? OCCASIONS.filter((o) => o.id !== "birthday") : OCCASIONS;
   const SUGGESTIONS = {
-    default: ["Clothes", "Tech", "Books", "Experiences", "Home decor", "Fitness", "Food", "Handmade"],
     her: ["Clothes", "Skincare", "Jewellery", "Books", "Experiences", "Home decor", "Plants"],
     him: ["Clothes", "Tech", "Gaming", "Grooming", "Fitness", "Books", "Gadgets"],
     boyfriend: ["Clothes", "Tech", "Toys", "Gaming", "Fitness", "Grooming", "Experiences"],
@@ -259,195 +184,236 @@
     couple: ["Kitchen", "Home decor", "Personalised", "Dinnerware", "Experiences", "Travel"],
   };
   const BUDGETS = [
-    { id: "under-1000", t: "Under ₹1k" },
-    { id: "1000-3000", t: "₹1k – 3k" },
-    { id: "3000-7000", t: "₹3k – 7k" },
-    { id: "7000-plus", t: "₹7k+" },
+    { id: "under-1000", t: "Under ₹1,000" },
+    { id: "1000-3000", t: "₹1,000 – 3,000" },
+    { id: "3000-7000", t: "₹3,000 – 7,000" },
+    { id: "7000-plus", t: "₹7,000 +" },
+    { id: "any", t: "Any budget" },
+  ];
+  const WHO = { her: "her", him: "him", boyfriend: "your boyfriend", "best-friend": "your best friend", parents: "your parents", couple: "the couple" };
+  const STORE_NAMES = { amazon: "Amazon", myntra: "Myntra", nykaa: "Nykaa", flipkart: "Flipkart" };
+
+  const state = { recipient: null, occasion: null, tags: [], budget: null, variant: 1, lastKey: "", busy: false };
+  const $ = (id) => document.getElementById(id);
+  const screen = $("screen");
+  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  let ads = [];
+  fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((d) => { if (d && Array.isArray(d.ads)) ads = d.ads; }).catch(() => {});
+
+  // ---- tiny DOM helper: h("p", {className: "x"}, "text", childEl)
+  function h(tag, props = {}, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k === "on") for (const [ev, fn] of Object.entries(v)) el.addEventListener(ev, fn);
+      else if (k === "style") el.style.cssText = v;
+      else if (k.includes("-")) el.setAttribute(k, v);
+      else el[k] = v;
+    }
+    for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid);
+    return el;
+  }
+  const rise = (el, i) => { el.classList.add("rise"); el.style.setProperty("--i", i); return el; };
+
+  // ---- one question per screen, with the browser's Back button working too
+  function go(step, push = true) {
+    // Never land on a question whose earlier answers are missing (e.g. after a refresh).
+    if (step >= 1 && !state.recipient) step = 0;
+    else if (step >= 2 && !state.occasion) step = 1;
+    else if (step >= 4 && !state.budget) step = 3;
+    if (push) history.pushState({ step }, "");
+    const swap = () => {
+      screen.textContent = "";
+      STEPS[step]();
+      window.scrollTo({ top: 0, behavior: "auto" });
+    };
+    if (calm || !screen.firstChild) swap();
+    else screen.animate([{ opacity: 1 }, { opacity: 0, transform: "translateY(-8px)" }], { duration: 160, easing: "ease-in" }).onfinish = swap;
+    $("back").hidden = step === 0;
+    $("brand").hidden = step !== 0;
+    [...$("progress").children].forEach((bar, i) => bar.classList.toggle("on", i <= step));
+  }
+  addEventListener("popstate", (e) => go(e.state?.step ?? 0, false));
+  $("back").addEventListener("click", () => history.back());
+
+  function choiceList(items, selected, onPick) {
+    return h("ul", { className: "choices" }, items.map((it, i) => rise(h("li", {},
+      h("button", { className: "choice", type: "button", "aria-pressed": String(it.id === selected), on: { click: (e) => {
+        e.currentTarget.setAttribute("aria-pressed", "true");
+        setTimeout(() => onPick(it.id), calm ? 0 : 170); // let the tap register before moving on
+      } } },
+        h("span", { className: "e", "aria-hidden": "true" }, it.e || ""), it.t, h("span", { className: "arrow", "aria-hidden": "true" }, "→"))), i + 2)));
+  }
+
+  const STEPS = [
+    // 1. who
+    () => screen.append(
+      rise(h("h1", {}, "Who's the ", h("em", {}, "lucky"), " one?"), 0),
+      rise(h("p", { className: "sub" }, "A few quick taps, and you'll have gift ideas you can actually buy."), 1),
+      choiceList(RECIPIENTS, state.recipient, (id) => {
+        if (id !== state.recipient) state.tags = [];
+        state.recipient = id;
+        if (!occasionsFor(id).some((o) => o.id === state.occasion)) state.occasion = null;
+        go(1);
+      }),
+    ),
+    // 2. occasion
+    () => screen.append(
+      rise(h("p", { className: "eyebrow" }, `For ${WHO[state.recipient]}`), 0),
+      rise(h("h2", {}, "What's the ", h("em", {}, "occasion"), "?"), 1),
+      choiceList(occasionsFor(state.recipient), state.occasion, (id) => { state.occasion = id; go(2); }),
+    ),
+    // 3. interests (optional)
+    () => {
+      const options = [...new Set([...(SUGGESTIONS[state.recipient] || []), ...state.tags])];
+      const chips = h("div", { className: "chips" });
+      const draw = (first) => {
+        chips.textContent = "";
+        options.forEach((t, i) => {
+          const on = state.tags.includes(t);
+          const chip = h("button", { className: "chip", type: "button", "aria-pressed": String(on), on: { click: () => {
+            state.tags = on ? state.tags.filter((x) => x !== t) : [...state.tags, t].slice(0, 8);
+            draw(false);
+          } } }, t);
+          chips.append(first ? rise(chip, i + 2) : chip);
+        });
+      };
+      const own = h("input", { className: "own", type: "text", maxLength: 30, placeholder: "Something else? Type it, press Enter", enterKeyHint: "done", on: { keydown: (e) => {
+        if (e.key !== "Enter" || !own.value.trim()) return;
+        const t = own.value.trim().replace(/\s+/g, " ");
+        if (!options.some((x) => x.toLowerCase() === t.toLowerCase())) options.push(t);
+        if (!state.tags.some((x) => x.toLowerCase() === t.toLowerCase())) state.tags = [...state.tags, t].slice(0, 8);
+        own.value = ""; draw(false);
+      } } });
+      draw(true);
+      screen.append(
+        rise(h("p", { className: "eyebrow" }, "Optional · pick any"), 0),
+        rise(h("h2", {}, "What are they ", h("em", {}, "into"), "?"), 1),
+        chips, rise(own, 9),
+        rise(h("div", { className: "actions" },
+          h("button", { className: "cta", type: "button", on: { click: () => go(3) } }, "Continue"),
+          h("button", { className: "quiet", type: "button", on: { click: () => { state.tags = []; go(3); } } }, "Skip")), 10),
+      );
+    },
+    // 4. budget, then straight to results
+    () => screen.append(
+      rise(h("p", { className: "eyebrow" }, "Last one"), 0),
+      rise(h("h2", {}, "What's your ", h("em", {}, "budget"), "?"), 1),
+      choiceList(BUDGETS, state.budget, (id) => { state.budget = id; go(4); }),
+    ),
+    // 5. results
+    () => results(),
   ];
 
-  const state = { recipient: null, occasion: null, tags: [], budget: null, busy: false, variant: 1, lastKey: "" };
-  let ads = [];
-  fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((d) => {
-    if (d && Array.isArray(d.ads)) ads = d.ads;
-  }).catch(() => {});
-
+  // ---- results
+  function searchKey() {
+    const p = new URLSearchParams({ recipient: state.recipient, occasion: state.occasion });
+    if (state.budget && state.budget !== "any") p.set("budget", state.budget);
+    const tags = [...new Set(state.tags.map((t) => t.toLowerCase()))].sort();
+    if (tags.length) p.set("tags", tags.join(","));
+    return p.toString();
+  }
   // An ad with nothing ticked for a field matches everything for that field.
   const matches = (item) =>
     (!item.recipients.length || item.recipients.includes(state.recipient)) &&
     (!item.occasions.length || item.occasions.includes(state.occasion));
   const safeHref = (u) => /^https:\/\//.test(u || "") ? u : null;
-
   // Up to two matching ads per search, shuffled so every slot gets seen.
   function pickAds() {
     const pool = ads.filter((a) => matches(a) && safeHref(a.url));
     for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
     return pool.slice(0, 2);
   }
-  function adCard(ad) {
-    const c = document.createElement("article"); c.className = "card ad";
-    c.innerHTML = `<div class="meta"><span class="chip">Sponsored</span><span class="brand"></span></div><h3></h3><p></p><a class="shop" target="_blank" rel="sponsored noopener noreferrer"></a>`;
-    if (safeHref(ad.image)) { const img = document.createElement("img"); img.src = ad.image; img.alt = ""; img.loading = "lazy"; c.querySelector(".meta").after(img); }
-    c.querySelector(".brand").textContent = ad.brand;
-    c.querySelector("h3").textContent = ad.title;
-    c.querySelector("p").textContent = ad.tagline;
-    const a = c.querySelector("a"); a.href = ad.url; a.textContent = `Shop ${ad.brand} ↗`;
-    return c;
-  }
-  const $ = (id) => document.getElementById(id);
 
-  // ---- who it's for
-  for (const r of RECIPIENTS) {
-    const b = document.createElement("button");
-    b.type = "button"; b.className = "occ"; b.dataset.id = r.id; b.setAttribute("aria-pressed", "false");
-    b.innerHTML = `<span class="e" aria-hidden="true">${r.e}</span><span class="t"></span>`;
-    b.querySelector(".t").textContent = r.t;
-    b.addEventListener("click", () => {
-      state.recipient = r.id;
-      const allowed = occasionsFor(r.id);
-      if (!allowed.some((o) => o.id === state.occasion)) state.occasion = allowed[0].id;
-      render();
-    });
-    $("recipients").appendChild(b);
-  }
+  function results() {
+    const why = { birthday: "Birthday", anniversary: "Anniversary", wedding: "Wedding", "just-because": "" }[state.occasion];
+    const heading = why ? [why + " ideas for ", h("em", {}, WHO[state.recipient])] : ["A little something for ", h("em", {}, WHO[state.recipient])];
+    const budget = BUDGETS.find((b) => b.id === state.budget && b.id !== "any");
+    const bits = [...state.tags.map((t) => t.toLowerCase()), budget?.t].filter(Boolean);
 
-  // ---- budget pills
-  for (const bd of BUDGETS) {
-    const b = document.createElement("button");
-    b.type = "button"; b.className = "pill"; b.textContent = bd.t; b.dataset.id = bd.id;
-    b.addEventListener("click", () => { state.budget = state.budget === bd.id ? null : bd.id; render(); });
-    $("budgets").appendChild(b);
-  }
+    const list = h("ul", { className: "ideas" });
+    const err = h("p", { className: "error", hidden: true });
+    const more = h("div", { className: "more", hidden: true },
+      h("button", { className: "cta", type: "button", on: { click: () => load() } }, "Show different ideas"),
+      h("button", { className: "quiet", type: "button", on: { click: () => go(0) } }, "Start over"));
+    screen.append(
+      rise(h("h2", {}, heading), 0),
+      rise(h("div", { className: "summary" }, bits.length ? h("span", {}, bits.join(" · ")) : null,
+        h("button", { className: "link", type: "button", on: { click: () => go(2) } }, "Change")), 1),
+      list, err, more,
+      h("p", { className: "fine" }, "Cards marked Sponsored are paid placements. Prices are estimates and links open a store search, so check reviews and delivery dates before buying."),
+    );
 
-  // ---- tags
-  function addTag(raw) {
-    const t = raw.trim().replace(/\s+/g, " ").slice(0, 30);
-    if (!t || state.tags.length >= 8) return;
-    if (state.tags.some((x) => x.toLowerCase() === t.toLowerCase())) return;
-    state.tags.push(t); render();
-  }
-  function removeTag(t) { state.tags = state.tags.filter((x) => x !== t); render(); }
-  $("taginput").addEventListener("keydown", (e) => {
-    const input = e.currentTarget;
-    if ((e.key === "Enter" || e.key === ",") && input.value.trim()) {
-      e.preventDefault(); addTag(input.value); input.value = "";
-    } else if (e.key === "Backspace" && !input.value && state.tags.length) {
-      removeTag(state.tags[state.tags.length - 1]);
-    }
-  });
-  $("taginput").addEventListener("blur", (e) => { if (e.target.value.trim()) { addTag(e.target.value); e.target.value = ""; } });
-  $("tagbox").addEventListener("click", (e) => { if (e.target.id === "tagbox") $("taginput").focus(); });
-
-  function render() {
-    for (const b of $("recipients").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.recipient));
-    const occBox = $("occasions"); occBox.textContent = "";
-    for (const o of occasionsFor(state.recipient)) {
-      const b = document.createElement("button");
-      b.type = "button"; b.className = "pill"; b.textContent = o.t; b.setAttribute("aria-pressed", String(o.id === state.occasion));
-      b.addEventListener("click", () => { state.occasion = o.id; render(); });
-      occBox.appendChild(b);
-    }
-    $("occasion-step").classList.toggle("dim", !state.recipient);
-    for (const b of $("budgets").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.budget));
-
-    const box = $("tagbox"), input = $("taginput");
-    box.querySelectorAll(".tag").forEach((n) => n.remove());
-    for (const t of state.tags) {
-      const s = document.createElement("span"); s.className = "tag";
-      const label = document.createElement("span"); label.textContent = t;
-      const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", `Remove ${t}`);
-      x.addEventListener("click", () => removeTag(t));
-      s.append(label, x); box.insertBefore(s, input);
-    }
-
-    const sug = $("suggest"); sug.textContent = "";
-    for (const t of SUGGESTIONS[state.recipient] || SUGGESTIONS.default) {
-      const on = state.tags.some((x) => x.toLowerCase() === t.toLowerCase());
-      const b = document.createElement("button");
-      b.type = "button"; b.className = "pill"; b.textContent = (on ? "✓ " : "+ ") + t; b.setAttribute("aria-pressed", String(on));
-      b.addEventListener("click", () => on ? removeTag(state.tags.find((x) => x.toLowerCase() === t.toLowerCase())) : addTag(t));
-      sug.appendChild(b);
-    }
-
-    $("go").disabled = !state.recipient || !state.occasion || state.busy;
-    $("go").textContent = state.busy ? "Finding ideas…" : "Find gift ideas";
-    $("hint").hidden = !!state.recipient;
-  }
-
-  // ---- fetch ideas
-  async function findIdeas() {
-    if (!state.recipient || !state.occasion || state.busy) return;
-    state.busy = true; render();
-    $("error").hidden = true;
-    const results = $("results"), cards = $("cards");
-    results.hidden = false;
-    $("results-title").textContent = "Finding ideas…";
-    cards.textContent = "";
-    for (let i = 0; i < 4; i++) { const s = document.createElement("div"); s.className = "card skeleton"; cards.appendChild(s); }
-    results.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
-
-    try {
-      // Same search, same URL: lets the server's cache answer repeat searches for free.
-      const key = searchKey();
-      state.variant = key === state.lastKey ? (state.variant % 3) + 1 : 1;
-      state.lastKey = key;
-      const r = await fetch(`/api/gift-ideas?${key}&v=${state.variant}`);
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok || !Array.isArray(data.ideas)) throw new Error(data.error || "Something went wrong. Please try again.");
-      showIdeas(data.ideas);
-    } catch (err) {
-      results.hidden = true;
-      $("error").textContent = err.message || "Something went wrong. Please try again.";
-      $("error").hidden = false;
-    } finally {
-      state.busy = false; render();
-    }
-  }
-
-  function searchKey() {
-    const p = new URLSearchParams({ recipient: state.recipient, occasion: state.occasion });
-    if (state.budget) p.set("budget", state.budget);
-    const tags = [...new Set(state.tags.map((t) => t.toLowerCase()))].sort();
-    if (tags.length) p.set("tags", tags.join(","));
-    return p.toString();
-  }
-
-  const STORE_NAMES = { amazon: "Amazon", myntra: "Myntra", nykaa: "Nykaa", flipkart: "Flipkart" };
-  function resultsTitle() {
-    const who = { her: "her", him: "him", boyfriend: "your boyfriend", "best-friend": "your best friend", parents: "your parents", couple: "the couple" }[state.recipient];
-    const why = { birthday: "birthday", anniversary: "anniversary", wedding: "wedding", "just-because": "" }[state.occasion];
-    return why ? `${why[0].toUpperCase() + why.slice(1)} ideas for ${who}` : `Ideas for ${who}, just because`;
-  }
-  function showIdeas(ideas) {
-    $("results-title").textContent = resultsTitle();
-    const cards = $("cards"); cards.textContent = "";
-    const [adA, adB] = pickAds();
-    ideas.forEach((idea, i) => {
-      // Ads go after the 2nd and 6th idea: seen, but never the first thing.
-      if (i === 2 && adA) cards.appendChild(adCard(adA));
-      if (i === 6 && adB) cards.appendChild(adCard(adB));
-      const c = document.createElement("article"); c.className = "card";
-      c.innerHTML = `<div class="meta"><span class="chip"></span><span class="price"></span></div><h3></h3><p></p><a class="shop" target="_blank" rel="noopener noreferrer"></a>`;
-      c.querySelector(".chip").textContent = idea.tag || "";
-      c.querySelector(".price").textContent = idea.price_range || "";
-      c.querySelector("h3").textContent = idea.name;
-      c.querySelector("p").textContent = idea.why;
-      const a = c.querySelector("a");
-      if (idea.own && safeHref(idea.url)) {
-        // A product added in the admin: real product link and photo, otherwise looks like any idea.
-        a.href = idea.url; a.textContent = "View product ↗";
-        if (safeHref(idea.image)) { const img = document.createElement("img"); img.className = "thumb"; img.src = idea.image; img.alt = ""; img.loading = "lazy"; c.querySelector(".meta").after(img); }
-      } else {
-        a.href = /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com)\//.test(idea.url) ? idea.url : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
-        a.textContent = `Find on ${STORE_NAMES[idea.store] || "Amazon"} ↗`;
+    async function load() {
+      if (state.busy) return;
+      state.busy = true; err.hidden = true; more.hidden = true;
+      list.textContent = "";
+      for (let i = 0; i < 4; i++) list.append(rise(h("li", { className: "idea", "aria-hidden": "true" },
+        h("div", { className: "bone", style: "width:22%" }),
+        h("div", { className: "bone", style: "height:24px;width:68%;margin-top:8px" }),
+        h("div", { className: "bone", style: "width:92%;margin-top:10px" })), i));
+      try {
+        // Same search, same URL: the server's cache answers repeat searches for free.
+        const key = searchKey();
+        state.variant = key === state.lastKey ? (state.variant % 3) + 1 : 1;
+        state.lastKey = key;
+        const r = await fetch(`/api/gift-ideas?${key}&v=${state.variant}`);
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || !Array.isArray(data.ideas)) throw new Error(data.error || "Something went wrong. Please try again.");
+        show(data.ideas);
+        more.hidden = false;
+      } catch (e) {
+        list.textContent = "";
+        err.textContent = e.message + " ";
+        err.append(h("button", { className: "link", type: "button", style: "text-decoration:underline", on: { click: () => load() } }, "Try again"));
+        err.hidden = false;
+      } finally {
+        state.busy = false;
       }
-      cards.appendChild(c);
-    });
-    if (adA && ideas.length <= 2) cards.appendChild(adCard(adA));
+    }
+
+    function show(ideas) {
+      list.textContent = "";
+      const [adA, adB] = pickAds();
+      let n = 0;
+      const add = (el) => list.append(rise(el, n++));
+      ideas.forEach((idea, i) => {
+        // Ads go after the 2nd and 6th idea: seen, but never the first thing.
+        if (i === 2 && adA) add(adItem(adA));
+        if (i === 6 && adB) add(adItem(adB));
+        add(ideaItem(idea));
+      });
+      if (adA && ideas.length <= 2) add(adItem(adA));
+    }
+
+    load();
   }
 
-  $("go").addEventListener("click", findIdeas);
-  $("again").addEventListener("click", findIdeas);
-  render();
+  function ideaItem(idea) {
+    const own = idea.own && safeHref(idea.url);
+    const href = own ? idea.url
+      : /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com)\//.test(idea.url) ? idea.url
+      : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
+    return h("li", { className: "idea" },
+      h("span", { className: "kind" }, idea.tag || ""),
+      own && safeHref(idea.image) ? h("img", { src: idea.image, alt: "", loading: "lazy" }) : null,
+      h("h3", {}, idea.name),
+      h("span", { className: "price" }, idea.price_range || ""),
+      h("p", {}, idea.why),
+      h("a", { className: "go", href, target: "_blank", rel: "noopener noreferrer" },
+        own ? "View product" : `Find on ${STORE_NAMES[idea.store] || "Amazon"}`, h("span", { "aria-hidden": "true" }, "↗")));
+  }
+  function adItem(ad) {
+    return h("li", { className: "idea ad" },
+      h("span", { className: "kind" }, `Sponsored · ${ad.brand}`),
+      safeHref(ad.image) ? h("img", { src: ad.image, alt: "", loading: "lazy" }) : null,
+      h("h3", {}, ad.title),
+      ad.tagline ? h("p", {}, ad.tagline) : null,
+      h("a", { className: "go", href: ad.url, target: "_blank", rel: "sponsored noopener noreferrer" }, `Shop ${ad.brand}`, h("span", { "aria-hidden": "true" }, "↗")));
+  }
+
+  history.replaceState({ step: 0 }, "");
+  go(0, false);
 })();
 </script>
 </body>
