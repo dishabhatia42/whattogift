@@ -109,7 +109,7 @@
         <div class="f">Show for (nothing ticked in a row = all)<div data-occ style="display:flex;flex-direction:column;gap:6px"></div></div>
         <div class="row">
           <img class="preview" data-preview hidden alt="">
-          <label class="f">Photo<input type="file" accept="image/*" data-file></label>
+          <label class="f">Photo (tip: a see-through PNG, or a photo on a plain white or light background, becomes a cutout on the board; busy photos show as round stickers)<input type="file" accept="image/*" data-file></label>
           <input type="hidden" name="image">
         </div>
         <div class="row">
@@ -205,8 +205,10 @@
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(bmp.width * scale); canvas.height = Math.round(bmp.height * scale);
     canvas.getContext("2d").drawImage(bmp, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-    const { url } = await call({ action: "upload", contentType: "image/jpeg", base64: dataUrl.split(",")[1] });
+    // PNG/WebP may be a ready-made cutout: keep the see-through background (WebP keeps it, small).
+    const type = /png|webp/.test(file.type) ? "image/webp" : "image/jpeg";
+    const dataUrl = canvas.toDataURL(type, type === "image/webp" ? 0.9 : 0.85);
+    const { url } = await call({ action: "upload", contentType: type, base64: dataUrl.split(",")[1] });
     return url;
   }
   function wireImage(form) {

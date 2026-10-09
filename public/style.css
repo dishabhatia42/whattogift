@@ -282,20 +282,25 @@ footer p + p { margin-top: 4px; }
 }
 .stickers { position: relative; height: 330px; }
 .sticker {
-  position: absolute; width: var(--size); transform: rotate(var(--tilt)) translateY(calc(var(--scroll, 0) * var(--drift) * -0.06px));
+  position: absolute; width: var(--size); transform: rotate(var(--tilt)) translateY(calc(var(--scroll, 0) * var(--drift) * -0.06px)) scale(var(--fit, 1));
   animation: pop .7s var(--ease) both; animation-delay: var(--d);
   transition: transform .25s var(--ease), filter .25s; text-decoration: none; color: inherit;
 }
 @keyframes pop { from { opacity: 0; transform: translateY(10px) rotate(0deg) scale(.85); } }
 .sticker.filler { font-size: calc(var(--size) * .62); line-height: 1; text-align: center; filter: drop-shadow(0 6px 8px rgba(30, 25, 21, .18)); user-select: none; }
-/* No square frame: photos get soft corners, and photos on a plain studio background are cut
-   out in the browser (see cutout() in common.js) and get a die-cut white sticker edge. */
-/* Photos keep their own shape (a book cover stays tall) instead of being cropped square. */
-.sticker.real img { display: block; width: auto; height: auto; max-width: 100%; max-height: calc(var(--size) * 1.3); margin: 0 auto; border-radius: 10px; box-shadow: 0 8px 18px rgba(30, 25, 21, .2); }
+/* No square frames. Each photo is shown one of three ways (see cutout() in common.js):
+   cut   = backdrop removed, die-cut white sticker edge;
+   flat  = a book cover or poster, shown as the object itself;
+   photo = a busy/lifestyle shot, shown as a round sticker. */
+.sticker.real img { display: block; margin: 0 auto; }
+.sticker.real.loading img { visibility: hidden; }
+.sticker.real.cut img, .sticker.real.flat img { width: auto; height: auto; max-width: 100%; max-height: var(--size); }
 .sticker.real.cut img {
-  border-radius: 0; box-shadow: none;
   filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 8px 10px rgba(30, 25, 21, .22));
 }
+.sticker.real.flat img { border-radius: 3px; box-shadow: 0 1px 2px rgba(30, 25, 21, .2), 0 10px 20px rgba(30, 25, 21, .2); }
+.sticker.real.photo img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 8px 18px rgba(30, 25, 21, .22); }
+.sticker.hide { display: none; }
 .sticker.real .noimg {
   display: block; width: 100%; aspect-ratio: 1; border-radius: 8px;
   border: 5px solid #fff; background: #fff; box-shadow: 0 8px 18px rgba(30, 25, 21, .22);
@@ -303,7 +308,7 @@ footer p + p { margin-top: 4px; }
 .sticker.real .noimg { display: grid; place-items: center; padding: 8px; font: 700 13px/1.25 var(--font-display); color: var(--fg); text-align: center; }
 .sticker.real { z-index: 1; }
 .sticker.real .photo { display: block; cursor: pointer; }
-.sticker.real:hover, .sticker.real:focus-within, .sticker.real.open { z-index: 5; transform: translateY(-6px) rotate(0deg) scale(1.08); }
+.sticker.real:hover, .sticker.real:focus-within, .sticker.real.open { z-index: 5; transform: translateY(-6px) rotate(0deg) scale(calc(var(--fit, 1) * 1.08)); }
 /* Product tag, like a tagged person on an Instagram photo: a small white label with a little pointer.
    Hidden until the product is hovered; always shown on touch screens. */
 .sticker .tag {
