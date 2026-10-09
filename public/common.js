@@ -228,8 +228,8 @@
           const c = document.createElement("canvas"); c.width = w; c.height = h;
           const ctx = c.getContext("2d", { willReadFrequently: true }); ctx.drawImage(im, 0, 0, w, h);
           const data = ctx.getImageData(0, 0, w, h), px = data.data;
-          // "Background" = bright and nearly grey (white, off-white, light grey).
-          const bg = (i) => { const r = px[i], g = px[i + 1], b = px[i + 2]; return Math.min(r, g, b) > 222 && Math.max(r, g, b) - Math.min(r, g, b) < 24; };
+          // "Background" = near-pure white. Pale colours (a blush-pink book cover) are not background.
+          const bg = (i) => { const r = px[i], g = px[i + 1], b = px[i + 2]; return Math.min(r, g, b) > 240 && Math.max(r, g, b) - Math.min(r, g, b) < 12; };
           const edge = [];
           for (let x = 0; x < w; x++) edge.push(x, (h - 1) * w + x);
           for (let y = 1; y < h - 1; y++) edge.push(y * w, y * w + w - 1);
@@ -246,6 +246,11 @@
           }
           // Nothing left, or almost nothing removed: not worth cutting.
           if (removed > w * h * 0.97 || removed < w * h * 0.08) return done(null);
+          // What's left must be one solid object, not scattered bits (like the letters of a cover
+          // whose background got removed): it should fill a good share of its own bounding box.
+          let x0 = w, y0 = h, x1 = 0, y1 = 0;
+          for (let p = 0; p < w * h; p++) if (!seen[p]) { const x = p % w, y = (p - x) / w; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+          if ((w * h - removed) / ((x1 - x0 + 1) * (y1 - y0 + 1)) < 0.5) return done(null);
           // Soften the edge: pixels touching the removed area fade a little.
           for (let p = 0; p < w * h; p++) {
             if (seen[p]) continue;
