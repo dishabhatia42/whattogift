@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Gift ideas · Thoughtful Gifting</title>
+<title>Gift ideas · Serial Gifter</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%81%3C/text%3E%3C/svg%3E">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,7 +15,7 @@
 <main class="page">
   <div class="bar">
     <a class="back" id="edit" href="/">← Edit</a>
-    <a class="brandline" href="/">Thoughtful Gifting<i aria-hidden="true"></i></a>
+    <a class="brandline" href="/">Serial Gifter<i aria-hidden="true"></i></a>
   </div>
 
   <header class="hero rise" style="--i:0">
@@ -47,7 +47,7 @@
   let variant = 0, busy = false;
 
   $("title").textContent = resultsTitle(state);
-  document.title = `${resultsTitle(state)} · Thoughtful Gifting`;
+  document.title = `${resultsTitle(state)} · Serial Gifter`;
   $("edit").href = "/?" + key;
   const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
   const bits = [...state.tags.map(cap), BUDGETS.find((b) => b.id === state.budget)?.t].filter(Boolean);

@@ -1,4 +1,4 @@
-# Thoughtful Gifting
+# Serial Gifter
 
 Pick who it's for and the occasion, add what they love, get gift ideas you can actually buy.
 

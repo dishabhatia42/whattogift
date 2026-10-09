@@ -1,4 +1,4 @@
-// Thoughtful Gifting: data and helpers shared by the form (/) and the results page (/ideas).
+// Serial Gifter: data and helpers shared by the form (/) and the results page (/ideas).
 (() => {
   // Who: relationships only. Gender is a separate, optional follow-up where it matters.
   const RECIPIENTS = [
