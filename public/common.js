@@ -266,7 +266,7 @@
               img.onerror = () => el.classList.remove("loading");
               img.src = src; el.classList.add(kind);
             };
-            // A cutout made in the admin wins; otherwise the photo is a round sticker.
+            // A cutout made in the admin wins; otherwise the photo is a rounded-square sticker.
             if (safeHref(product.cutout)) show(product.cutout, "cut");
             else isCutout(product.image).then((cut) => show(product.image, cut ? "cut" : "photo"));
           } else { const t = document.createElement("span"); t.className = "noimg"; t.textContent = product.name; photo.appendChild(t); }

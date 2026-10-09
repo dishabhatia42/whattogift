@@ -58,7 +58,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .wordmark { display: flex; flex-direction: column; min-width: 0; }
 .wordmark .name { font-family: var(--font-display); font-weight: 800; font-size: 24px; line-height: 1.05; letter-spacing: -0.03em; color: var(--fg); }
 .wordmark .name em { font-style: normal; color: var(--primary); }
-.wordmark .tagline { font-size: 12.5px; line-height: 1.3; color: var(--muted); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wordmark .tagline { font-size: 12.5px; line-height: 1.3; color: var(--muted); font-style: italic; max-width: 24ch; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 /* Header button: flat, softly rounded, boutique-like. */
 .header-cta {
   flex: none; text-decoration: none; font-family: var(--font-body); font-weight: 500; font-size: 14px; white-space: nowrap;
@@ -74,7 +74,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 @media (min-width: 720px) {
   .site-header-inner { padding: 16px 24px; }
   .wordmark .name { font-size: 30px; }
-  .wordmark .tagline { font-size: 13.5px; }
+  .wordmark .tagline { font-size: 13.5px; max-width: none; white-space: nowrap; }
   .header-cta { min-height: 46px; padding: 0 22px; font-size: 16px; gap: 20px; }
 }
 @media (max-width: 380px) { .wordmark .tagline { display: none; } }
@@ -142,9 +142,9 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 /* While it's following you down the page, the small line under it hides, and a soft fade
    behind the button covers whatever scrolls underneath. */
 .cta-wrap .note { transition: opacity .2s; }
-.cta-wrap.stuck .note { opacity: 0; visibility: hidden; }
-.cta-wrap.stuck::before {
-  content: ""; position: absolute; z-index: -1; left: -24px; right: -24px; top: -28px; bottom: -12px; pointer-events: none;
+.cta-wrap.ready.stuck .note { opacity: 0; visibility: hidden; }
+.cta-wrap.ready.stuck::before {
+  content: ""; position: absolute; z-index: -1; left: -16px; right: -16px; top: -28px; bottom: -12px; pointer-events: none;
   background: linear-gradient(to bottom, transparent, var(--bg) 28px);
 }
 .go {
@@ -293,14 +293,14 @@ footer p + p { margin-top: 4px; }
 @keyframes pop { from { opacity: 0; transform: translateY(10px) rotate(0deg) scale(.85); } }
 .sticker.filler { font-size: calc(var(--size) * .62); line-height: 1; text-align: center; filter: drop-shadow(0 6px 8px rgba(30, 25, 21, .18)); user-select: none; }
 /* No square frames: a product is either a cutout (made in the admin) with a die-cut white
-   sticker edge, or, until it has one, a round photo sticker. */
+   sticker edge, or, until it has one, a photo sticker with softly rounded corners. */
 .sticker.real img { display: block; margin: 0 auto; }
 .sticker.real.loading img { visibility: hidden; }
 .sticker.real.cut img {
   width: auto; height: auto; max-width: 100%; max-height: var(--size);
   filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 8px 10px rgba(30, 25, 21, .22));
 }
-.sticker.real.photo img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 8px 18px rgba(30, 25, 21, .22); }
+.sticker.real.photo img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 16px; border: 3px solid #fff; box-shadow: 0 8px 18px rgba(30, 25, 21, .22); }
 .sticker.hide { display: none; }
 .sticker.real .noimg {
   display: block; width: 100%; aspect-ratio: 1; border-radius: 8px;
