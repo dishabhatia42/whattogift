@@ -331,6 +331,35 @@
     addEventListener("scroll", onScroll, { passive: true }); onScroll();
   }
 
+  // Hovering the logo sets off a tiny party popper: a 🎉 pops out at the end of "serialgifter"
+  // with a burst of confetti in the brand colours, then everything fades away.
+  const logo = document.querySelector(".logo");
+  if (logo && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const COLORS = ["#A1354A", "#D8A928", "#E7B8C1", "#A1354A", "#D8A928", "#E7B8C1"];
+    let popping = false;
+    const pop = () => {
+      if (popping) return;
+      popping = true;
+      const burst = document.createElement("span");
+      burst.className = "pop"; burst.setAttribute("aria-hidden", "true");
+      const popper = document.createElement("span"); popper.className = "popper"; popper.textContent = "🎉";
+      burst.appendChild(popper);
+      for (let i = 0; i < 14; i++) {
+        // Fan out up-right to right, out of the popper's mouth (straight up would leave the screen).
+        const angle = (-75 + (i / 13) * 95 + (Math.random() * 12 - 6)) * Math.PI / 180;
+        const dist = 24 + Math.random() * 26;
+        const bit = document.createElement("i");
+        if (i % 3 === 0) bit.className = "dot";
+        bit.style.cssText = `--c:${COLORS[i % COLORS.length]};--dx:${(Math.cos(angle) * dist).toFixed(1)}px;--dy:${(Math.sin(angle) * dist).toFixed(1)}px;--r:${Math.round(Math.random() * 540 - 270)}deg;--delay:${Math.round(Math.random() * 60) + 80}ms`;
+        burst.appendChild(bit);
+      }
+      logo.appendChild(burst);
+      setTimeout(() => { burst.remove(); popping = false; }, 1200);
+    };
+    logo.addEventListener("mouseenter", pop);
+    logo.addEventListener("focus", pop);
+  }
+
   window.WTG = {
     RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES,
     asksGender, safeHref, toParams, fromParams, resultsTitle,
