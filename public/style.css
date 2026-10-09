@@ -59,19 +59,23 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .wordmark .name { font-family: var(--font-display); font-weight: 800; font-size: 24px; line-height: 1.05; letter-spacing: -0.03em; color: var(--fg); }
 .wordmark .name em { font-style: normal; color: var(--primary); }
 .wordmark .tagline { font-size: 12.5px; line-height: 1.3; color: var(--muted); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Header button: flat, softly rounded, boutique-like. */
 .header-cta {
-  flex: none; text-decoration: none; font-family: var(--font-display); font-weight: 700; font-size: 14px;
-  min-height: 40px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center;
-  background: var(--primary); color: var(--on-primary); box-shadow: 0 6px 14px rgba(140, 45, 58, .25);
-  transition: transform .15s var(--ease);
+  flex: none; text-decoration: none; font-family: var(--font-body); font-weight: 500; font-size: 14px; white-space: nowrap;
+  min-height: 40px; padding: 0 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 14px;
+  background: var(--primary); color: var(--on-primary); transition: background .15s;
 }
-.header-cta:hover { transform: translateY(-1px); }
+.header-cta:hover { background: var(--primary-hi); }
+.header-cta .arr { transition: transform .2s var(--ease); }
+.header-cta .short { display: none; }
+@media (max-width: 480px) { .header-cta .long { display: none; } .header-cta .short { display: inline; } }
+.header-cta:hover .arr { transform: translateX(3px); }
 .header-cta.ghost { background: var(--surface); color: var(--fg); box-shadow: var(--shadow-sm); }
 @media (min-width: 720px) {
   .site-header-inner { padding: 16px 24px; }
   .wordmark .name { font-size: 30px; }
   .wordmark .tagline { font-size: 13.5px; }
-  .header-cta { min-height: 44px; padding: 0 20px; font-size: 15px; }
+  .header-cta { min-height: 46px; padding: 0 22px; font-size: 16px; gap: 20px; }
 }
 @media (max-width: 380px) { .wordmark .tagline { display: none; } }
 
@@ -280,7 +284,7 @@ footer p + p { margin-top: 4px; }
   background-size: 34px 34px; background-position: -1px -1px;
   box-shadow: inset 0 0 0 1px var(--line), var(--shadow-sm);
 }
-.stickers { position: relative; height: 330px; }
+.stickers { position: relative; height: 360px; }
 .sticker {
   position: absolute; width: var(--size); transform: rotate(var(--tilt)) translateY(calc(var(--scroll, 0) * var(--drift) * -0.06px)) scale(var(--fit, 1));
   animation: pop .7s var(--ease) both; animation-delay: var(--d);
@@ -288,17 +292,14 @@ footer p + p { margin-top: 4px; }
 }
 @keyframes pop { from { opacity: 0; transform: translateY(10px) rotate(0deg) scale(.85); } }
 .sticker.filler { font-size: calc(var(--size) * .62); line-height: 1; text-align: center; filter: drop-shadow(0 6px 8px rgba(30, 25, 21, .18)); user-select: none; }
-/* No square frames. Each photo is shown one of three ways (see cutout() in common.js):
-   cut   = backdrop removed, die-cut white sticker edge;
-   flat  = a book cover or poster, shown as the object itself;
-   photo = a busy/lifestyle shot, shown as a round sticker. */
+/* No square frames: a product is either a cutout (made in the admin) with a die-cut white
+   sticker edge, or, until it has one, a round photo sticker. */
 .sticker.real img { display: block; margin: 0 auto; }
 .sticker.real.loading img { visibility: hidden; }
-.sticker.real.cut img, .sticker.real.flat img { width: auto; height: auto; max-width: 100%; max-height: var(--size); }
 .sticker.real.cut img {
+  width: auto; height: auto; max-width: 100%; max-height: var(--size);
   filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 8px 10px rgba(30, 25, 21, .22));
 }
-.sticker.real.flat img { border-radius: 3px; box-shadow: 0 1px 2px rgba(30, 25, 21, .2), 0 10px 20px rgba(30, 25, 21, .2); }
 .sticker.real.photo img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 8px 18px rgba(30, 25, 21, .22); }
 .sticker.hide { display: none; }
 .sticker.real .noimg {

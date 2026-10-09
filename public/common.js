@@ -204,77 +204,37 @@
   // ---- the home-page board: pinned products as tilted stickers, topped up with emoji stickers
   // so it never looks empty. Positions are hand-placed slots (x %, y %, size px, tilt deg).
   // Wide: the right half stays above ~45% so the headline (bottom-right) is never covered.
-  // [x %, y %, size px, tilt deg]. A row across the top, then a few more down the left and
-  // middle, keeping clear of the headline (bottom right) and the typewriter line (bottom left).
+  // [x %, y %, size px, tilt deg]. Seven across the top, three down the left and middle, evenly
+  // spaced and clear of the headline (bottom right) and the typewriter line (bottom left).
   const SLOTS_WIDE = [
-    [4, 6, 128, -8], [21, 4, 112, 6], [39, 6, 120, 9], [57, 4, 132, -4], [75, 8, 116, 7],
-    [94, 5, 104, -9], [5, 40, 112, 5], [22, 48, 100, -6], [38, 30, 96, 4], [74, 27, 92, 10],
+    [3, 6, 116, -7], [19, 12, 104, 5], [35, 5, 112, -4], [51, 11, 104, 6], [67, 5, 112, -5],
+    [83, 12, 100, 7], [98, 5, 104, -6], [5, 46, 108, 5], [22, 56, 96, -6], [39, 42, 100, 4],
   ];
   const SLOTS_NARROW = [
-    [4, 6, 88, -8], [40, 2, 80, 6], [76, 8, 86, 9], [14, 52, 82, 5], [50, 46, 90, -6], [84, 54, 76, -10],
+    [4, 5, 86, -8], [40, 2, 80, 6], [76, 6, 84, 9], [14, 56, 80, 5], [50, 52, 86, -6], [84, 58, 76, -10],
   ];
   const FILLERS = ["🎁", "🧸", "💐", "🍫", "📚", "🕯️", "🎀", "☕", "🪴", "💌"];
-  // Decides how a product photo sits on the board, all in the browser (free, no AI):
-  //   "cut"   the photo has a plain light backdrop (white, grey, cream): it's removed, leaving a
-  //           cutout with a die-cut sticker edge. src is a PNG data URL.
-  //   "flat"  the backdrop is plain but removing it would shred the item (a book cover or poster
-  //           whose own background matches): the photo is the object, shown as-is.
-  //   "photo" a busy or lifestyle photo (or the store won't let us read it): shown as a round sticker.
-  const cutouts = new Map();
-  function cutout(url) {
-    if (!cutouts.has(url)) cutouts.set(url, new Promise((done) => {
-      const photo = () => done({ kind: "photo" });
+  // Is this photo already see-through (a ready-made cutout PNG/WebP)? Real cutouts are made
+  // in the admin with an AI model; the board never guesses, because guessing shredded photos.
+  const seeThrough = new Map();
+  function isCutout(url) {
+    if (!seeThrough.has(url)) seeThrough.set(url, new Promise((done) => {
       const im = new Image();
       im.crossOrigin = "anonymous";
-      im.onerror = photo;
+      im.onerror = () => done(false);
       im.onload = () => {
         try {
-          const S = 320, k = Math.min(S / im.naturalWidth, S / im.naturalHeight);
-          const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
-          const c = document.createElement("canvas"); c.width = w; c.height = h;
-          const ctx = c.getContext("2d", { willReadFrequently: true }); ctx.drawImage(im, 0, 0, w, h);
-          const data = ctx.getImageData(0, 0, w, h), px = data.data;
-          const edge = [];
-          for (let x = 0; x < w; x++) edge.push(x, (h - 1) * w + x);
-          for (let y = 1; y < h - 1; y++) edge.push(y * w, y * w + w - 1);
-          // Already a cutout (see-through PNG/WebP): use it as is.
-          if (edge.filter((p) => px[p * 4 + 3] < 16).length > edge.length * 0.6) return done({ kind: "cut", src: url });
-          // The backdrop colour is the typical edge colour; it must be light and the edges even.
-          const med = [0, 1, 2].map((ch) => { const v = edge.map((p) => px[p * 4 + ch]).sort((m, n) => m - n); return v[v.length >> 1]; });
-          const near = (i, tol) => Math.abs(px[i] - med[0]) < tol && Math.abs(px[i + 1] - med[1]) < tol && Math.abs(px[i + 2] - med[2]) < tol;
-          const light = 0.299 * med[0] + 0.587 * med[1] + 0.114 * med[2];
-          if (light < 175 || edge.filter((p) => near(p * 4, 26)).length < edge.length * 0.85) return photo();
-          // Flood in from the edges, so backdrop-coloured parts inside the product stay put.
-          const bg = (i) => near(i, 30);
-          const seen = new Uint8Array(w * h), stack = edge.filter((p) => bg(p * 4));
-          let removed = 0;
-          while (stack.length) {
-            const p = stack.pop();
-            if (seen[p]) continue;
-            seen[p] = 1; px[p * 4 + 3] = 0; removed++;
-            const x = p % w, y = (p - x) / w;
-            for (const q of [x > 0 && p - 1, x < w - 1 && p + 1, y > 0 && p - w, y < h - 1 && p + w]) if (q !== false && !seen[q] && bg(q * 4)) stack.push(q);
-          }
-          if (removed > w * h * 0.97) return photo();          // nothing left
-          if (removed < w * h * 0.08) return done({ kind: "flat" }); // the item fills the frame
-          // What's left must be one solid object, not scattered bits (like the lettering on a cover
-          // whose background got removed): it should fill a good share of its own bounding box.
-          let x0 = w, y0 = h, x1 = 0, y1 = 0;
-          for (let p = 0; p < w * h; p++) if (!seen[p]) { const x = p % w, y = (p - x) / w; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-          if ((w * h - removed) / ((x1 - x0 + 1) * (y1 - y0 + 1)) < 0.5) return done({ kind: "flat" });
-          // Soften the edge: pixels touching the removed area fade a little.
-          for (let p = 0; p < w * h; p++) {
-            if (seen[p]) continue;
-            const x = p % w;
-            if ((x > 0 && seen[p - 1]) || (x < w - 1 && seen[p + 1]) || seen[p - w] || seen[p + w]) px[p * 4 + 3] = 150;
-          }
-          ctx.putImageData(data, 0, 0);
-          done({ kind: "cut", src: c.toDataURL("image/png") });
-        } catch { photo(); } // the store didn't allow reading the photo
+          const S = 64, c = document.createElement("canvas"); c.width = S; c.height = S;
+          const ctx = c.getContext("2d", { willReadFrequently: true }); ctx.drawImage(im, 0, 0, S, S);
+          const px = ctx.getImageData(0, 0, S, S).data;
+          let clear = 0;
+          for (let i = 0; i < S; i++) for (const p of [i, (S - 1) * S + i, i * S, i * S + S - 1]) if (px[p * 4 + 3] < 16) clear++;
+          done(clear > S * 4 * 0.6);
+        } catch { done(false); }
       };
       im.src = url;
     }));
-    return cutouts.get(url);
+    return seeThrough.get(url);
   }
 
   function mountBoard() {
@@ -301,11 +261,14 @@
             // Hidden until we know how to show it, so a square never flashes up first.
             const img = document.createElement("img"); img.alt = ""; photo.appendChild(img);
             el.classList.add("loading");
-            cutout(product.image).then(({ kind, src }) => {
+            const show = (src, kind) => {
               img.onload = () => { el.classList.remove("loading"); keepClear(); };
               img.onerror = () => el.classList.remove("loading");
-              img.src = src || product.image; el.classList.add(kind);
-            });
+              img.src = src; el.classList.add(kind);
+            };
+            // A cutout made in the admin wins; otherwise the photo is a round sticker.
+            if (safeHref(product.cutout)) show(product.cutout, "cut");
+            else isCutout(product.image).then((cut) => show(product.image, cut ? "cut" : "photo"));
           } else { const t = document.createElement("span"); t.className = "noimg"; t.textContent = product.name; photo.appendChild(t); }
           // Instagram-style tag with the name (and Disha's line) that goes straight to the product.
           // It appears on hover; on touch screens it is always shown.

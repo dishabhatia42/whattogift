@@ -14,7 +14,7 @@ export default async function handler(req, res) {
       version: String(updatedAt || 0),
       ads: ads.filter((a) => a.active && (!a.endsOn || a.endsOn >= today)),
       board: products.filter((p) => p.active && p.board).slice(0, 10)
-        .map(({ id, name, line, url, image, price }) => ({ id, name, line, url, image, price })),
+        .map(({ id, name, line, url, image, cutout, price }) => ({ id, name, line, url, image, cutout, price })),
     });
   } catch (err) {
     console.error(err);

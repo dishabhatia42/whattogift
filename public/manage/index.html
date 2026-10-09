@@ -66,6 +66,8 @@
   .item .txt span { font-size: 13px; color: var(--muted); }
   .off { opacity: .5; }
   .preview { width: 96px; height: 72px; object-fit: cover; border-radius: 10px; background: var(--chip); }
+  /* checkerboard so a cutout's see-through background is obvious */
+  .preview.cut, .item img.cut { object-fit: contain; background: repeating-conic-gradient(#e8e2dc 0 25%, #fff 0 50%) 0 0 / 12px 12px; }
   #status { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; max-width: calc(100% - 32px); }
   #status.err { background: var(--err); color: #fff; }
 </style>
@@ -109,14 +111,22 @@
         <div class="f">Show for (nothing ticked in a row = all)<div data-occ style="display:flex;flex-direction:column;gap:6px"></div></div>
         <div class="row">
           <img class="preview" data-preview hidden alt="">
-          <label class="f">Photo (tip: a see-through PNG, or a photo on a plain white or light background, becomes a cutout on the board; busy photos show as round stickers)<input type="file" accept="image/*" data-file></label>
+          <label class="f">Photo<input type="file" accept="image/*" data-file></label>
           <input type="hidden" name="image">
+        </div>
+        <div class="row" style="align-items:center">
+          <img class="preview cut" data-cut-preview hidden alt="Cutout">
+          <button type="button" data-cut>✂️ Cut out background</button>
+          <button type="button" data-uncut hidden>Remove cutout</button>
+          <span class="muted" data-cut-note>Board stickers look best as cutouts. Free, runs on this computer.</span>
+          <input type="hidden" name="cutout">
         </div>
         <div class="row">
           <button class="primary" type="submit">Save product</button>
           <button type="button" data-cancel hidden>Cancel edit</button>
         </div>
       </form>
+      <div class="row" style="align-items:center"><button type="button" id="cut-all">✂️ Cut out all board photos</button><span class="muted" id="cut-all-note">Makes a cutout for every board product that doesn't have one yet.</span></div>
       <div id="pick-list"></div>
     </section>
 
@@ -226,6 +236,62 @@
     const preview = $("[data-preview]", form); preview.hidden = !url; if (url) preview.src = url;
   }
 
+  // ---- background removal, free and in this browser: the open-source BiRefNet-lite model
+  // (MIT licence) runs locally via transformers.js. The first use downloads it (~220 MB, then
+  // cached by the browser); after that each photo takes a few seconds (longer without a GPU).
+  const CUT_MODEL = "onnx-community/BiRefNet_lite-ONNX";
+  let cutter = null;
+  function loadCutter(say) {
+    if (!cutter) cutter = (async () => {
+      const T = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");
+      const gpu = navigator.gpu && await navigator.gpu.requestAdapter().catch(() => null);
+      const model = await T.AutoModel.from_pretrained(CUT_MODEL, {
+        dtype: "fp32", device: gpu ? "webgpu" : "wasm",
+        progress_callback: (p) => { if (p.status === "progress" && /\.onnx/.test(p.file || "")) say(`Getting the cutout tool ready (one time only): ${Math.round(p.progress)}%`); },
+      });
+      const processor = await T.AutoProcessor.from_pretrained(CUT_MODEL);
+      return { T, model, processor };
+    })().catch((e) => { cutter = null; throw e; });
+    return cutter;
+  }
+  // Returns the uploaded URL of the cutout (WebP with a see-through background, trimmed to the product).
+  async function makeCutout(url, say) {
+    const { T, model, processor } = await loadCutter(say);
+    say("Cutting out…");
+    let blob;
+    try { const r = await fetch(url); if (!r.ok) throw 0; blob = await r.blob(); }
+    catch { throw new Error("Couldn't read this photo (the store blocks it). Upload the photo from your computer, then try again."); }
+    const image = await T.RawImage.fromBlob(blob);
+    const { pixel_values } = await processor(image);
+    const { output_image } = await model({ input_image: pixel_values });
+    const mask = await T.RawImage.fromTensor(output_image[0].sigmoid().mul(255).to("uint8")).resize(image.width, image.height);
+    // Photo + mask -> see-through image, cropped to the product with a little breathing room.
+    const bmp = await createImageBitmap(blob);
+    const w = bmp.width, h = bmp.height, full = document.createElement("canvas"); full.width = w; full.height = h;
+    const ctx = full.getContext("2d"); ctx.drawImage(bmp, 0, 0, w, h);
+    const px = ctx.getImageData(0, 0, w, h);
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let i = 0; i < w * h; i++) {
+      const a = mask.data[i * mask.channels]; px.data[i * 4 + 3] = a;
+      if (a > 24) { const x = i % w, y = (i - x) / w; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (x1 < 0) throw new Error("The cutout tool couldn't find a product in this photo.");
+    ctx.putImageData(px, 0, 0);
+    const pad = Math.round(Math.max(x1 - x0, y1 - y0) * 0.03);
+    x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+    const cw = x1 - x0 + 1, ch = y1 - y0 + 1, k = Math.min(1, 800 / Math.max(cw, ch));
+    const out = document.createElement("canvas"); out.width = Math.round(cw * k); out.height = Math.round(ch * k);
+    out.getContext("2d").drawImage(full, x0, y0, cw, ch, 0, 0, out.width, out.height);
+    say("Saving the cutout…");
+    const { url: saved } = await call({ action: "upload", contentType: "image/webp", base64: out.toDataURL("image/webp", 0.9).split(",")[1] });
+    return saved;
+  }
+  function setCutout(form, url) {
+    form.elements.cutout.value = url || "";
+    const pv = $("[data-cut-preview]", form); pv.hidden = !url; if (url) pv.src = url;
+    $("[data-uncut]", form).hidden = !url;
+  }
+
   const label = (list, ids) => ids.map((id) => list.find(([k]) => k === id)[1]).join(", ");
   function describeTargets(item) {
     const who = item.recipients.length ? label(RECIPIENTS, item.recipients) : "anyone";
@@ -237,8 +303,33 @@
   const pickForm = $("#pick-form");
   occasionBoxes($("[data-occ]", pickForm));
   wireImage(pickForm);
+  // A new photo means the old cutout no longer matches it.
+  $("[data-file]", pickForm).addEventListener("change", () => setCutout(pickForm, ""));
+  $("[data-uncut]", pickForm).addEventListener("click", () => setCutout(pickForm, ""));
+  $("[data-cut]", pickForm).addEventListener("click", async (e) => {
+    const btn = e.currentTarget, note = $("[data-cut-note]", pickForm), url = pickForm.elements.image.value;
+    if (!url) return toast("Add a photo first.", true);
+    btn.disabled = true;
+    try { setCutout(pickForm, await makeCutout(url, (t) => { note.textContent = t; })); note.textContent = "Cutout ready. Save the product to use it on the board."; }
+    catch (err) { note.textContent = err.message; toast(err.message, true); }
+    finally { btn.disabled = false; }
+  });
+  $("#cut-all").addEventListener("click", async (e) => {
+    const btn = e.currentTarget, note = $("#cut-all-note");
+    const todo = data.products.filter((p) => p.board && p.image && !p.cutout);
+    if (!todo.length) { note.textContent = "Every board product already has a cutout."; return; }
+    btn.disabled = true;
+    const made = {}, failed = [];
+    for (const [i, p] of todo.entries()) {
+      try { made[p.id] = await makeCutout(p.image, (t) => { note.textContent = `${i + 1} of ${todo.length} · ${p.name}: ${t}`; }); }
+      catch (err) { failed.push(`${p.name} (${err.message})`); }
+    }
+    if (Object.keys(made).length) await save({ ...data, products: data.products.map((p) => made[p.id] ? { ...p, cutout: made[p.id] } : p) });
+    note.textContent = `Done: ${Object.keys(made).length} cut out.` + (failed.length ? ` Couldn't do: ${failed.join("; ")}` : "");
+    btn.disabled = false;
+  });
   function resetPickForm() {
-    pickForm.reset(); pickForm.elements.id.value = ""; setImage(pickForm, "");
+    pickForm.reset(); pickForm.elements.id.value = ""; setImage(pickForm, ""); setCutout(pickForm, "");
     occasionBoxes($("[data-occ]", pickForm)); $("[data-cancel]", pickForm).hidden = true;
   }
   $("[data-cancel]", pickForm).addEventListener("click", resetPickForm);
@@ -265,7 +356,7 @@
     const f = pickForm.elements;
     const pick = {
       id: f.id.value || Math.random().toString(36).slice(2, 10),
-      name: f.name.value, price: f.price.value, url: f.url.value, note: f.note.value, image: f.image.value,
+      name: f.name.value, price: f.price.value, url: f.url.value, note: f.note.value, image: f.image.value, cutout: f.cutout.value,
       board: f.board.checked, line: f.line.value,
       tags: f.tags.value.split(",").map((t) => t.trim()).filter(Boolean),
       recipients: checked(pickForm, "recipients"), occasions: checked(pickForm, "occasions"), active: true,
@@ -281,9 +372,9 @@
     for (const p of data.products) {
       const row = document.createElement("div"); row.className = "item" + (p.active ? "" : " off");
       row.innerHTML = `<div class="ph"></div><div class="txt"><strong></strong><span></span></div><button type="button" data-edit>Edit</button><button type="button" data-toggle></button><button type="button" class="danger" data-del>Delete</button>`;
-      if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = ""; row.firstChild.replaceWith(img); }
+      if (p.cutout || p.image) { const img = document.createElement("img"); img.src = p.cutout || p.image; img.alt = ""; if (p.cutout) img.className = "cut"; row.firstChild.replaceWith(img); }
       $("strong", row).textContent = p.name;
-      $("span", row).textContent = [p.board ? "📌 On the board" : "", p.price, describeTargets(p)].filter(Boolean).join(" · ");
+      $("span", row).textContent = [p.board ? (p.cutout ? "📌 On the board ✂️" : "📌 On the board") : "", p.price, describeTargets(p)].filter(Boolean).join(" · ");
       $("[data-toggle]", row).textContent = p.active ? "Hide" : "Show";
       $("[data-toggle]", row).addEventListener("click", () => save({ ...data, products: data.products.map((x) => x.id === p.id ? { ...x, active: !x.active } : x) }));
       $("[data-del]", row).addEventListener("click", () => { if (confirm(`Delete "${p.name}"?`)) save({ ...data, products: data.products.filter((x) => x.id !== p.id) }); });
@@ -291,7 +382,8 @@
         const f = pickForm.elements;
         f.id.value = p.id; f.name.value = p.name; f.price.value = p.price; f.url.value = p.url; f.note.value = p.note; f.tags.value = p.tags.join(", ");
         f.board.checked = !!p.board; f.line.value = p.line || "";
-        setImage(pickForm, p.image); occasionBoxes($("[data-occ]", pickForm), p);
+        setImage(pickForm, p.image); setCutout(pickForm, p.cutout); occasionBoxes($("[data-occ]", pickForm), p);
+        $("[data-cut-note]", pickForm).textContent = p.cutout ? "This product has a cutout." : "Board stickers look best as cutouts. Free, runs on this computer.";
         $("[data-cancel]", pickForm).hidden = false; pickForm.scrollIntoView({ behavior: "smooth" });
       });
       list.appendChild(row);

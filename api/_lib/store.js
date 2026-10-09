@@ -55,6 +55,7 @@ export function clean(data) {
     price: str(p.price, 40),
     url: httpsUrl(p.url),
     image: httpsUrl(p.image),
+    cutout: httpsUrl(p.cutout),  // the photo with its background removed, made in the admin
     recipients: oneOf(p.recipients, RECIPIENT_IDS),
     occasions: oneOf(p.occasions, OCCASION_IDS),
     tags: (Array.isArray(p.tags) ? p.tags : []).map((t) => str(t, 30)).filter(Boolean).slice(0, 10),
