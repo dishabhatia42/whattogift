@@ -296,7 +296,7 @@ footer p + p { margin-top: 4px; }
 .sticker.real .photo { display: block; cursor: pointer; }
 .sticker.real:hover, .sticker.real:focus-within, .sticker.real.open { z-index: 5; transform: translateY(-6px) rotate(0deg) scale(1.08); }
 /* Product tag, like a tagged person on an Instagram photo: a small white label with a little pointer.
-   Hidden until the product is hovered (or tapped once on a phone). */
+   Hidden until the product is hovered; always shown on touch screens. */
 .sticker .tag {
   position: absolute; top: calc(100% - 8px); left: 50%; transform: translateX(-50%);
   width: max-content; max-width: calc(var(--size) + 8px);
@@ -323,6 +323,8 @@ footer p + p { margin-top: 4px; }
 .sticker.real:hover .tag, .sticker.real:focus-within .tag, .sticker.real.open .tag { max-width: 180px; opacity: 1; margin-top: 0; pointer-events: auto; }
 .sticker.real:hover .tline, .sticker.real:focus-within .tline, .sticker.real.open .tline { display: block; }
 .sticker .tag:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+/* Touch screens can't hover, so tags stay on show there; a tap on the photo adds Disha's line. */
+@media (hover: none) { .sticker.real .tag { opacity: 1; margin-top: 0; pointer-events: auto; } }
 /* Phones: a touch smaller still, so neighbours don't collide; the full name shows when opened. */
 @media (max-width: 719px) {
   .sticker .tag { top: calc(100% - 5px); max-width: calc(var(--size) + 6px); padding: 3px 6px; font-size: 9.5px; border-radius: 5px; }

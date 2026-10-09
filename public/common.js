@@ -286,7 +286,7 @@
             cutout(product.image).then((src) => { if (src) { img.src = src; el.classList.add("cut"); } });
           } else { const t = document.createElement("span"); t.className = "noimg"; t.textContent = product.name; photo.appendChild(t); }
           // Instagram-style tag with the name (and Disha's line) that goes straight to the product.
-          // It appears on hover, or on the first tap of the photo on a phone.
+          // It appears on hover; on touch screens it is always shown.
           const tag = link("tag");
           tag.title = product.name;
           const n = document.createElement("span"); n.className = "tname"; n.textContent = product.name;
@@ -294,9 +294,9 @@
           tag.append(n, arr);
           if (product.line) { const l = document.createElement("span"); l.className = "tline"; l.textContent = product.line; tag.appendChild(l); }
           el.append(photo, tag);
-          // On touch screens the first tap on the photo shows the tag, the second opens the product.
+          // On touch screens the first tap on the photo shows Disha's line, the second opens the product.
           photo.addEventListener("click", (e) => {
-            if (matchMedia("(hover: hover)").matches || el.classList.contains("open")) return;
+            if (matchMedia("(hover: hover)").matches || el.classList.contains("open") || !product.line) return;
             e.preventDefault();
             box.querySelectorAll(".open").forEach((o) => o.classList.remove("open"));
             el.classList.add("open");
