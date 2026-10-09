@@ -272,7 +272,7 @@ footer p + p { margin-top: 4px; }
   background-size: 34px 34px; background-position: -1px -1px;
   box-shadow: inset 0 0 0 1px var(--line), var(--shadow-sm);
 }
-.stickers { position: relative; height: 270px; }
+.stickers { position: relative; height: 330px; }
 .sticker {
   position: absolute; width: var(--size); transform: rotate(var(--tilt)) translateY(calc(var(--scroll, 0) * var(--drift) * -0.06px));
   animation: pop .7s var(--ease) both; animation-delay: var(--d);
@@ -280,26 +280,54 @@ footer p + p { margin-top: 4px; }
 }
 @keyframes pop { from { opacity: 0; transform: translateY(10px) rotate(0deg) scale(.85); } }
 .sticker.filler { font-size: calc(var(--size) * .62); line-height: 1; text-align: center; filter: drop-shadow(0 6px 8px rgba(30, 25, 21, .18)); user-select: none; }
-.sticker.real img, .sticker.real .noimg {
-  display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px;
+/* No square frame: photos get soft corners, and photos on a plain studio background are cut
+   out in the browser (see cutout() in common.js) and get a die-cut white sticker edge. */
+.sticker.real img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 14px; box-shadow: 0 8px 18px rgba(30, 25, 21, .2); }
+.sticker.real.cut img {
+  object-fit: contain; border-radius: 0; box-shadow: none;
+  filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 8px 10px rgba(30, 25, 21, .22));
+}
+.sticker.real .noimg {
+  display: block; width: 100%; aspect-ratio: 1; border-radius: 8px;
   border: 5px solid #fff; background: #fff; box-shadow: 0 8px 18px rgba(30, 25, 21, .22);
 }
 .sticker.real .noimg { display: grid; place-items: center; padding: 8px; font: 700 13px/1.25 var(--font-display); color: var(--fg); text-align: center; }
-.sticker.real { z-index: 1; cursor: pointer; }
-.sticker.real:hover, .sticker.real:focus-visible, .sticker.real.open { z-index: 5; transform: translateY(-6px) rotate(0deg) scale(1.08); }
-.sticker .cap {
-  position: absolute; left: 50%; top: calc(100% + 10px); transform: translateX(-50%) translateY(-4px); width: max-content; max-width: 220px;
-  display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 12px;
-  background: var(--fg); color: var(--bg); font-size: 13px; line-height: 1.35; text-align: left;
-  opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s var(--ease); box-shadow: var(--shadow);
+.sticker.real { z-index: 1; }
+.sticker.real .photo { display: block; cursor: pointer; }
+.sticker.real:hover, .sticker.real:focus-within, .sticker.real.open { z-index: 5; transform: translateY(-6px) rotate(0deg) scale(1.08); }
+/* Product tag, like a tagged person on an Instagram photo: a dark label with a little pointer. */
+.sticker .tag {
+  position: absolute; top: calc(100% - 12px); left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: calc(var(--size) + 28px);
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 5px; align-items: start;
+  padding: 6px 9px; border-radius: 8px; background: rgba(30, 25, 21, .9); color: #fff;
+  font: 600 12px/1.3 var(--font-body); text-decoration: none; text-align: left;
+  box-shadow: 0 6px 14px rgba(30, 25, 21, .25); transition: max-width .2s var(--ease), background .2s;
 }
-.sticker.cap-left .cap { left: 0; transform: translateY(-4px); }
-.sticker.cap-right .cap { left: auto; right: 0; transform: translateY(-4px); }
-.sticker.cap-left.real:hover .cap, .sticker.cap-left.real:focus-visible .cap, .sticker.cap-left.real.open .cap,
-.sticker.cap-right.real:hover .cap, .sticker.cap-right.real:focus-visible .cap, .sticker.cap-right.real.open .cap { transform: none; }
-.sticker .cap strong { font-family: var(--font-display); font-weight: 700; font-size: 14px; }
-.sticker .cap em { font-style: normal; font-weight: 600; color: var(--gold-chip); margin-top: 2px; }
-.sticker.real:hover .cap, .sticker.real:focus-visible .cap, .sticker.real.open .cap { opacity: 1; transform: translateX(-50%); pointer-events: auto; }
+.sticker .tag::before {
+  content: ""; position: absolute; bottom: 100%; left: 50%; margin-left: -6px;
+  border: 6px solid transparent; border-bottom-color: rgba(30, 25, 21, .9); border-top: 0;
+}
+.sticker.cap-left .tag { left: 0; transform: none; }
+.sticker.cap-left .tag::before { left: calc(var(--size) / 2); }
+.sticker.cap-right .tag { left: auto; right: 0; transform: none; }
+.sticker.cap-right .tag::before { left: auto; right: calc(var(--size) / 2); margin: 0 -6px 0 0; }
+.sticker .tname { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sticker .tarr { color: var(--gold-chip); font-weight: 700; }
+.sticker .tline { display: none; grid-column: 1 / -1; margin-top: 4px; font-weight: 400; color: rgba(255, 255, 255, .82); }
+.sticker .tag:hover { background: #8C2D3A; }
+.sticker .tag:hover::before { border-bottom-color: #8C2D3A; }
+.sticker.real:hover .tag, .sticker.real:focus-within .tag, .sticker.real.open .tag { max-width: 220px; }
+.sticker.real:hover .tline, .sticker.real:focus-within .tline, .sticker.real.open .tline { display: block; }
+.sticker .tag:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+/* Phones: slimmer two-line tags so neighbours don't collide; the full name shows when opened. */
+@media (max-width: 719px) {
+  .sticker .tag { top: calc(100% - 6px); max-width: calc(var(--size) + 16px); padding: 4px 7px; font-size: 11px; border-radius: 7px; }
+  .sticker .tname { -webkit-line-clamp: 2; }
+  .sticker.real.open .tag { max-width: 200px; }
+  .sticker.real.open .tname { -webkit-line-clamp: 3; }
+}
+@media (prefers-color-scheme: dark) { .sticker .tag { box-shadow: 0 0 0 1px rgba(255, 255, 255, .14), 0 6px 14px rgba(0, 0, 0, .4); } }
 
 .board-copy { position: relative; padding: 4px 18px 26px; display: flex; flex-direction: column; gap: 18px; }
 .board .type { font-family: "Space Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--body); max-width: 34ch; line-height: 1.8; }

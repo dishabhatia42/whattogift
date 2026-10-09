@@ -212,6 +212,55 @@
     [4, 6, 88, -8], [40, 2, 80, 6], [76, 8, 86, 9], [14, 52, 82, 5], [50, 46, 90, -6], [84, 54, 76, -10],
   ];
   const FILLERS = ["🎁", "🧸", "💐", "🍫", "📚", "🕯️", "🎀", "☕", "🪴", "💌"];
+  // Cuts a product photo out of a plain white or light studio background, so it sits on the
+  // board like a sticker. Returns a PNG data URL, or null when the background is busy (a
+  // lifestyle shot) or the store doesn't allow the photo to be read; those keep the plain photo.
+  const cutouts = new Map();
+  function cutout(url) {
+    if (!cutouts.has(url)) cutouts.set(url, new Promise((done) => {
+      const im = new Image();
+      im.crossOrigin = "anonymous";
+      im.onerror = () => done(null);
+      im.onload = () => {
+        try {
+          const S = 320, k = Math.min(S / im.naturalWidth, S / im.naturalHeight);
+          const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
+          const c = document.createElement("canvas"); c.width = w; c.height = h;
+          const ctx = c.getContext("2d", { willReadFrequently: true }); ctx.drawImage(im, 0, 0, w, h);
+          const data = ctx.getImageData(0, 0, w, h), px = data.data;
+          // "Background" = bright and nearly grey (white, off-white, light grey).
+          const bg = (i) => { const r = px[i], g = px[i + 1], b = px[i + 2]; return Math.min(r, g, b) > 222 && Math.max(r, g, b) - Math.min(r, g, b) < 24; };
+          const edge = [];
+          for (let x = 0; x < w; x++) edge.push(x, (h - 1) * w + x);
+          for (let y = 1; y < h - 1; y++) edge.push(y * w, y * w + w - 1);
+          if (edge.filter((p) => bg(p * 4)).length < edge.length * 0.85) return done(null);
+          // Flood in from the edges, so white parts inside the product stay put.
+          const seen = new Uint8Array(w * h), stack = edge.filter((p) => bg(p * 4));
+          let removed = 0;
+          while (stack.length) {
+            const p = stack.pop();
+            if (seen[p]) continue;
+            seen[p] = 1; px[p * 4 + 3] = 0; removed++;
+            const x = p % w, y = (p - x) / w;
+            for (const q of [x > 0 && p - 1, x < w - 1 && p + 1, y > 0 && p - w, y < h - 1 && p + w]) if (q !== false && !seen[q] && bg(q * 4)) stack.push(q);
+          }
+          // Nothing left, or almost nothing removed: not worth cutting.
+          if (removed > w * h * 0.97 || removed < w * h * 0.08) return done(null);
+          // Soften the edge: pixels touching the removed area fade a little.
+          for (let p = 0; p < w * h; p++) {
+            if (seen[p]) continue;
+            const x = p % w;
+            if ((x > 0 && seen[p - 1]) || (x < w - 1 && seen[p + 1]) || seen[p - w] || seen[p + w]) px[p * 4 + 3] = 150;
+          }
+          ctx.putImageData(data, 0, 0);
+          done(c.toDataURL("image/png"));
+        } catch { done(null); } // the store didn't allow reading the photo
+      };
+      im.src = url;
+    }));
+    return cutouts.get(url);
+  }
+
   function mountBoard() {
     const box = document.getElementById("stickers");
     if (!box) return;
@@ -223,24 +272,31 @@
       box.textContent = "";
       slots.forEach(([x, y, size, tilt], i) => {
         const product = items[i];
-        const el = document.createElement(product ? "a" : "span");
-        // Captions on edge stickers open inward so they never run off the screen.
+        const el = document.createElement("span");
+        // Tags on edge stickers line up inward so they never run off the screen.
         el.className = "sticker " + (product ? "real" : "filler") + (x < 30 ? " cap-left" : x > 70 ? " cap-right" : "");
         // Keep every sticker inside the board: the left edge moves in by its own width as x grows.
         el.style.cssText = `left:calc(${x}% - ${Math.round(size * x / 100)}px);top:${y}%;--size:${size}px;--tilt:${tilt}deg;--d:${i * 60}ms;--drift:${(i % 3) - 1}`;
         if (product) {
-          el.href = product.url; el.target = "_blank"; el.rel = "noopener noreferrer";
-          el.setAttribute("aria-label", `${product.name}${product.line ? ": " + product.line : ""}`);
-          if (safeHref(product.image)) { const img = document.createElement("img"); img.src = product.image; img.alt = ""; img.loading = "lazy"; el.appendChild(img); }
-          else { const t = document.createElement("span"); t.className = "noimg"; t.textContent = product.name; el.appendChild(t); }
-          const cap = document.createElement("span"); cap.className = "cap";
-          const n = document.createElement("strong"); n.textContent = product.name; cap.appendChild(n);
-          if (product.line) { const l = document.createElement("span"); l.textContent = product.line; cap.appendChild(l); }
-          const go = document.createElement("em"); go.textContent = "This one's a keeper ↗"; cap.appendChild(go);
-          el.appendChild(cap);
-          // On touch screens the first tap shows the line, the second opens the product.
-          el.addEventListener("click", (e) => {
-            if (matchMedia("(hover: hover)").matches || el.classList.contains("open")) return;
+          const link = (cls) => { const a = document.createElement("a"); a.className = cls; a.href = product.url; a.target = "_blank"; a.rel = "noopener noreferrer"; return a; };
+          const photo = link("photo");
+          photo.setAttribute("aria-label", product.name);
+          if (safeHref(product.image)) {
+            const img = document.createElement("img"); img.src = product.image; img.alt = ""; photo.appendChild(img);
+            cutout(product.image).then((src) => { if (src) { img.src = src; el.classList.add("cut"); } });
+          } else { const t = document.createElement("span"); t.className = "noimg"; t.textContent = product.name; photo.appendChild(t); }
+          // Instagram-style tag: always shows the name and goes straight to the product.
+          // Hovering (or tapping the photo on a phone) also reveals Disha's line.
+          const tag = link("tag");
+          tag.title = product.name;
+          const n = document.createElement("span"); n.className = "tname"; n.textContent = product.name;
+          const arr = document.createElement("span"); arr.className = "tarr"; arr.setAttribute("aria-hidden", "true"); arr.textContent = "↗";
+          tag.append(n, arr);
+          if (product.line) { const l = document.createElement("span"); l.className = "tline"; l.textContent = product.line; tag.appendChild(l); }
+          el.append(photo, tag);
+          // On touch screens the first tap on the photo shows the line, the second opens the product.
+          photo.addEventListener("click", (e) => {
+            if (matchMedia("(hover: hover)").matches || el.classList.contains("open") || !product.line) return;
             e.preventDefault();
             box.querySelectorAll(".open").forEach((o) => o.classList.remove("open"));
             el.classList.add("open");
