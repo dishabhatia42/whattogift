@@ -135,6 +135,14 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 /* main button: full width, sticks to the bottom of the screen on phones until you reach it */
 .cta-wrap { display: flex; flex-direction: column; gap: 10px; }
 .cta-wrap.ready { position: sticky; bottom: 12px; z-index: 5; }
+/* While it's following you down the page, the small line under it hides, and a soft fade
+   behind the button covers whatever scrolls underneath. */
+.cta-wrap .note { transition: opacity .2s; }
+.cta-wrap.stuck .note { opacity: 0; visibility: hidden; }
+.cta-wrap.stuck::before {
+  content: ""; position: absolute; z-index: -1; left: -24px; right: -24px; top: -28px; bottom: -12px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--bg) 28px);
+}
 .go {
   appearance: none; font: inherit; cursor: pointer; width: 100%; min-height: 56px; border: 0; border-radius: 16px;
   font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: -0.01em;

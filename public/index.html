@@ -73,6 +73,7 @@
       <p class="note" id="hint">First things first. Who are we spoiling?</p>
       <p class="note" id="mug" hidden>Because another generic coffee mug isn't the answer.</p>
     </div>
+    <div id="cta-end" aria-hidden="true" style="margin-top:-36px;height:1px"></div>
   </div>
 
   <section class="featured" id="featured" aria-label="Featured gift shops" hidden>
@@ -216,6 +217,10 @@
   const toQuestions = (e) => { e.preventDefault(); $("s1").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }); };
   $("era-go").addEventListener("click", toQuestions);
   $("header-cta").addEventListener("click", toQuestions);
+  // The button is "stuck" (following you down the page) while its real spot is still below the screen.
+  new IntersectionObserver(([e]) => {
+    $("cta").classList.toggle("stuck", !e.isIntersecting && e.boundingClientRect.top > 0);
+  }).observe($("cta-end"));
   render();
 })();
 </script>
