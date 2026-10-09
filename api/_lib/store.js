@@ -58,6 +58,8 @@ export function clean(data) {
     recipients: oneOf(p.recipients, RECIPIENT_IDS),
     occasions: oneOf(p.occasions, OCCASION_IDS),
     tags: (Array.isArray(p.tags) ? p.tags : []).map((t) => str(t, 30)).filter(Boolean).slice(0, 10),
+    board: p.board === true,   // shown as a sticker on the home-page board
+    line: str(p.line, 140),    // Disha's one-liner shown when a sticker is opened
     active: p.active !== false,
   })).filter((p) => p.name && p.url);
 

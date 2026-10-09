@@ -8,7 +8,7 @@
 <meta name="description" content="Thoughtful gifts for your favourite humans. Even the ones who say they don't want anything.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Space+Mono&display=swap">
 <link rel="stylesheet" href="/style.css">
 <meta property="og:title" content="Serial Gifter · We take gifting personally">
 <meta property="og:description" content="Thoughtful gifts for your favourite humans. Even the ones who say they don't want anything.">
@@ -16,18 +16,30 @@
 <meta name="twitter:card" content="summary">
 </head>
 <body>
-<main class="page">
-  <div class="bar rise" style="--i:0">
-    <span class="brandline">serialgifter<b aria-hidden="true">✳</b></span>
-    <span class="tagline">We take gifting personally.</span>
+<header class="site-header" id="site-header">
+  <div class="site-header-inner">
+    <a class="logo" href="/" aria-label="Serial Gifter home">
+      <span class="wordmark"><span class="name">serial<em>gifter</em></span><span class="tagline">We take gifting personally.</span></span>
+    </a>
+    <a class="header-cta" href="#s1" id="header-cta">🎁 Find a gift</a>
   </div>
+</header>
+<!-- The board: gifts pinned like stickers on grid paper, with the headline sitting on it -->
+<section class="board" id="board" aria-label="Gifts we love">
+  <div class="board-inner">
+    <div class="stickers" id="stickers"></div>
+    <div class="board-copy">
+      <p class="type rise" style="--i:2">A handpicked collection of gifts that live rent-free in our heads.</p>
+      <div class="board-hero rise" style="--i:1">
+        <h1>Less ordinary. More <span>“OH MY GOD, YOU REMEMBERED!”</span></h1>
+        <p class="lede">Thoughtful gifts for your favourite humans. Even the ones who say they don't want anything.</p>
+        <p class="promise">Really good gifts. Zero guesswork. Maximum brownie points.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-  <header class="rise" style="--i:1">
-    <h1>Less ordinary. More <span>“OH MY GOD, YOU REMEMBERED!”</span></h1>
-    <p class="lede">Thoughtful gifts for your favourite humans. Even the ones who say they don't want anything.</p>
-    <p class="promise">Really good gifts. Zero guesswork. Maximum brownie points.</p>
-  </header>
-
+<main class="page">
   <div class="steps">
     <section class="step rise" style="--i:2" aria-labelledby="s1">
       <h2 id="s1">Who's the lucky human?</h2>
@@ -108,6 +120,7 @@
   const state = fromParams(new URLSearchParams(location.search));
   if (state.recipient && !state.occasion) state.occasion = occasionsFor(state.recipient)[0].id;
   const renderFeatured = mountFeatured(() => state);
+  WTG.mountBoard();
 
   function pills(container, items, onClick) {
     for (const it of items) {
@@ -200,8 +213,10 @@
     if (!state.recipient || !state.occasion) return;
     location.href = "/ideas?" + toParams(state).toString();
   });
-  // "Go make someone's day" jumps back up to the first question.
-  $("era-go").addEventListener("click", (e) => { e.preventDefault(); $("s1").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }); });
+  // "Go make someone's day" and the header button jump to the first question.
+  const toQuestions = (e) => { e.preventDefault(); $("s1").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }); };
+  $("era-go").addEventListener("click", toQuestions);
+  $("header-cta").addEventListener("click", toQuestions);
   render();
 })();
 </script>

@@ -89,9 +89,10 @@
   }
 
   // ---- ads (and the version stamp that refreshes cached searches after admin changes)
-  const catalog = { ads: [], version: "" };
+  const catalog = { ads: [], board: [], version: "" };
   const catalogReady = fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((d) => {
     if (d && Array.isArray(d.ads)) catalog.ads = d.ads;
+    if (d && Array.isArray(d.board)) catalog.board = d.board;
     if (d && d.version) catalog.version = d.version;
   }).catch(() => {});
 
@@ -200,9 +201,80 @@
     return render;
   }
 
+  // ---- the home-page board: pinned products as tilted stickers, topped up with emoji stickers
+  // so it never looks empty. Positions are hand-placed slots (x %, y %, size px, tilt deg).
+  // Wide: the right half stays above ~45% so the headline (bottom-right) is never covered.
+  const SLOTS_WIDE = [
+    [6, 8, 132, -8], [22, 40, 112, 6], [34, 6, 120, 9], [50, 8, 148, -4], [68, 4, 124, 7],
+    [87, 6, 104, -9], [6, 60, 104, 5], [36, 56, 96, -6], [63, 32, 110, 4], [82, 34, 96, 10],
+  ];
+  const SLOTS_NARROW = [
+    [4, 6, 88, -8], [40, 2, 80, 6], [76, 8, 86, 9], [14, 52, 82, 5], [50, 46, 90, -6], [84, 54, 76, -10],
+  ];
+  const FILLERS = ["🎁", "🧸", "💐", "🍫", "📚", "🕯️", "🎀", "☕", "🪴", "💌"];
+  function mountBoard() {
+    const box = document.getElementById("stickers");
+    if (!box) return;
+    const wide = matchMedia("(min-width: 720px)");
+    const calm = matchMedia("(prefers-reduced-motion: reduce)");
+    function draw() {
+      const slots = wide.matches ? SLOTS_WIDE : SLOTS_NARROW;
+      const items = catalog.board.filter((p) => safeHref(p.url)).slice(0, slots.length);
+      box.textContent = "";
+      slots.forEach(([x, y, size, tilt], i) => {
+        const product = items[i];
+        const el = document.createElement(product ? "a" : "span");
+        // Captions on edge stickers open inward so they never run off the screen.
+        el.className = "sticker " + (product ? "real" : "filler") + (x < 30 ? " cap-left" : x > 70 ? " cap-right" : "");
+        // Keep every sticker inside the board: the left edge moves in by its own width as x grows.
+        el.style.cssText = `left:calc(${x}% - ${Math.round(size * x / 100)}px);top:${y}%;--size:${size}px;--tilt:${tilt}deg;--d:${i * 60}ms;--drift:${(i % 3) - 1}`;
+        if (product) {
+          el.href = product.url; el.target = "_blank"; el.rel = "noopener noreferrer";
+          el.setAttribute("aria-label", `${product.name}${product.line ? ": " + product.line : ""}`);
+          if (safeHref(product.image)) { const img = document.createElement("img"); img.src = product.image; img.alt = ""; img.loading = "lazy"; el.appendChild(img); }
+          else { const t = document.createElement("span"); t.className = "noimg"; t.textContent = product.name; el.appendChild(t); }
+          const cap = document.createElement("span"); cap.className = "cap";
+          const n = document.createElement("strong"); n.textContent = product.name; cap.appendChild(n);
+          if (product.line) { const l = document.createElement("span"); l.textContent = product.line; cap.appendChild(l); }
+          const go = document.createElement("em"); go.textContent = "This one's a keeper ↗"; cap.appendChild(go);
+          el.appendChild(cap);
+          // On touch screens the first tap shows the line, the second opens the product.
+          el.addEventListener("click", (e) => {
+            if (matchMedia("(hover: hover)").matches || el.classList.contains("open")) return;
+            e.preventDefault();
+            box.querySelectorAll(".open").forEach((o) => o.classList.remove("open"));
+            el.classList.add("open");
+          });
+        } else {
+          el.setAttribute("aria-hidden", "true");
+          el.textContent = FILLERS[i % FILLERS.length];
+        }
+        box.appendChild(el);
+      });
+    }
+    // Gentle drift while scrolling, desktop only.
+    let ticking = false;
+    addEventListener("scroll", () => {
+      if (ticking || !wide.matches || calm.matches) return;
+      ticking = true;
+      requestAnimationFrame(() => { box.style.setProperty("--scroll", Math.min(scrollY, 600)); ticking = false; });
+    }, { passive: true });
+    document.addEventListener("click", (e) => { if (!e.target.closest(".sticker")) box.querySelectorAll(".open").forEach((o) => o.classList.remove("open")); });
+    wide.addEventListener("change", draw);
+    draw();
+    catalogReady.then(draw);
+  }
+
+  // Header gets a soft line and shadow once the page scrolls.
+  const header = document.getElementById("site-header");
+  if (header) {
+    const onScroll = () => header.classList.toggle("scrolled", window.scrollY > 4);
+    addEventListener("scroll", onScroll, { passive: true }); onScroll();
+  }
+
   window.WTG = {
     RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES,
     asksGender, safeHref, toParams, fromParams, resultsTitle,
-    catalog, catalogReady, pickAds, mountFeatured,
+    catalog, catalogReady, pickAds, mountFeatured, mountBoard,
   };
 })();
