@@ -319,9 +319,9 @@
       requestAnimationFrame(() => { box.style.setProperty("--scroll", Math.min(scrollY, 600)); ticking = false; });
     }, { passive: true });
     document.addEventListener("click", (e) => { if (!e.target.closest(".sticker")) box.querySelectorAll(".open").forEach((o) => o.classList.remove("open")); });
-    wide.addEventListener("change", draw);
-    draw();
-    catalogReady.then(draw);
+    // Draw only once the products have arrived. Drawing straight away showed the emoji
+    // placeholders for a moment on every load before the real products replaced them.
+    catalogReady.then(() => { draw(); wide.addEventListener("change", draw); });
   }
 
   // Header gets a soft line and shadow once the page scrolls.
