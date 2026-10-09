@@ -2,15 +2,15 @@
 (() => {
   // Who: relationships only. Gender is a separate, optional follow-up where it matters.
   const RECIPIENTS = [
-    { id: "partner", t: "Partner", ask: true },
-    { id: "friend", t: "Friend", ask: true },
-    { id: "mom", t: "Mom" },
-    { id: "dad", t: "Dad" },
-    { id: "parents", t: "Parents" },
-    { id: "sibling", t: "Sibling", ask: true },
-    { id: "colleague", t: "Colleague", ask: true },
-    { id: "couple", t: "A couple" },
-    { id: "child", t: "A child", ask: true },
+    { id: "partner", e: "❤️", t: "My person", ask: true },
+    { id: "friend", e: "🫶", t: "Bestie", ask: true },
+    { id: "mom", e: "💐", t: "Mom" },
+    { id: "dad", e: "🧢", t: "Dad" },
+    { id: "parents", e: "🏡", t: "Parents" },
+    { id: "sibling", e: "😈", t: "Sibling", ask: true },
+    { id: "colleague", e: "💻", t: "Work bestie", ask: true },
+    { id: "couple", e: "🥂", t: "A couple" },
+    { id: "child", e: "🧸", t: "Little human", ask: true },
   ];
   const GENDERS = [{ id: "him", t: "Him" }, { id: "her", t: "Her" }, { id: "any", t: "Either" }];
   const OCCASIONS = [
@@ -24,23 +24,33 @@
     r === "couple" ? OCCASIONS.filter((o) => o.id !== "birthday")
     : r === "child" ? OCCASIONS.filter((o) => o.id === "birthday" || o.id === "just-because")
     : OCCASIONS;
+  const BASE_INTERESTS = ["Fashion & style", "All things tech", "Books & stories", "Experiences", "Home & cosy things", "Fitness & wellness", "Food & treats", "Handmade & artsy"];
   const SUGGESTIONS = {
-    default: ["Clothes", "Tech", "Books", "Experiences", "Home decor", "Fitness", "Food", "Handmade"],
-    partner: ["Clothes", "Tech", "Jewellery", "Experiences", "Grooming", "Skincare", "Gaming", "Personalised"],
-    friend: ["Clothes", "Skincare", "Books", "Memories", "Experiences", "Tech", "Snacks"],
-    mom: ["Saree & ethnic wear", "Skincare", "Kitchen", "Jewellery", "Health", "Spiritual", "Plants"],
-    dad: ["Tech he'll use", "Grooming", "Health", "Watches", "Books", "Travel", "Comfort"],
-    parents: ["Health", "Comfort", "Tech they'll use", "Spiritual", "Home", "Travel", "Gardening"],
-    sibling: ["Clothes", "Tech", "Gaming", "Skincare", "Books", "Fitness", "Snacks"],
-    colleague: ["Desk & office", "Coffee & tea", "Books", "Stationery", "Plants", "Snacks"],
-    couple: ["Kitchen", "Home decor", "Personalised", "Dinnerware", "Experiences", "Travel"],
-    child: ["Toys", "Books", "Art & craft", "Games", "Outdoor play", "Learning"],
+    default: BASE_INTERESTS,
+    partner: [...BASE_INTERESTS, "Jewellery", "Personalised"],
+    friend: [...BASE_INTERESTS, "Skincare", "Memories"],
+    mom: [...BASE_INTERESTS, "Ethnic wear", "Spiritual"],
+    dad: [...BASE_INTERESTS, "Watches", "Health"],
+    parents: [...BASE_INTERESTS, "Health", "Spiritual"],
+    sibling: [...BASE_INTERESTS, "Gaming", "Skincare"],
+    colleague: [...BASE_INTERESTS, "Desk & office", "Coffee & tea"],
+    couple: [...BASE_INTERESTS, "Kitchen", "Personalised"],
+    child: ["Toys & games", "Books & stories", "Art & craft", "Outdoor play", "Learning & puzzles", "Food & treats"],
+  };
+  // Emojis are display-only; the plain words are what the search sees.
+  const INTEREST_EMOJI = {
+    "Fashion & style": "👗", "All things tech": "📱", "Books & stories": "📚", "Experiences": "🎟️",
+    "Home & cosy things": "🪴", "Fitness & wellness": "🏋️", "Food & treats": "🍫", "Handmade & artsy": "🎨",
+    "Jewellery": "💍", "Personalised": "✨", "Skincare": "🧴", "Memories": "📸", "Ethnic wear": "🥻",
+    "Spiritual": "🪔", "Watches": "⌚", "Health": "🩺", "Gaming": "🎮", "Desk & office": "🖇️",
+    "Coffee & tea": "☕", "Kitchen": "🍳", "Toys & games": "🧸", "Art & craft": "🖍️", "Outdoor play": "⚽",
+    "Learning & puzzles": "🧩",
   };
   const BUDGETS = [
-    { id: "under-1000", t: "Under ₹1k" },
-    { id: "1000-3000", t: "₹1k – 3k" },
-    { id: "3000-7000", t: "₹3k – 7k" },
-    { id: "7000-plus", t: "₹7k+" },
+    { id: "under-1000", t: "Under ₹1,000" },
+    { id: "1000-3000", t: "₹1,000–₹3,000" },
+    { id: "3000-7000", t: "₹3,000–₹7,000" },
+    { id: "7000-plus", t: "₹7,000+", note: "Going all out, huh?" },
   ];
   const STORE_NAMES = { amazon: "Amazon", myntra: "Myntra", nykaa: "Nykaa", flipkart: "Flipkart" };
   const asksGender = (r) => !!RECIPIENTS.find((x) => x.id === r)?.ask;
@@ -68,11 +78,11 @@
   function resultsTitle(s) {
     const g = s.gender === "him" || s.gender === "her" ? s.gender : null;
     const who = {
-      partner: g === "him" ? "your boyfriend or husband" : g === "her" ? "your girlfriend or wife" : "your partner",
-      friend: "your friend", mom: "your mom", dad: "your dad", parents: "your parents",
+      partner: g === "him" ? "your boyfriend or husband" : g === "her" ? "your girlfriend or wife" : "your person",
+      friend: "your bestie", mom: "your mom", dad: "your dad", parents: "your parents",
       sibling: g === "him" ? "your brother" : g === "her" ? "your sister" : "your sibling",
-      colleague: "a colleague", couple: "the couple",
-      child: g === "him" ? "a little boy" : g === "her" ? "a little girl" : "a child",
+      colleague: "your work bestie", couple: "the couple",
+      child: g === "him" ? "a little boy" : g === "her" ? "a little girl" : "a little human",
     }[s.recipient];
     const why = { birthday: "Birthday", anniversary: "Anniversary", wedding: "Wedding", "just-because": "" }[s.occasion];
     return why ? `${why} ideas for ${who}` : `Ideas for ${who}, just because`;
@@ -170,7 +180,7 @@
         const title = document.createElement("strong"); title.textContent = ad.title;
         tx.append(who, title);
         if (ad.tagline) { const tl = document.createElement("span"); tl.className = "tl"; tl.textContent = ad.tagline; tx.appendChild(tl); }
-        const go = document.createElement("span"); go.className = "go2"; go.textContent = live.length > 1 ? "Shop →" : `Shop ${ad.brand} →`; tx.appendChild(go);
+        const go = document.createElement("span"); go.className = "go2"; go.textContent = live.length > 1 ? "Explore →" : "Explore this find →"; tx.appendChild(go);
         a.appendChild(tx); row.appendChild(a);
       }
       section.hidden = !ordered.length;
@@ -191,7 +201,7 @@
   }
 
   window.WTG = {
-    RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, SUGGESTIONS, BUDGETS, STORE_NAMES,
+    RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES,
     asksGender, safeHref, toParams, fromParams, resultsTitle,
     catalog, catalogReady, pickAds, mountFeatured,
   };

@@ -15,13 +15,17 @@
 <main class="page">
   <div class="bar">
     <a class="back" id="edit" href="/">← Edit</a>
-    <a class="brandline" href="/">Serial Gifter<i aria-hidden="true"></i></a>
+    <a class="brandline" href="/">serialgifter<b aria-hidden="true">✳</b></a>
   </div>
 
   <header class="hero rise" style="--i:0">
-    <h1 id="title">Finding ideas…</h1>
+    <h1 id="title">Hunting down the good stuff…</h1>
+    <p class="promise" id="ready" hidden>Oh, they're going to LOVE these.</p>
     <div class="chips" id="chips"></div>
-    <button class="secondary" id="again" type="button" hidden>Show different ideas</button>
+    <div class="hero-actions">
+      <button class="secondary" id="again" type="button" hidden>Show me different ones ↻</button>
+      <a class="quiet-link" href="/">Different human, different mission ↻</a>
+    </div>
   </header>
 
   <section aria-live="polite">
@@ -29,7 +33,10 @@
     <p class="error" id="error" role="alert" hidden></p>
   </section>
 
+  <div class="toast" id="toast" role="status" hidden></div>
+
   <footer>
+    <p>Made with love, and a slight obsession with gifting.</p>
     <p>Cards marked "Sponsored" are paid placements. Prices are estimates. Links open a store search, so check reviews and delivery dates before buying.</p>
     <p>Ideas are suggested by AI and can be imperfect. You know them best.</p>
   </footer>
@@ -46,7 +53,7 @@
   const key = toParams(state).toString();
   let variant = 0, busy = false;
 
-  $("title").textContent = resultsTitle(state);
+  const finalTitle = resultsTitle(state);
   document.title = `${resultsTitle(state)} · Serial Gifter`;
   $("edit").href = "/?" + key;
   const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
@@ -64,12 +71,16 @@
     if (own && safeHref(idea.image)) { const img = el("img", "thumb"); img.src = idea.image; img.alt = ""; img.loading = "lazy"; body.appendChild(img); }
     body.append(el("h3", "", idea.name), el("p", "", idea.why));
     const a = el("a", "shop"); a.target = "_blank"; a.rel = "noopener noreferrer";
-    if (own) { a.href = idea.url; a.textContent = "View product ↗"; }
+    if (own) { a.href = idea.url; a.textContent = "This one's a keeper ↗"; }
     else {
       a.href = /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com)\//.test(idea.url) ? idea.url : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
       a.textContent = `Find on ${STORE_NAMES[idea.store] || "Amazon"} ↗`;
     }
-    body.appendChild(a);
+    const links = el("div", "links"); links.appendChild(a);
+    const hint = el("button", "hint-btn", "Send a not-so-subtle hint ↗"); hint.type = "button";
+    hint.addEventListener("click", () => share(idea, a.href));
+    links.appendChild(hint);
+    body.appendChild(links);
     li.append(el("span", "num", String(n + 1).padStart(2, "0")), body);
     return li;
   }
@@ -84,9 +95,23 @@
     return c;
   }
 
+  // Share one idea: the phone's share sheet where available, otherwise copy a ready-made message.
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2200); }
+  async function share(idea, url) {
+    const text = `Not saying anything… but ${idea.name} would make a very good gift 👀`;
+    try {
+      if (navigator.share) { await navigator.share({ title: idea.name, text, url }); return; }
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      toast("Hint copied. Go drop it in the group chat 😉");
+    } catch (e) {
+      if (e && e.name !== "AbortError") toast("Couldn't share that one. Copy the link instead?");
+    }
+  }
+
   async function load() {
     if (busy) return;
     busy = true; $("again").disabled = true; $("error").hidden = true;
+    $("title").textContent = "Hunting down the good stuff…"; $("ready").hidden = true;
     variant = (variant % 3) + 1; // "Show different ideas" cycles three cached answers
     const list = $("ideas"); list.textContent = "";
     for (let i = 0; i < 4; i++) list.appendChild(el("div", "idea skeleton"));
@@ -95,7 +120,7 @@
       await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
       const r = await fetch(`/api/gift-ideas?${key}&v=${variant}${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
       const data = await r.json().catch(() => ({}));
-      if (!r.ok || !Array.isArray(data.ideas)) throw new Error(data.error || "Something went wrong. Please try again.");
+      if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("Even we couldn't crack this one. Let's try again?");
       list.textContent = "";
       const [adA, adB] = pickAds(state);
       let n = 0;
@@ -107,9 +132,11 @@
       });
       if (adA && data.ideas.length <= 2) list.appendChild(adItem(adA, n));
       $("again").hidden = false;
+      $("title").textContent = finalTitle; $("ready").hidden = false;
     } catch (err) {
+      $("title").textContent = finalTitle;
       list.textContent = "";
-      $("error").textContent = (err.message || "Something went wrong.") + " ";
+      $("error").textContent = "Even we couldn't crack this one. Let's try again? ";
       const retry = el("button", "secondary", "Try again"); retry.type = "button"; retry.style.marginTop = "12px";
       retry.addEventListener("click", () => { variant -= 1; load(); }); // retry the same answer
       $("error").appendChild(retry);

@@ -5,28 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Serial Gifter</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%81%3C/text%3E%3C/svg%3E">
-<meta name="description" content="Pick who it's for and the occasion, add what they love, and get gift ideas you can actually buy.">
+<meta name="description" content="Thoughtful gifts for your favourite humans. Even the ones who say they don't want anything.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/style.css">
-<meta property="og:title" content="Serial Gifter · Gift ideas you can actually buy">
-<meta property="og:description" content="Pick who it's for and the occasion, add what they love, and get gift ideas you can actually buy.">
+<meta property="og:title" content="Serial Gifter · We take gifting personally">
+<meta property="og:description" content="Thoughtful gifts for your favourite humans. Even the ones who say they don't want anything.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
 </head>
 <body>
 <main class="page">
-  <div class="bar rise" style="--i:0"><span class="brandline">Serial Gifter<i aria-hidden="true"></i></span></div>
+  <div class="bar rise" style="--i:0">
+    <span class="brandline">serialgifter<b aria-hidden="true">✳</b></span>
+    <span class="tagline">We take gifting personally.</span>
+  </div>
 
   <header class="rise" style="--i:1">
-    <h1>What should I <span>gift?</span></h1>
-    <p class="lede">A few taps and you'll have gift ideas you can actually buy.</p>
+    <h1>Less ordinary. More <span>“OH MY GOD, YOU REMEMBERED!”</span></h1>
+    <p class="lede">Thoughtful gifts for your favourite humans. Even the ones who say they don't want anything.</p>
+    <p class="promise">Really good gifts. Zero guesswork. Maximum brownie points.</p>
   </header>
 
   <div class="steps">
     <section class="step rise" style="--i:2" aria-labelledby="s1">
-      <h2 id="s1">Who's it for?</h2>
+      <h2 id="s1">Who's the lucky human?</h2>
       <div class="suggest" id="recipients" role="group" aria-labelledby="s1"></div>
       <div class="gender" id="gender-row" hidden>
         <span>Are they…</span>
@@ -35,31 +39,36 @@
     </section>
 
     <section class="step" id="occasion-step" hidden aria-labelledby="s1b">
-      <h2 id="s1b">What's the occasion?</h2>
+      <h2 id="s1b">What are we celebrating?</h2>
       <div class="suggest" id="occasions" role="group" aria-labelledby="s1b"></div>
     </section>
 
     <section class="step rise" style="--i:3" aria-labelledby="s2">
-      <h2 id="s2">What are they into?</h2>
+      <div class="step-head"><h2 id="s2">What makes them tick?</h2><p class="sub">Tell us what they're into. We'll do the digging.</p></div>
       <div class="suggest" id="suggest" aria-label="Suggested keywords"></div>
       <div class="tagbox" id="tagbox">
-        <input id="taginput" type="text" maxlength="30" placeholder="+ Add your own, e.g. cricket" aria-label="Add a keyword" enterkeyhint="done">
+        <input id="taginput" type="text" maxlength="30" placeholder="+ Something oddly specific? Pottery, F1, frogs…" aria-label="Add something they're into" enterkeyhint="done">
       </div>
     </section>
 
     <section class="step rise" style="--i:4" aria-labelledby="s3">
-      <h2 id="s3">Budget</h2>
+      <div class="step-head"><h2 id="s3">How much are we spoiling them?</h2><p class="sub">Thoughtfulness comes in every budget.</p></div>
       <div class="suggest" id="budgets" role="group" aria-labelledby="s3"></div>
+      <p class="aside" id="budget-note" hidden></p>
     </section>
 
     <div class="cta-wrap rise" style="--i:5" id="cta">
-      <button class="go" id="go" type="button" disabled>Find gift ideas <span class="arr" aria-hidden="true">→</span></button>
-      <p class="note" id="hint">Pick who it's for to start.</p>
+      <button class="go" id="go" type="button" disabled>Find gifts they'll actually love <span class="arr" aria-hidden="true">→</span></button>
+      <p class="note" id="hint">First things first. Who are we spoiling?</p>
+      <p class="note" id="mug" hidden>Because another generic coffee mug isn't the answer.</p>
     </div>
   </div>
 
   <section class="featured" id="featured" aria-label="Featured gift shops" hidden>
-    <div class="featured-head"><span class="kicker">Featured</span><span class="kicker" id="feat-count"></span></div>
+    <div class="featured-head">
+      <div><h2 class="sec">Handpicked little discoveries</h2><p class="sub">Things worth gifting. Things worth keeping. Things we'd happily send to our own favourite people.</p></div>
+      <span class="kicker" id="feat-count"></span>
+    </div>
     <div class="feat-wrap">
       <button class="feat-nav prev" id="feat-prev" type="button" aria-label="Previous ad">‹</button>
       <div class="feat-row" id="feat-row"></div>
@@ -68,16 +77,31 @@
     <div class="feat-dots" id="feat-dots"></div>
   </section>
 
+  <section class="era">
+    <h2 class="sec">Your gifting era starts here.</h2>
+    <p>You know that feeling when someone opens your gift and says, “HOW DID YOU KNOW?!” Yeah. We're here for more of that.</p>
+    <p>No endless scrolling. No panic-buying something vaguely acceptable. Just lovely, thoughtful finds that make people feel seen.</p>
+    <a class="secondary" href="#s1" id="era-go">Go make someone's day →</a>
+  </section>
+
+  <section class="note-card">
+    <p class="kicker">A little note from Serial Gifter</p>
+    <p>The best gifts aren't always expensive. Sometimes they're silly. Sometimes they're sentimental. Sometimes they're something someone mentioned once, six months ago, and forgot about.</p>
+    <p class="beat">But you didn't.</p>
+    <p>And that's what makes a gift special. We're just here to make finding it a whole lot easier.</p>
+    <p class="sign">Made for people who give a damn. ♡</p>
+  </section>
+
   <footer>
+    <p>Made with love, and a slight obsession with gifting.</p>
     <p>Ideas are suggested by AI and can be imperfect. You know them best.</p>
-    <p>Made by Disha Bhatia.</p>
   </footer>
 </main>
 
 <script src="/common.js"></script>
 <script>
 (() => {
-  const { RECIPIENTS, GENDERS, occasionsFor, SUGGESTIONS, BUDGETS, asksGender, toParams, fromParams, mountFeatured } = window.WTG;
+  const { RECIPIENTS, GENDERS, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, asksGender, toParams, fromParams, mountFeatured } = window.WTG;
   const $ = (id) => document.getElementById(id);
 
   // Start from the URL, so "Edit" on the results page comes back with the answers still picked.
@@ -88,7 +112,8 @@
   function pills(container, items, onClick) {
     for (const it of items) {
       const b = document.createElement("button");
-      b.type = "button"; b.className = "pill"; b.dataset.id = it.id; b.textContent = it.t; b.setAttribute("aria-pressed", "false");
+      b.type = "button"; b.className = "pill"; b.dataset.id = it.id; b.setAttribute("aria-pressed", "false");
+      b.textContent = it.e ? `${it.e} ${it.t}` : it.t;
       b.addEventListener("click", () => onClick(it.id));
       container.appendChild(b);
     }
@@ -154,7 +179,7 @@
     for (const t of suggestions) {
       const on = state.tags.some((x) => x.toLowerCase() === t.toLowerCase());
       const b = document.createElement("button");
-      b.type = "button"; b.className = "pill"; b.textContent = t; b.setAttribute("aria-pressed", String(on));
+      b.type = "button"; b.className = "pill"; b.textContent = INTEREST_EMOJI[t] ? `${INTEREST_EMOJI[t]} ${t}` : t; b.setAttribute("aria-pressed", String(on));
       b.addEventListener("click", () => on ? removeTag(state.tags.find((x) => x.toLowerCase() === t.toLowerCase())) : addTag(t));
       sug.appendChild(b);
     }
@@ -163,6 +188,10 @@
     $("go").disabled = !ready;
     $("cta").classList.toggle("ready", ready);
     $("hint").hidden = ready;
+    $("mug").hidden = !ready;
+    const note = BUDGETS.find((b) => b.id === state.budget)?.note;
+    $("budget-note").textContent = note || "";
+    $("budget-note").hidden = !note;
     renderFeatured();
   }
 
@@ -171,6 +200,8 @@
     if (!state.recipient || !state.occasion) return;
     location.href = "/ideas?" + toParams(state).toString();
   });
+  // "Go make someone's day" jumps back up to the first question.
+  $("era-go").addEventListener("click", (e) => { e.preventDefault(); $("s1").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }); });
   render();
 })();
 </script>
