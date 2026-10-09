@@ -17,30 +17,42 @@
     <a class="logo" href="/" aria-label="Serial Gifter home">
       <span class="wordmark"><span class="name">serialgifter</span></span>
     </a>
-    <a class="header-cta ghost" id="edit" href="/">← Edit answers</a>
+    <a class="header-cta ghost" id="edit" href="/">← Edit my picks</a>
   </div>
 </header>
-<main class="page">
-  <header class="hero rise" style="--i:0">
+<main class="page wide">
+  <header class="edit-hero rise" style="--i:0">
+    <p class="kicker" id="kicker">The gift edit</p>
     <h1 id="title">Hunting down the good stuff…</h1>
-    <p class="promise" id="ready" hidden>Oh, they're going to LOVE these.</p>
-    <div class="chips" id="chips"></div>
-    <div class="hero-actions">
-      <button class="secondary" id="again" type="button" hidden>Show me different ones ↻</button>
-      <a class="quiet-link" href="/">Different human, different mission ↻</a>
-    </div>
+    <p class="edit-vibe" id="vibe" hidden></p>
+    <p class="edit-sub" id="ready" hidden>We think we understood the assignment.</p>
+    <div class="edit-chips" id="chips"></div>
   </header>
 
-  <section aria-live="polite">
-    <div class="ideas" id="ideas"></div>
+  <section class="edit-collection" aria-live="polite">
+    <div class="edit-bar">
+      <h2 class="sec" id="count">Finding little ways to make their day…</h2>
+      <button class="link-btn" id="again" type="button" hidden>Not quite their vibe? Try again ↻</button>
+    </div>
+    <div class="cards" id="ideas"></div>
     <p class="error" id="error" role="alert" hidden></p>
+  </section>
+
+  <section class="edit-collection" id="sponsored" hidden aria-label="Sponsored picks">
+    <div class="edit-bar"><h2 class="sec">Sponsored picks</h2></div>
+    <div class="cards" id="ads"></div>
+  </section>
+
+  <section class="edit-more" id="more" hidden>
+    <button class="secondary" id="again2" type="button">Not quite their vibe? Try again ↻</button>
+    <a class="quiet-link" href="/">Shopping for someone else? →</a>
   </section>
 
   <div class="toast" id="toast" role="status" hidden></div>
 
   <footer>
     <p>Made with love, and a slight obsession with gifting.</p>
-    <p>Cards marked "Sponsored" are paid placements. Prices are estimates. Links open a store search, so check reviews and delivery dates before buying.</p>
+    <p>"Gift idea" cards open a store search, so check reviews and delivery dates before buying. Prices are estimates. Cards marked "Sponsored" are paid placements.</p>
     <p>Ideas are suggested by AI and can be imperfect. You know them best.</p>
   </footer>
 </main>
@@ -48,7 +60,7 @@
 <script src="/common.js"></script>
 <script>
 (() => {
-  const { BUDGETS, toParams, fromParams, resultsTitle, safeHref, STORE_NAMES, catalog, catalogReady, pickAds } = window.WTG;
+  const { BUDGETS, RECIPIENTS, OCCASIONS, toParams, fromParams, resultsTitle, safeHref, STORE_NAMES, catalog, catalogReady, pickAds } = window.WTG;
   const $ = (id) => document.getElementById(id);
 
   const state = fromParams(new URLSearchParams(location.search));
@@ -56,45 +68,62 @@
   const key = toParams(state).toString();
   let variant = 0, busy = false;
 
-  const finalTitle = resultsTitle(state);
+  // "your bestie" -> "Your bestie is going to lose it."
+  const who = resultsTitle(state).replace(/^.*? (?:ideas )?for /, "").replace(/, just because$/, "");
+  const plural = state.recipient === "parents" || state.recipient === "couple";
+  const finalTitle = `${who.charAt(0).toUpperCase()}${who.slice(1)} ${plural ? "are" : "is"} going to lose it.`;
   document.title = `${resultsTitle(state)} · Serial Gifter`;
   $("edit").href = "/?" + key;
+  $("kicker").textContent = `The gift edit / ${who}`;
+
+  // What they picked, as soft pills: who, occasion, interests, budget.
   const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
-  const bits = [...state.tags.map(cap), BUDGETS.find((b) => b.id === state.budget)?.t].filter(Boolean);
+  const recip = RECIPIENTS.find((r) => r.id === state.recipient), occ = OCCASIONS.find((o) => o.id === state.occasion);
+  const bits = [recip && recip.t, occ && occ.t, ...state.tags.map(cap), BUDGETS.find((b) => b.id === state.budget)?.t].filter(Boolean);
   for (const b of bits) { const s = document.createElement("span"); s.textContent = b; $("chips").appendChild(s); }
 
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  const TILES = ["#F6E3E7", "#F3EBDD", "#F7EDE6", "#EFE6EC"];
 
-  function ideaItem(idea, n) {
-    const li = el("article", "idea rise"); li.style.setProperty("--i", n);
-    const body = el("div", "body");
-    const meta = el("div", "meta"); meta.append(el("span", "kind", idea.tag || ""), el("span", "price", idea.price_range || ""));
-    body.appendChild(meta);
+  // Two kinds of card: an exact gift (Disha's own pick, real photo, direct link)
+  // and a gift idea (illustrated tile, opens a store search).
+  function card(idea, n) {
     const own = idea.own && safeHref(idea.url);
-    if (own && safeHref(idea.image)) { const img = el("img", "thumb"); img.src = idea.image; img.alt = ""; img.loading = "lazy"; body.appendChild(img); }
-    body.append(el("h3", "", idea.name), el("p", "", idea.why));
+    const c = el("article", "card rise" + (own ? " exact" : " idea")); c.style.setProperty("--i", n % 8);
+    const pic = el("div", "pic");
+    if (own && safeHref(idea.image)) { const img = el("img"); img.src = idea.image; img.alt = ""; img.loading = "lazy"; pic.appendChild(img); }
+    else { pic.classList.add("tile"); pic.style.background = TILES[n % TILES.length]; pic.appendChild(el("span", "emoji", idea.emoji || "🎁")); }
+    pic.appendChild(el("span", "kind", own ? "Our pick" : "Gift idea"));
+    const body = el("div", "body");
+    if (idea.label || idea.tag) body.appendChild(el("p", "label", idea.label || idea.tag));
+    body.append(el("h3", "", idea.name), el("p", "why", idea.why));
+    const foot = el("div", "foot");
+    foot.appendChild(el("span", "price", idea.price_range || ""));
     const a = el("a", "shop"); a.target = "_blank"; a.rel = "noopener noreferrer";
-    if (own) { a.href = idea.url; a.textContent = "This one's a keeper ↗"; }
+    if (own) { a.href = idea.url; a.textContent = "Shop this gift ↗"; }
     else {
       a.href = /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com)\//.test(idea.url) ? idea.url : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
-      a.textContent = `Find on ${STORE_NAMES[idea.store] || "Amazon"} ↗`;
+      a.textContent = `Search on ${STORE_NAMES[idea.store] || "Amazon"} ↗`;
     }
-    const links = el("div", "links"); links.appendChild(a);
-    const hint = el("button", "hint-btn", "Send a not-so-subtle hint ↗"); hint.type = "button";
+    const hint = el("button", "hint-btn", "Drop a hint ↗"); hint.type = "button";
     hint.addEventListener("click", () => share(idea, a.href));
-    links.appendChild(hint);
-    body.appendChild(links);
-    li.append(el("span", "num", String(n + 1).padStart(2, "0")), body);
-    return li;
+    const acts = el("div", "acts"); acts.append(a, hint);
+    body.append(foot, acts);
+    c.append(pic, body);
+    return c;
   }
-  function adItem(ad, n) {
-    const c = el("article", "idea ad rise"); c.style.setProperty("--i", n);
-    if (safeHref(ad.image)) { const img = el("img"); img.src = ad.image; img.alt = ""; img.loading = "lazy"; c.appendChild(img); }
-    const meta = el("div", "meta"); meta.append(el("span", "kind", "Sponsored"), el("span", "brand", ad.brand));
-    c.append(meta, el("h3", "", ad.title));
-    if (ad.tagline) c.appendChild(el("p", "", ad.tagline));
+  function adCard(ad, n) {
+    const c = el("article", "card sponsored rise"); c.style.setProperty("--i", n);
+    const pic = el("div", "pic");
+    if (safeHref(ad.image)) { const img = el("img"); img.src = ad.image; img.alt = ""; img.loading = "lazy"; pic.appendChild(img); }
+    else { pic.classList.add("tile"); pic.style.background = TILES[1]; pic.appendChild(el("span", "emoji", "🛍️")); }
+    pic.appendChild(el("span", "kind ad", "Sponsored"));
+    const body = el("div", "body");
+    body.append(el("p", "label", ad.brand), el("h3", "", ad.title));
+    if (ad.tagline) body.appendChild(el("p", "why", ad.tagline));
     const a = el("a", "shop", `Shop ${ad.brand} ↗`); a.href = ad.url; a.target = "_blank"; a.rel = "sponsored noopener noreferrer";
-    c.appendChild(a);
+    const acts = el("div", "acts"); acts.appendChild(a); body.appendChild(acts);
+    c.append(pic, body);
     return c;
   }
 
@@ -111,33 +140,43 @@
     }
   }
 
+  // While Claude thinks: shimmering cards and a few playful lines.
+  const LINES = ["Checking what's trending…", "Skipping the coffee mugs…", "Reading between the lines…", "Almost there. Good things take a second…"];
+  let lineTimer;
+  function loading(on) {
+    clearInterval(lineTimer);
+    if (!on) return;
+    let i = 0; $("count").textContent = LINES[0];
+    lineTimer = setInterval(() => { i = (i + 1) % LINES.length; $("count").textContent = LINES[i]; }, 1800);
+  }
+
   async function load() {
     if (busy) return;
-    busy = true; $("again").disabled = true; $("error").hidden = true;
-    $("title").textContent = "Hunting down the good stuff…"; $("ready").hidden = true;
-    variant = (variant % 3) + 1; // "Show different ideas" cycles three cached answers
+    busy = true; $("again").disabled = $("again2").disabled = true; $("error").hidden = true;
+    $("title").textContent = "Hunting down the good stuff…"; $("ready").hidden = $("vibe").hidden = true; $("more").hidden = true;
+    variant = (variant % 3) + 1; // "Try again" cycles three cached answers
     const list = $("ideas"); list.textContent = "";
-    for (let i = 0; i < 4; i++) list.appendChild(el("div", "idea skeleton"));
+    for (let i = 0; i < 6; i++) list.appendChild(el("div", "card skeleton"));
+    loading(true);
     try {
-      // The catalog version busts cached searches whenever products or ads change.
+      // The catalog version busts cached searches whenever products or ads change; p=2 is the card layout's answer format.
       await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
-      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=2${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
       const data = await r.json().catch(() => ({}));
-      if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("Even we couldn't crack this one. Let's try again?");
+      if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");
+      loading(false);
       list.textContent = "";
-      const [adA, adB] = pickAds(state);
-      let n = 0;
-      data.ideas.forEach((idea, i) => {
-        // Ads go after the 2nd and 6th idea: seen, but never the first thing.
-        if (i === 2 && adA) list.appendChild(adItem(adA, n));
-        if (i === 6 && adB) list.appendChild(adItem(adB, n));
-        list.appendChild(ideaItem(idea, n++));
-      });
-      if (adA && data.ideas.length <= 2) list.appendChild(adItem(adA, n));
-      $("again").hidden = false;
-      $("title").textContent = finalTitle; $("ready").hidden = false;
-    } catch (err) {
+      data.ideas.forEach((idea, i) => list.appendChild(card(idea, i)));
+      $("count").textContent = `${data.ideas.length} little ways to make their day`;
       $("title").textContent = finalTitle;
+      if (data.vibe) { $("vibe").textContent = `${data.vibe} We found ${data.ideas.length} ideas that feel very them.`; $("vibe").hidden = false; }
+      $("ready").hidden = false; $("again").hidden = false; $("more").hidden = false;
+      const ads = pickAds(state).filter(Boolean);
+      $("ads").textContent = ""; ads.forEach((ad, i) => $("ads").appendChild(adCard(ad, i)));
+      $("sponsored").hidden = !ads.length;
+    } catch (err) {
+      loading(false);
+      $("title").textContent = finalTitle; $("count").textContent = "";
       list.textContent = "";
       $("error").textContent = "Even we couldn't crack this one. Let's try again? ";
       const retry = el("button", "secondary", "Try again"); retry.type = "button"; retry.style.marginTop = "12px";
@@ -145,11 +184,13 @@
       $("error").appendChild(retry);
       $("error").hidden = false;
     } finally {
-      busy = false; $("again").disabled = false;
+      busy = false; $("again").disabled = $("again2").disabled = false;
     }
   }
 
-  $("again").addEventListener("click", () => { load(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+  const again = () => { load(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  $("again").addEventListener("click", again);
+  $("again2").addEventListener("click", again);
   load();
 })();
 </script>

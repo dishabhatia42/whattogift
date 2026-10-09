@@ -42,36 +42,40 @@ const VARIANTS = 3; // "Show different ideas" cycles through this many cached an
 const SCHEMA = {
   type: "object",
   properties: {
+    vibe: { type: "string" },
     ideas: {
       type: "array",
       items: {
         type: "object",
         properties: {
           name: { type: "string" },
+          label: { type: "string" },
           why: { type: "string" },
+          emoji: { type: "string" },
           price_range: { type: "string" },
           search_query: { type: "string" },
           store: { type: "string", enum: STORES },
-          tag: { type: "string" },
           product_id: { type: "string" },
         },
-        required: ["name", "why", "price_range", "search_query", "store", "tag", "product_id"],
+        required: ["name", "label", "why", "emoji", "price_range", "search_query", "store", "product_id"],
         additionalProperties: false,
       },
     },
   },
-  required: ["ideas"],
+  required: ["vibe", "ideas"],
   additionalProperties: false,
 };
 
-const SYSTEM = `You suggest thoughtful, specific gift ideas for shoppers in India.
-Return 8 ideas. Each must be a concrete product type someone can actually buy online in India (e.g. "Bellavita unisex perfume gift set", not "something nice").
+const SYSTEM = `You are Serial Gifter: the friend who is ridiculously good at gifts. You suggest thoughtful, specific gift ideas for shoppers in India.
+Return 8 ideas. Each must be a concrete product type someone can actually buy online in India (e.g. "Bellavita unisex perfume gift set", not "something nice"). The ideas are not ranked.
+- vibe: one short, warm line summing up the person from their interests, like "Bookish, cosy, and a little sentimental." No more than 8 words.
 - name: short product name, brand included when a well-known Indian-available brand fits.
-- why: one warm sentence on why it suits this person, occasion and interests. No fluff.
+- label: a playful personality label for who this gift is for, 2 to 5 words, like "For their bookish era", "For the professional homebody", "The sentimental pick", "A little something". Make each label different.
+- why: why THIS person will love it, in 20 words or fewer. Tie it to their interests, the occasion or who they are; never generic product marketing.
+- emoji: one emoji that pictures the gift itself (e.g. 🕯️ for a candle, 📖 for a book).
 - price_range: realistic Indian price range in rupees, e.g. "₹1,200 – ₹1,800".
 - search_query: a short query that will find this item on the chosen store (no URLs).
 - store: the best Indian store for it: amazon (default), myntra (fashion), nykaa (beauty), flipkart.
-- tag: one or two words grouping the idea (e.g. "Clothes", "Experience", "Tech").
 - product_id: "" for your own ideas. The shopper's message may list hand-curated products, each with an id. Include every listed product that genuinely suits this person, budget and interests (most relevant first, up to 4), using its exact id, its name, and a price_range copied from its price. Spread them among the 8 ideas rather than all at the top. Never invent an id, and leave out listed products that don't fit.
 Mix safe picks with one or two more personal or experience-style ideas. Respect the budget strictly when one is given. If the shopper's interests are given, cover each of them.`;
 
@@ -142,7 +146,7 @@ export default async function handler(req, res) {
       return { ...idea, name: product.name, price_range: product.price || idea.price_range, url: product.url, image: product.image, own: true };
     });
     res.setHeader("Cache-Control", `public, s-maxage=${CACHE_SECONDS}, stale-while-revalidate=3600`);
-    return res.status(200).json({ ideas });
+    return res.status(200).json({ vibe: typeof data.vibe === "string" ? data.vibe.slice(0, 80) : "", ideas });
   } catch (err) {
     if (err instanceof Anthropic.RateLimitError) {
       return res.status(429).json({ error: "Lots of people are gifting right now. Try again in a minute." });
