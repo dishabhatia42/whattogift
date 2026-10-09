@@ -289,14 +289,15 @@ footer p + p { margin-top: 4px; }
 @keyframes pop { from { opacity: 0; transform: translateY(10px) rotate(0deg) scale(.85); } }
 .sticker.filler { font-size: calc(var(--size) * .62); line-height: 1; text-align: center; filter: drop-shadow(0 6px 8px rgba(30, 25, 21, .18)); user-select: none; }
 /* No square frames: a product is either a cutout (made in the admin) with a die-cut white
-   sticker edge, or, until it has one, a photo sticker with softly rounded corners. */
+   sticker edge, or, until it has one, the photo in its own shape (a tall book stays tall, never
+   cropped) with softly rounded corners. */
 .sticker.real img { display: block; margin: 0 auto; }
 .sticker.real.loading img { visibility: hidden; }
 .sticker.real.cut img {
   width: auto; height: auto; max-width: 100%; max-height: var(--size);
   filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 8px 10px rgba(30, 25, 21, .22));
 }
-.sticker.real.photo img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 16px; border: 3px solid #fff; box-shadow: 0 8px 18px rgba(30, 25, 21, .22); }
+.sticker.real.photo img { width: auto; height: auto; max-width: 100%; max-height: var(--size); border-radius: 12px; border: 3px solid #fff; box-shadow: 0 8px 18px rgba(30, 25, 21, .22); }
 .sticker.hide { display: none; }
 .sticker.real .noimg {
   display: block; width: 100%; aspect-ratio: 1; border-radius: 8px;
