@@ -82,6 +82,8 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
   background: var(--primary); color: var(--on-primary); transition: background .15s;
 }
 .header-cta:hover { background: var(--primary-hi); }
+.header-cta { transition: background .15s, opacity .25s, transform .25s var(--ease), visibility .25s; }
+.header-cta.away { opacity: 0; transform: translateY(-6px); visibility: hidden; pointer-events: none; }
 .header-cta .arr { transition: transform .2s var(--ease); }
 .header-cta .short { display: none; }
 @media (max-width: 480px) { .header-cta .long { display: none; } .header-cta .short { display: inline; } }

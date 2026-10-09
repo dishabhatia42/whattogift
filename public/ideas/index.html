@@ -68,10 +68,10 @@
   const key = toParams(state).toString();
   let variant = 0, busy = false;
 
-  // "your bestie" -> "Your bestie is going to lose it."
+  // "your bestie" -> "Your bestie is going to love it!"
   const who = resultsTitle(state).replace(/^.*? (?:ideas )?for /, "").replace(/, just because$/, "");
   const plural = state.recipient === "parents" || state.recipient === "couple";
-  const finalTitle = `${who.charAt(0).toUpperCase()}${who.slice(1)} ${plural ? "are" : "is"} going to lose it.`;
+  const finalTitle = `${who.charAt(0).toUpperCase()}${who.slice(1)} ${plural ? "are" : "is"} going to love it!`;
   document.title = `${resultsTitle(state)} · Serial Gifter`;
   $("edit").href = "/?" + key;
   $("kicker").textContent = `The gift edit / ${who}`;

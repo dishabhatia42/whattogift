@@ -221,6 +221,10 @@
   new IntersectionObserver(([e]) => {
     $("cta").classList.toggle("stuck", !e.isIntersecting && e.boundingClientRect.top > 0);
   }).observe($("cta-end"));
+  // The header button only leads to the questions, so it steps aside once the first question
+  // is on screen (the main button takes over there) and comes back when you scroll up.
+  const headerCta = () => $("header-cta").classList.toggle("away", $("s1").getBoundingClientRect().top < innerHeight * 0.8);
+  addEventListener("scroll", headerCta, { passive: true }); addEventListener("resize", headerCta); headerCta();
   render();
 })();
 </script>
