@@ -2,7 +2,7 @@
 // the ADMIN_PASSWORD (set in Vercel's environment variables) in x-admin-key.
 import { createHash, timingSafeEqual } from "node:crypto";
 import { readData, writeData, saveImage } from "./_lib/store.js";
-import { autofill, UserError } from "./_lib/autofill.js";
+import { autofill, UserError, aiTrouble } from "./_lib/autofill.js";
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
@@ -46,6 +46,8 @@ export default async function handler(req, res) {
   } catch (err) {
     if (err instanceof UserError) return res.status(400).json({ error: err.message });
     console.error(err);
+    // Name the real problem: an AI error, or storage.
+    if (err?.status && err?.headers) return res.status(502).json({ error: aiTrouble(err) });
     return res.status(500).json({ error: "Couldn't reach storage. Is a Blob store connected to this project?" });
   }
 }

@@ -47,18 +47,25 @@ export async function autofill(rawUrl) {
       ].filter(Boolean).join("\n")
     : "The page couldn't be read (the store blocked it or it needs a browser).";
 
-  const response = await client.beta.messages.create({
-    model: "claude-opus-5-5",
-    max_tokens: 4000,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
-    system: SYSTEM,
-    messages: [{ role: "user", content: `Link: ${url}\n${details}` }],
-  });
-  const text = response.content.find((b) => b.type === "text")?.text;
-  let data;
-  try { data = JSON.parse(text); } catch { throw new Error("Couldn't read the AI's answer."); }
+  // If the AI can't run (e.g. credits ran out), still fill in what the store page says.
+  let data, aiProblem = "";
+  try {
+    const response = await client.beta.messages.create({
+      model: "claude-opus-5-5",
+      max_tokens: 4000,
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
+      system: SYSTEM,
+      messages: [{ role: "user", content: `Link: ${url}\n${details}` }],
+    });
+    data = JSON.parse(response.content.find((b) => b.type === "text")?.text);
+  } catch (err) {
+    console.error(err);
+    aiProblem = aiTrouble(err);
+    if (!page?.title) throw new UserError(`${aiProblem} The page couldn't be read either, so please fill this one in by hand.`);
+    data = { name: page.title.slice(0, 120), note: "", price: "", tags: [], recipients: [], occasions: [], check: "" };
+  }
 
   // Keep a copy of the photo so it doesn't vanish if the store changes its image links.
   let image = "";
@@ -73,11 +80,22 @@ export async function autofill(rawUrl) {
     recipients: data.recipients,
     occasions: data.occasions,
     image,
-    check: page ? data.check : `Couldn't open the page, so this is a best guess from the link. ${data.check}`.trim(),
+    check: aiProblem
+      ? `${aiProblem} Name, price and photo came from the store page; add the description, keywords and who it's for yourself.`
+      : page ? data.check : `Couldn't open the page, so this is a best guess from the link. ${data.check}`.trim(),
   };
 }
 
 export class UserError extends Error {}
+
+// A plain-English reason the AI step failed, for the admin screen.
+export function aiTrouble(err) {
+  const msg = String(err?.error?.error?.message || err?.message || "");
+  if (/credit balance/i.test(msg)) return "Your Anthropic credits have run out (top up at console.anthropic.com → Billing).";
+  if (err?.status === 401) return "The ANTHROPIC_API_KEY in Vercel isn't working.";
+  if (err?.status === 429 || err?.status === 529) return "The AI is busy right now. Try again in a minute.";
+  return "The AI couldn't help with this one right now.";
+}
 
 function safeProductUrl(raw) {
   try {
