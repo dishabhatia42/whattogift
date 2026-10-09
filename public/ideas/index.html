@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gift ideas · Thoughtful Gifting</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%81%3C/text%3E%3C/svg%3E">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main class="page">
+  <div class="bar">
+    <a class="back" id="edit" href="/">← Edit</a>
+    <a class="brandline" href="/">Thoughtful Gifting<i aria-hidden="true"></i></a>
+  </div>
+
+  <header class="hero rise" style="--i:0">
+    <h1 id="title">Finding ideas…</h1>
+    <div class="chips" id="chips"></div>
+    <button class="secondary" id="again" type="button" hidden>Show different ideas</button>
+  </header>
+
+  <section aria-live="polite">
+    <div class="ideas" id="ideas"></div>
+    <p class="error" id="error" role="alert" hidden></p>
+  </section>
+
+  <footer>
+    <p>Cards marked "Sponsored" are paid placements. Prices are estimates. Links open a store search, so check reviews and delivery dates before buying.</p>
+    <p>Ideas are suggested by AI and can be imperfect. You know them best.</p>
+  </footer>
+</main>
+
+<script src="/common.js"></script>
+<script>
+(() => {
+  const { BUDGETS, toParams, fromParams, resultsTitle, safeHref, STORE_NAMES, catalog, catalogReady, pickAds } = window.WTG;
+  const $ = (id) => document.getElementById(id);
+
+  const state = fromParams(new URLSearchParams(location.search));
+  if (!state.recipient || !state.occasion) { location.replace("/"); return; }
+  const key = toParams(state).toString();
+  let variant = 0, busy = false;
+
+  $("title").textContent = resultsTitle(state);
+  document.title = `${resultsTitle(state)} · Thoughtful Gifting`;
+  $("edit").href = "/?" + key;
+  const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+  const bits = [...state.tags.map(cap), BUDGETS.find((b) => b.id === state.budget)?.t].filter(Boolean);
+  for (const b of bits) { const s = document.createElement("span"); s.textContent = b; $("chips").appendChild(s); }
+
+  function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+  function ideaItem(idea, n) {
+    const li = el("article", "idea rise"); li.style.setProperty("--i", n);
+    const body = el("div", "body");
+    const meta = el("div", "meta"); meta.append(el("span", "kind", idea.tag || ""), el("span", "price", idea.price_range || ""));
+    body.appendChild(meta);
+    const own = idea.own && safeHref(idea.url);
+    if (own && safeHref(idea.image)) { const img = el("img", "thumb"); img.src = idea.image; img.alt = ""; img.loading = "lazy"; body.appendChild(img); }
+    body.append(el("h3", "", idea.name), el("p", "", idea.why));
+    const a = el("a", "shop"); a.target = "_blank"; a.rel = "noopener noreferrer";
+    if (own) { a.href = idea.url; a.textContent = "View product ↗"; }
+    else {
+      a.href = /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com)\//.test(idea.url) ? idea.url : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
+      a.textContent = `Find on ${STORE_NAMES[idea.store] || "Amazon"} ↗`;
+    }
+    body.appendChild(a);
+    li.append(el("span", "num", String(n + 1).padStart(2, "0")), body);
+    return li;
+  }
+  function adItem(ad, n) {
+    const c = el("article", "idea ad rise"); c.style.setProperty("--i", n);
+    if (safeHref(ad.image)) { const img = el("img"); img.src = ad.image; img.alt = ""; img.loading = "lazy"; c.appendChild(img); }
+    const meta = el("div", "meta"); meta.append(el("span", "kind", "Sponsored"), el("span", "brand", ad.brand));
+    c.append(meta, el("h3", "", ad.title));
+    if (ad.tagline) c.appendChild(el("p", "", ad.tagline));
+    const a = el("a", "shop", `Shop ${ad.brand} ↗`); a.href = ad.url; a.target = "_blank"; a.rel = "sponsored noopener noreferrer";
+    c.appendChild(a);
+    return c;
+  }
+
+  async function load() {
+    if (busy) return;
+    busy = true; $("again").disabled = true; $("error").hidden = true;
+    variant = (variant % 3) + 1; // "Show different ideas" cycles three cached answers
+    const list = $("ideas"); list.textContent = "";
+    for (let i = 0; i < 4; i++) list.appendChild(el("div", "idea skeleton"));
+    try {
+      // The catalog version busts cached searches whenever products or ads change.
+      await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
+      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !Array.isArray(data.ideas)) throw new Error(data.error || "Something went wrong. Please try again.");
+      list.textContent = "";
+      const [adA, adB] = pickAds(state);
+      let n = 0;
+      data.ideas.forEach((idea, i) => {
+        // Ads go after the 2nd and 6th idea: seen, but never the first thing.
+        if (i === 2 && adA) list.appendChild(adItem(adA, n));
+        if (i === 6 && adB) list.appendChild(adItem(adB, n));
+        list.appendChild(ideaItem(idea, n++));
+      });
+      if (adA && data.ideas.length <= 2) list.appendChild(adItem(adA, n));
+      $("again").hidden = false;
+    } catch (err) {
+      list.textContent = "";
+      $("error").textContent = (err.message || "Something went wrong.") + " ";
+      const retry = el("button", "secondary", "Try again"); retry.type = "button"; retry.style.marginTop = "12px";
+      retry.addEventListener("click", () => { variant -= 1; load(); }); // retry the same answer
+      $("error").appendChild(retry);
+      $("error").hidden = false;
+    } finally {
+      busy = false; $("again").disabled = false;
+    }
+  }
+
+  $("again").addEventListener("click", () => { load(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+  load();
+})();
+</script>
+</body>
+</html>

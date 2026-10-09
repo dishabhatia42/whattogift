@@ -3,237 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>What to Gift</title>
+<title>Thoughtful Gifting</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%81%3C/text%3E%3C/svg%3E">
 <meta name="description" content="Pick who it's for and the occasion, add what they love, and get gift ideas you can actually buy.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Inter:wght@400;500&display=swap">
-<meta property="og:title" content="What to Gift · Gift ideas you can actually buy">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/style.css">
+<meta property="og:title" content="Thoughtful Gifting · Gift ideas you can actually buy">
 <meta property="og:description" content="Pick who it's for and the occasion, add what they love, and get gift ideas you can actually buy.">
-<meta property="og:url" content="https://whattogift.vercel.app/">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
-<style>
-  *, *::before, *::after { box-sizing: border-box; }
-  body { margin: 0; }
-  [hidden] { display: none !important; }
-
-  /* Warm Luxury Concierge: burgundy primary, gold accent, terracotta links, warm neutrals */
-  :root {
-    --bg: #faf6f2; --fg: #1e1915; --body: #4d443e; --muted: #736860; --line: #eae2db;
-    --chip: #f2ebe5; --primary: #8c2d3a; --on-primary: #ffffff; --tint: #f7e6e8;
-    --link: #a84e38; --gold: #d4af37; --on-gold: #1e1915; --ad-bg: #f5eee7; --err: #a3262f;
-    --font-display: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #1e1915; --fg: #f7f0eb; --body: #d4c9c1; --muted: #9a8f87; --line: #342c27;
-      --chip: #2a231f; --primary: #e58c97; --on-primary: #1e1915; --tint: #3a2226;
-      --link: #e89478; --gold: #d4af37; --on-gold: #1e1915; --ad-bg: #28211c; --err: #f2a7ad;
-      color-scheme: dark;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #1e1915; --fg: #f7f0eb; --body: #d4c9c1; --muted: #9a8f87; --line: #342c27;
-    --chip: #2a231f; --primary: #e58c97; --on-primary: #1e1915; --tint: #3a2226;
-    --link: #e89478; --gold: #d4af37; --on-gold: #1e1915; --ad-bg: #28211c; --err: #f2a7ad;
-    color-scheme: dark;
-  }
-
-  html { -webkit-text-size-adjust: 100%; }
-  body {
-    background: var(--bg); color: var(--body);
-    font-family: var(--font-body); font-size: 16px; line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-  }
-  .page {
-    max-width: 640px; margin: 0 auto;
-    padding-inline: 16px; padding-block: 28px 80px;
-    display: flex; flex-direction: column; gap: 32px;
-  }
-  .brandline { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--primary); letter-spacing: -0.01em; }
-  .brandline i { font-style: normal; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-left: 4px; vertical-align: middle; }
-
-  h1 {
-    margin: 0; font-family: var(--font-display); font-weight: 700;
-    font-size: clamp(28px, 6vw, 36px); line-height: 1.2; letter-spacing: -0.02em; color: var(--fg);
-    text-wrap: balance;
-  }
-  h1 span { color: var(--primary); }
-  .lede { margin: 10px 0 0; max-width: 46ch; }
-
-  .step { display: flex; flex-direction: column; gap: 12px; }
-  .step h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 17px; color: var(--fg); }
-
-  /* every choice is the same quiet pill */
-  .suggest { display: flex; flex-wrap: wrap; gap: 8px; }
-  .pill {
-    appearance: none; font: inherit; font-size: 15px; cursor: pointer;
-    background: var(--chip); color: var(--fg); border: 1.5px solid transparent; border-radius: 999px; padding: 8px 16px;
-    transition: background .15s, border-color .15s, color .15s, transform .1s;
-  }
-  .pill:hover { border-color: var(--line); }
-  .pill:active { transform: scale(.97); }
-  .pill[aria-pressed="true"] { background: var(--tint); border-color: var(--primary); color: var(--primary); font-weight: 500; }
-
-  .gender { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 15px; color: var(--muted); }
-  .gender .pill { padding: 6px 14px; font-size: 14px; }
-
-  /* own interests: a borderless line, added ones show as pills */
-  .tagbox { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-bottom: 1.5px solid var(--line); padding-bottom: 6px; }
-  .tagbox:focus-within { border-color: var(--primary); }
-  .tagbox input { flex: 1 1 160px; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; color: var(--fg); padding: 6px 0; }
-  .tagbox input::placeholder { color: var(--muted); }
-  .tag {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--tint); color: var(--primary); border-radius: 999px;
-    padding: 4px 6px 4px 12px; font-size: 14px; font-weight: 500;
-  }
-  .tag button {
-    appearance: none; border: 0; background: transparent; color: inherit; cursor: pointer;
-    width: 20px; height: 20px; border-radius: 50%; font-size: 15px; line-height: 1; display: grid; place-items: center;
-  }
-
-  .go {
-    appearance: none; font: inherit; cursor: pointer; align-self: flex-start;
-    font-family: var(--font-display); font-weight: 700; font-size: 16px;
-    background: var(--primary); color: var(--on-primary); border: 0; border-radius: 999px; padding: 14px 28px;
-    transition: opacity .15s, transform .15s;
-  }
-  .go:hover { transform: translateY(-1px); }
-  .go:disabled { opacity: .3; cursor: not-allowed; transform: none; }
-  button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
-  .note { font-size: 14px; color: var(--muted); margin: 0; }
-  .error { color: var(--err); font-size: 15px; margin: 0; }
-
-  /* results: a clean list with hairlines, no boxes */
-  .results { display: flex; flex-direction: column; gap: 12px; scroll-margin-top: 16px; }
-  .results-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-  .results-head h2 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 21px; color: var(--fg); }
-  .link-btn { appearance: none; border: 0; background: none; font: inherit; font-size: 14px; color: var(--primary); cursor: pointer; font-weight: 500; }
-  .link-btn:hover { text-decoration: underline; text-underline-offset: 3px; }
-  .cards { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
-  .card { padding: 18px 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
-  .card .meta { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-  .card .chip { font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  .card .price { font-size: 14px; font-weight: 500; color: var(--fg); white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .card h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 18px; line-height: 1.35; color: var(--fg); }
-  .card p { margin: 0; font-size: 15px; }
-  .card a.shop { align-self: flex-start; text-decoration: none; font-weight: 500; font-size: 15px; color: var(--link); }
-  .card a.shop:hover { text-decoration: underline; text-underline-offset: 3px; }
-
-  .skeleton { min-height: 120px; position: relative; overflow: hidden; }
-  .skeleton::after {
-    content: ""; position: absolute; inset: 12px 0;
-    background: linear-gradient(90deg, transparent, var(--chip), transparent);
-    animation: shimmer 1.3s infinite; transform: translateX(-100%);
-  }
-  @keyframes shimmer { to { transform: translateX(100%); } }
-  @media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
-
-  /* sponsored: soft panel inside the list with a small gold tag */
-  /* landing page: slim swipeable "Featured" strip */
-  .featured { display: flex; flex-direction: column; gap: 10px; margin-top: -8px; }
-  .featured-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  .feat-row {
-    display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
-    margin-inline: -16px; padding-inline: 16px; scroll-padding-inline: 16px; overscroll-behavior-x: contain;
-  }
-  .feat-row::-webkit-scrollbar { display: none; }
-  /* tiles: ~2.5 visible on a phone, so the half card invites a swipe */
-  .feat {
-    flex: 0 0 min(calc((100% - 20px) / 2.5), 200px); scroll-snap-align: start;
-    display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: inherit;
-    background: var(--ad-bg); border-radius: 14px; padding: 8px 8px 12px;
-    min-width: 0; overflow: hidden; transition: transform .15s;
-  }
-  .feat:active { transform: scale(.98); }
-  .feat img, .feat .ph { width: 100%; aspect-ratio: 1; border-radius: 10px; object-fit: cover; background: var(--chip); display: block; }
-  .feat .ph { display: grid; place-items: center; background: var(--tint); color: var(--primary); font: 700 34px var(--font-display); }
-  .feat .tx { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; padding-inline: 2px; }
-  .feat .who { font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); display: flex; gap: 5px; align-items: center; min-width: 0; }
-  .feat .who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .feat .who b { flex: none; background: var(--gold); color: var(--on-gold); font-weight: 600; border-radius: 999px; padding: 0 6px; font-size: 10px; }
-  .feat strong { font-family: var(--font-display); font-weight: 600; font-size: 14px; line-height: 1.3; color: var(--fg); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .feat .tl { display: none; }
-  .feat .go2 { font-size: 13px; font-weight: 600; color: var(--link); margin-top: auto; padding-top: 4px; white-space: nowrap; }
-
-  /* a single ad gets the wide card: photo beside text, with its short line */
-  .feat-row > .feat:only-child { flex: 1 1 100%; flex-direction: row; align-items: center; gap: 12px; padding: 10px 14px 10px 10px; }
-  .feat-row > .feat:only-child img, .feat-row > .feat:only-child .ph { width: 84px; flex: none; }
-  .feat-row > .feat:only-child strong { font-size: 16px; }
-  .feat-row > .feat:only-child .tl { display: -webkit-box; font-size: 13px; line-height: 1.4; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-
-  /* results: photo-first sponsored card */
-  .card.ad { background: var(--ad-bg); border-radius: 16px; padding: 0 0 16px; margin: 12px 0; border-bottom: 0; overflow: hidden; gap: 6px; }
-  .card.ad > :not(img) { margin-inline: 16px; }
-  .card.ad .meta { margin-top: 14px; }
-  .card.ad img { max-width: none !important; width: 100%; aspect-ratio: 16 / 9; border-radius: 0 !important; margin: 0 !important; }
-  .card.ad + .card { border-top: 1px solid var(--line); }
-  .card.ad .chip { background: var(--gold); color: var(--on-gold); padding: 2px 8px; border-radius: 999px; font-size: 11px; }
-  .card.ad .brand { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  .card .thumb, .card.ad img { width: 100%; max-width: 360px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; background: var(--chip); display: block; margin: 4px 0; }
-
-  footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 18px; }
-  footer p { margin: 0 0 4px; }
-</style>
 </head>
 <body>
 <main class="page">
-  <div class="brandline">What to Gift<i aria-hidden="true"></i></div>
+  <div class="bar rise" style="--i:0"><span class="brandline">Thoughtful Gifting<i aria-hidden="true"></i></span></div>
 
-  <header>
+  <header class="rise" style="--i:1">
     <h1>What should I <span>gift?</span></h1>
     <p class="lede">A few taps and you'll have gift ideas you can actually buy.</p>
   </header>
 
-  <section class="featured" id="featured" aria-label="Featured gift shops" hidden>
-    <div class="featured-head"><span>Featured</span><span id="feat-count"></span></div>
-    <div class="feat-row" id="feat-row"></div>
-  </section>
+  <div class="steps">
+    <section class="step rise" style="--i:2" aria-labelledby="s1">
+      <h2 id="s1">Who's it for?</h2>
+      <div class="suggest" id="recipients" role="group" aria-labelledby="s1"></div>
+      <div class="gender" id="gender-row" hidden>
+        <span>Are they…</span>
+        <div class="suggest" id="genders" role="group" aria-label="Him, her or either"></div>
+      </div>
+    </section>
 
-  <section class="step" aria-labelledby="s1">
-    <h2 id="s1">Who's it for?</h2>
-    <div class="suggest" id="recipients" role="group" aria-labelledby="s1"></div>
-    <div class="gender" id="gender-row" hidden>
-      <span>Are they…</span>
-      <div class="suggest" id="genders" role="group" aria-label="Him, her or either"></div>
+    <section class="step" id="occasion-step" hidden aria-labelledby="s1b">
+      <h2 id="s1b">What's the occasion?</h2>
+      <div class="suggest" id="occasions" role="group" aria-labelledby="s1b"></div>
+    </section>
+
+    <section class="step rise" style="--i:3" aria-labelledby="s2">
+      <h2 id="s2">What are they into?</h2>
+      <div class="suggest" id="suggest" aria-label="Suggested keywords"></div>
+      <div class="tagbox" id="tagbox">
+        <input id="taginput" type="text" maxlength="30" placeholder="+ Add your own, e.g. cricket" aria-label="Add a keyword" enterkeyhint="done">
+      </div>
+    </section>
+
+    <section class="step rise" style="--i:4" aria-labelledby="s3">
+      <h2 id="s3">Budget</h2>
+      <div class="suggest" id="budgets" role="group" aria-labelledby="s3"></div>
+    </section>
+
+    <div class="cta-wrap rise" style="--i:5" id="cta">
+      <button class="go" id="go" type="button" disabled>Find gift ideas <span class="arr" aria-hidden="true">→</span></button>
+      <p class="note" id="hint">Pick who it's for to start.</p>
     </div>
-  </section>
-
-  <section class="step" id="occasion-step" hidden aria-labelledby="s1b">
-    <h2 id="s1b">What's the occasion?</h2>
-    <div class="suggest" id="occasions" role="group" aria-labelledby="s1b"></div>
-  </section>
-
-  <section class="step" aria-labelledby="s2">
-    <h2 id="s2">What are they into?</h2>
-    <div class="suggest" id="suggest" aria-label="Suggested keywords"></div>
-    <div class="tagbox" id="tagbox">
-      <input id="taginput" type="text" maxlength="30" placeholder="+ Add your own, e.g. cricket" aria-label="Add a keyword" enterkeyhint="done">
-    </div>
-  </section>
-
-  <section class="step" aria-labelledby="s3">
-    <h2 id="s3">Budget</h2>
-    <div class="suggest" id="budgets" role="group" aria-labelledby="s3"></div>
-  </section>
-
-  <div class="step">
-    <button class="go" id="go" disabled>Find gift ideas</button>
-    <p class="note" id="hint">Pick who it's for to start.</p>
-    <p class="error" id="error" role="alert" hidden></p>
   </div>
 
-  <section class="results" id="results" aria-live="polite" hidden>
-    <div class="results-head">
-      <h2 id="results-title">Ideas for you</h2>
-      <button class="link-btn" id="again">Show different ideas</button>
+  <section class="featured" id="featured" aria-label="Featured gift shops" hidden>
+    <div class="featured-head"><span class="kicker">Featured</span><span class="kicker" id="feat-count"></span></div>
+    <div class="feat-wrap">
+      <button class="feat-nav prev" id="feat-prev" type="button" aria-label="Previous ad">‹</button>
+      <div class="feat-row" id="feat-row"></div>
+      <button class="feat-nav next" id="feat-next" type="button" aria-label="Next ad">›</button>
     </div>
-    <div class="cards" id="cards"></div>
-    <p class="note">Cards marked "Sponsored" are paid placements. Prices are estimates. Links open a store search, so check reviews and delivery dates before buying.</p>
+    <div class="feat-dots" id="feat-dots"></div>
   </section>
 
   <footer>
@@ -242,147 +74,36 @@
   </footer>
 </main>
 
+<script src="/common.js"></script>
 <script>
 (() => {
-  // Who: relationships only. Gender is a separate, optional follow-up where it matters.
-  const RECIPIENTS = [
-    { id: "partner", t: "Partner", ask: true },
-    { id: "friend", t: "Friend", ask: true },
-    { id: "mom", t: "Mom" },
-    { id: "dad", t: "Dad" },
-    { id: "parents", t: "Parents" },
-    { id: "sibling", t: "Sibling", ask: true },
-    { id: "colleague", t: "Colleague", ask: true },
-    { id: "couple", t: "A couple" },
-    { id: "child", t: "A child", ask: true },
-  ];
-  const GENDERS = [{ id: "him", t: "Him" }, { id: "her", t: "Her" }, { id: "any", t: "Either" }];
-  const OCCASIONS = [
-    { id: "birthday", t: "Birthday" },
-    { id: "anniversary", t: "Anniversary" },
-    { id: "wedding", t: "Wedding" },
-    { id: "just-because", t: "Just because" },
-  ];
-  // A couple doesn't share a birthday; a child has no anniversary or wedding.
-  const occasionsFor = (r) =>
-    r === "couple" ? OCCASIONS.filter((o) => o.id !== "birthday")
-    : r === "child" ? OCCASIONS.filter((o) => o.id === "birthday" || o.id === "just-because")
-    : OCCASIONS;
-  const SUGGESTIONS = {
-    default: ["Clothes", "Tech", "Books", "Experiences", "Home decor", "Fitness", "Food", "Handmade"],
-    partner: ["Clothes", "Tech", "Jewellery", "Experiences", "Grooming", "Skincare", "Gaming", "Personalised"],
-    friend: ["Clothes", "Skincare", "Books", "Memories", "Experiences", "Tech", "Snacks"],
-    mom: ["Saree & ethnic wear", "Skincare", "Kitchen", "Jewellery", "Health", "Spiritual", "Plants"],
-    dad: ["Tech he'll use", "Grooming", "Health", "Watches", "Books", "Travel", "Comfort"],
-    parents: ["Health", "Comfort", "Tech they'll use", "Spiritual", "Home", "Travel", "Gardening"],
-    sibling: ["Clothes", "Tech", "Gaming", "Skincare", "Books", "Fitness", "Snacks"],
-    colleague: ["Desk & office", "Coffee & tea", "Books", "Stationery", "Plants", "Snacks"],
-    couple: ["Kitchen", "Home decor", "Personalised", "Dinnerware", "Experiences", "Travel"],
-    child: ["Toys", "Books", "Art & craft", "Games", "Outdoor play", "Learning"],
-  };
-  const BUDGETS = [
-    { id: "under-1000", t: "Under ₹1k" },
-    { id: "1000-3000", t: "₹1k – 3k" },
-    { id: "3000-7000", t: "₹3k – 7k" },
-    { id: "7000-plus", t: "₹7k+" },
-  ];
-
-  const state = { recipient: null, gender: null, occasion: null, tags: [], budget: null, busy: false, variant: 1, lastKey: "" };
-  let ads = [];
-  let catalogVersion = "";
-  const catalogReady = fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((d) => {
-    if (d && Array.isArray(d.ads)) ads = d.ads;
-    if (d && d.version) catalogVersion = d.version;
-    renderFeatured();
-  }).catch(() => {});
-
-  // An ad with nothing ticked for a field matches everything for that field.
-  const matches = (item) =>
-    (!item.recipients.length || item.recipients.includes(state.recipient)) &&
-    (!item.occasions.length || item.occasions.includes(state.occasion));
-  const safeHref = (u) => /^https:\/\//.test(u || "") ? u : null;
-
-  // Up to two matching ads per search, shuffled so every slot gets seen.
-  function pickAds() {
-    const pool = ads.filter((a) => matches(a) && safeHref(a.url));
-    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-    return pool.slice(0, 2);
-  }
-  function adCard(ad) {
-    const c = document.createElement("article"); c.className = "card ad";
-    c.innerHTML = `<div class="meta"><span class="chip">Sponsored</span><span class="brand"></span></div><h3></h3><p></p><a class="shop" target="_blank" rel="sponsored noopener noreferrer"></a>`;
-    if (safeHref(ad.image)) { const img = document.createElement("img"); img.src = ad.image; img.alt = ""; img.loading = "lazy"; c.prepend(img); }
-    c.querySelector(".brand").textContent = ad.brand;
-    c.querySelector("h3").textContent = ad.title;
-    c.querySelector("p").textContent = ad.tagline;
-    const a = c.querySelector("a"); a.href = ad.url; a.textContent = `Shop ${ad.brand} ↗`;
-    return c;
-  }
+  const { RECIPIENTS, GENDERS, occasionsFor, SUGGESTIONS, BUDGETS, asksGender, toParams, fromParams, mountFeatured } = window.WTG;
   const $ = (id) => document.getElementById(id);
 
-  // ---- landing-page "Featured" strip: every live ad, ones matching the current choice first
-  let featuredKey = null;
-  function renderFeatured() {
-    const key = `${ads.length}|${state.recipient}|${state.occasion}`;
-    if (key === featuredKey) return; // avoid rebuilding (and losing the swipe position) on every tap
-    featuredKey = key;
-    const live = ads.filter((a) => safeHref(a.url));
-    const ordered = state.recipient ? [...live.filter(matches), ...live.filter((a) => !matches(a))] : live;
-    const row = $("feat-row"); row.textContent = "";
-    for (const ad of ordered) {
-      const a = document.createElement("a");
-      a.className = "feat"; a.href = ad.url; a.target = "_blank"; a.rel = "sponsored noopener noreferrer";
-      if (safeHref(ad.image)) {
-        const img = document.createElement("img"); img.src = ad.image; img.alt = ""; img.loading = "lazy"; a.appendChild(img);
-      } else {
-        const ph = document.createElement("span"); ph.className = "ph"; ph.setAttribute("aria-hidden", "true"); ph.textContent = (ad.brand || "?").trim()[0].toUpperCase(); a.appendChild(ph);
-      }
-      const tx = document.createElement("span"); tx.className = "tx";
-      const who = document.createElement("span"); who.className = "who";
-      const brand = document.createElement("span"); brand.textContent = ad.brand; who.appendChild(brand);
-      const tag = document.createElement("b"); tag.textContent = "Ad"; who.appendChild(tag);
-      const title = document.createElement("strong"); title.textContent = ad.title;
-      tx.append(who, title);
-      if (ad.tagline) { const tl = document.createElement("span"); tl.className = "tl"; tl.textContent = ad.tagline; tx.appendChild(tl); }
-      const go = document.createElement("span"); go.className = "go2"; go.textContent = live.length > 1 ? "Shop →" : `Shop ${ad.brand} →`; tx.appendChild(go);
-      a.appendChild(tx); row.appendChild(a);
+  // Start from the URL, so "Edit" on the results page comes back with the answers still picked.
+  const state = fromParams(new URLSearchParams(location.search));
+  if (state.recipient && !state.occasion) state.occasion = occasionsFor(state.recipient)[0].id;
+  const renderFeatured = mountFeatured(() => state);
+
+  function pills(container, items, onClick) {
+    for (const it of items) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "pill"; b.dataset.id = it.id; b.textContent = it.t; b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", () => onClick(it.id));
+      container.appendChild(b);
     }
-    $("feat-count").textContent = ordered.length > 2 ? "Swipe →" : "";
-    $("featured").hidden = !ordered.length;
   }
+  pills($("recipients"), RECIPIENTS, (id) => {
+    if (state.recipient !== id) state.gender = null;
+    state.recipient = id;
+    const allowed = occasionsFor(id);
+    if (!allowed.some((o) => o.id === state.occasion)) state.occasion = allowed[0].id;
+    render();
+  });
+  pills($("genders"), GENDERS, (id) => { state.gender = state.gender === id ? null : id; render(); });
+  pills($("budgets"), BUDGETS, (id) => { state.budget = state.budget === id ? null : id; render(); });
 
-  // ---- who it's for
-  for (const r of RECIPIENTS) {
-    const b = document.createElement("button");
-    b.type = "button"; b.className = "pill"; b.dataset.id = r.id; b.setAttribute("aria-pressed", "false");
-    b.textContent = r.t;
-    b.addEventListener("click", () => {
-      if (state.recipient !== r.id) state.gender = null;
-      state.recipient = r.id;
-      const allowed = occasionsFor(r.id);
-      if (!allowed.some((o) => o.id === state.occasion)) state.occasion = allowed[0].id;
-      render();
-    });
-    $("recipients").appendChild(b);
-  }
-
-  // ---- him / her / either, only for relationships where it isn't obvious
-  for (const g of GENDERS) {
-    const b = document.createElement("button");
-    b.type = "button"; b.className = "pill"; b.dataset.id = g.id; b.textContent = g.t;
-    b.addEventListener("click", () => { state.gender = state.gender === g.id ? null : g.id; render(); });
-    $("genders").appendChild(b);
-  }
-
-  // ---- budget pills
-  for (const bd of BUDGETS) {
-    const b = document.createElement("button");
-    b.type = "button"; b.className = "pill"; b.textContent = bd.t; b.dataset.id = bd.id;
-    b.addEventListener("click", () => { state.budget = state.budget === bd.id ? null : bd.id; render(); });
-    $("budgets").appendChild(b);
-  }
-
-  // ---- tags
+  // ---- interests
   function addTag(raw) {
     const t = raw.trim().replace(/\s+/g, " ").slice(0, 30);
     if (!t || state.tags.length >= 8) return;
@@ -401,24 +122,27 @@
   $("taginput").addEventListener("blur", (e) => { if (e.target.value.trim()) { addTag(e.target.value); e.target.value = ""; } });
   $("tagbox").addEventListener("click", (e) => { if (e.target.id === "tagbox") $("taginput").focus(); });
 
+  // Slide a row open the moment it appears.
+  function show(el, visible) {
+    if (visible && el.hidden) { el.hidden = false; el.classList.remove("reveal"); void el.offsetWidth; el.classList.add("reveal"); }
+    else if (!visible) el.hidden = true;
+  }
+
   function render() {
     for (const b of $("recipients").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.recipient));
     const occBox = $("occasions"); occBox.textContent = "";
-    for (const o of occasionsFor(state.recipient)) {
-      const b = document.createElement("button");
-      b.type = "button"; b.className = "pill"; b.textContent = o.t; b.setAttribute("aria-pressed", String(o.id === state.occasion));
-      b.addEventListener("click", () => { state.occasion = o.id; render(); });
-      occBox.appendChild(b);
-    }
-    $("occasion-step").hidden = !state.recipient;
-    $("gender-row").hidden = !RECIPIENTS.find((r) => r.id === state.recipient)?.ask;
+    pills(occBox, occasionsFor(state.recipient), (id) => { state.occasion = id; render(); });
+    for (const b of occBox.children) b.setAttribute("aria-pressed", String(b.dataset.id === state.occasion));
+    show($("occasion-step"), !!state.recipient);
+    show($("gender-row"), asksGender(state.recipient));
     for (const b of $("genders").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.gender));
     for (const b of $("budgets").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.budget));
 
     const box = $("tagbox"), input = $("taginput");
     box.querySelectorAll(".tag").forEach((n) => n.remove());
     // Suggested interests show as highlighted pills; only typed-in ones appear here.
-    const suggested = (SUGGESTIONS[state.recipient] || SUGGESTIONS.default).map((x) => x.toLowerCase());
+    const suggestions = SUGGESTIONS[state.recipient] || SUGGESTIONS.default;
+    const suggested = suggestions.map((x) => x.toLowerCase());
     for (const t of state.tags.filter((x) => !suggested.includes(x.toLowerCase()))) {
       const s = document.createElement("span"); s.className = "tag";
       const label = document.createElement("span"); label.textContent = t;
@@ -426,9 +150,8 @@
       x.addEventListener("click", () => removeTag(t));
       s.append(label, x); box.insertBefore(s, input);
     }
-
     const sug = $("suggest"); sug.textContent = "";
-    for (const t of SUGGESTIONS[state.recipient] || SUGGESTIONS.default) {
+    for (const t of suggestions) {
       const on = state.tags.some((x) => x.toLowerCase() === t.toLowerCase());
       const b = document.createElement("button");
       b.type = "button"; b.className = "pill"; b.textContent = t; b.setAttribute("aria-pressed", String(on));
@@ -436,96 +159,18 @@
       sug.appendChild(b);
     }
 
+    const ready = !!(state.recipient && state.occasion);
+    $("go").disabled = !ready;
+    $("cta").classList.toggle("ready", ready);
+    $("hint").hidden = ready;
     renderFeatured();
-    $("go").disabled = !state.recipient || !state.occasion || state.busy;
-    $("go").textContent = state.busy ? "Finding ideas…" : "Find gift ideas";
-    $("hint").hidden = !!state.recipient;
   }
 
-  // ---- fetch ideas
-  async function findIdeas() {
-    if (!state.recipient || !state.occasion || state.busy) return;
-    state.busy = true; render();
-    $("error").hidden = true;
-    const results = $("results"), cards = $("cards");
-    results.hidden = false;
-    $("results-title").textContent = "Finding ideas…";
-    cards.textContent = "";
-    for (let i = 0; i < 4; i++) { const s = document.createElement("div"); s.className = "card skeleton"; cards.appendChild(s); }
-    results.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
-
-    try {
-      // Same search, same URL: lets the server's cache answer repeat searches for free.
-      const key = searchKey();
-      state.variant = key === state.lastKey ? (state.variant % 3) + 1 : 1;
-      state.lastKey = key;
-      // The catalog version busts cached searches whenever products or ads change.
-      await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
-      const r = await fetch(`/api/gift-ideas?${key}&v=${state.variant}${catalogVersion ? `&cv=${encodeURIComponent(catalogVersion)}` : ""}`);
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok || !Array.isArray(data.ideas)) throw new Error(data.error || "Something went wrong. Please try again.");
-      showIdeas(data.ideas);
-    } catch (err) {
-      results.hidden = true;
-      $("error").textContent = err.message || "Something went wrong. Please try again.";
-      $("error").hidden = false;
-    } finally {
-      state.busy = false; render();
-    }
-  }
-
-  function searchKey() {
-    const p = new URLSearchParams({ recipient: state.recipient, occasion: state.occasion });
-    if (RECIPIENTS.find((r) => r.id === state.recipient)?.ask && (state.gender === "him" || state.gender === "her")) p.set("gender", state.gender);
-    if (state.budget) p.set("budget", state.budget);
-    const tags = [...new Set(state.tags.map((t) => t.toLowerCase()))].sort();
-    if (tags.length) p.set("tags", tags.join(","));
-    return p.toString();
-  }
-
-  const STORE_NAMES = { amazon: "Amazon", myntra: "Myntra", nykaa: "Nykaa", flipkart: "Flipkart" };
-  function resultsTitle() {
-    const g = state.gender === "him" || state.gender === "her" ? state.gender : null;
-    const who = {
-      partner: g === "him" ? "your boyfriend or husband" : g === "her" ? "your girlfriend or wife" : "your partner",
-      friend: "your friend", mom: "your mom", dad: "your dad", parents: "your parents",
-      sibling: g === "him" ? "your brother" : g === "her" ? "your sister" : "your sibling",
-      colleague: "a colleague", couple: "the couple",
-      child: g === "him" ? "a little boy" : g === "her" ? "a little girl" : "a child",
-    }[state.recipient];
-    const why = { birthday: "birthday", anniversary: "anniversary", wedding: "wedding", "just-because": "" }[state.occasion];
-    return why ? `${why[0].toUpperCase() + why.slice(1)} ideas for ${who}` : `Ideas for ${who}, just because`;
-  }
-  function showIdeas(ideas) {
-    $("results-title").textContent = resultsTitle();
-    const cards = $("cards"); cards.textContent = "";
-    const [adA, adB] = pickAds();
-    ideas.forEach((idea, i) => {
-      // Ads go after the 2nd and 6th idea: seen, but never the first thing.
-      if (i === 2 && adA) cards.appendChild(adCard(adA));
-      if (i === 6 && adB) cards.appendChild(adCard(adB));
-      const c = document.createElement("article"); c.className = "card";
-      c.innerHTML = `<div class="meta"><span class="chip"></span><span class="price"></span></div><h3></h3><p></p><a class="shop" target="_blank" rel="noopener noreferrer"></a>`;
-      c.querySelector(".chip").textContent = idea.tag || "";
-      c.querySelector(".price").textContent = idea.price_range || "";
-      c.querySelector("h3").textContent = idea.name;
-      c.querySelector("p").textContent = idea.why;
-      const a = c.querySelector("a");
-      if (idea.own && safeHref(idea.url)) {
-        // A product added in the admin: real product link and photo, otherwise looks like any idea.
-        a.href = idea.url; a.textContent = "View product ↗";
-        if (safeHref(idea.image)) { const img = document.createElement("img"); img.className = "thumb"; img.src = idea.image; img.alt = ""; img.loading = "lazy"; c.querySelector(".meta").after(img); }
-      } else {
-        a.href = /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com)\//.test(idea.url) ? idea.url : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
-        a.textContent = `Find on ${STORE_NAMES[idea.store] || "Amazon"} ↗`;
-      }
-      cards.appendChild(c);
-    });
-    if (adA && ideas.length <= 2) cards.appendChild(adCard(adA));
-  }
-
-  $("go").addEventListener("click", findIdeas);
-  $("again").addEventListener("click", findIdeas);
+  // Results open on their own page; the answers travel in the URL.
+  $("go").addEventListener("click", () => {
+    if (!state.recipient || !state.occasion) return;
+    location.href = "/ideas?" + toParams(state).toString();
+  });
   render();
 })();
 </script>

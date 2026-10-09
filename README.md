@@ -1,4 +1,4 @@
-# What to Gift
+# Thoughtful Gifting
 
 Pick who it's for and the occasion, add what they love, get gift ideas you can actually buy.
 
