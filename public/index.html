@@ -60,6 +60,11 @@
       <div class="tagbox" id="tagbox">
         <input id="taginput" type="text" maxlength="30" placeholder="+ Something oddly specific? Pottery, F1, frogs…" aria-label="Add something they're into" enterkeyhint="done">
       </div>
+      <button class="discover" id="discover" type="button" aria-pressed="false">
+        <span class="sw" aria-hidden="true"></span>
+        <span class="txt"><strong>✨ Open a new world</strong><small>Introduce them to something they've never tried.</small></span>
+      </button>
+      <p class="fine">Optional. The little details make the best gifts.</p>
     </section>
 
     <section class="step rise" style="--i:4" aria-labelledby="s3">
@@ -140,6 +145,7 @@
   });
   pills($("genders"), GENDERS, (id) => { state.gender = state.gender === id ? null : id; render(); });
   pills($("budgets"), BUDGETS, (id) => { state.budget = state.budget === id ? null : id; render(); });
+  $("discover").addEventListener("click", () => { state.discover = !state.discover; render(); });
 
   // ---- interests
   function addTag(raw) {
@@ -175,6 +181,7 @@
     show($("gender-row"), asksGender(state.recipient));
     for (const b of $("genders").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.gender));
     for (const b of $("budgets").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.budget));
+    $("discover").setAttribute("aria-pressed", String(!!state.discover));
 
     const box = $("tagbox"), input = $("taginput");
     box.querySelectorAll(".tag").forEach((n) => n.remove());

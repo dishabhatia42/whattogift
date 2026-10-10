@@ -36,6 +36,15 @@ const BUDGETS = {
 };
 
 const STORES = ["amazon", "myntra", "nykaa", "flipkart"];
+// Refinements from the results page ("Not quite their vibe?"), one instruction each.
+const TUNES = {
+  unusual: "Go less obvious: skip the gifts everyone thinks of first.",
+  personal: "Make them more personal: sentimental or personalisable gifts.",
+  practical: "Make them more practical: things they'd use every day.",
+  cheaper: "Make them less expensive than the stated budget (aim one price band lower).",
+  experiences: "Lean towards experiences, classes, subscriptions and outings over physical things.",
+  noclutter: "No clutter: only consumables, experiences, subscriptions or genuinely useful items; no knick-knacks or decor.",
+};
 const CACHE_SECONDS = 12 * 60 * 60;
 const VARIANTS = 3; // "Show different ideas" cycles through this many cached answers
 
@@ -55,9 +64,10 @@ const SCHEMA = {
           price_range: { type: "string" },
           search_query: { type: "string" },
           store: { type: "string", enum: STORES },
+          fit: { type: "string", enum: ["familiar", "new", "wildcard"] },
           product_id: { type: "string" },
         },
-        required: ["name", "label", "why", "emoji", "price_range", "search_query", "store", "product_id"],
+        required: ["name", "label", "why", "emoji", "price_range", "search_query", "store", "fit", "product_id"],
         additionalProperties: false,
       },
     },
@@ -76,6 +86,7 @@ Return 8 ideas. Each must be a concrete product type someone can actually buy on
 - price_range: realistic Indian price range in rupees, e.g. "₹1,200 – ₹1,800".
 - search_query: a short query that will find this item on the chosen store (no URLs).
 - store: the best Indian store for it: amazon (default), myntra (fashion), nykaa (beauty), flipkart.
+- fit: "familiar" for gifts squarely within their interests, "new" for something new to them but naturally connected to what they enjoy, "wildcard" for a more unexpected idea (its why must say why it could still work).
 - product_id: "" for your own ideas. The shopper's message may list hand-curated products, each with an id. Include every listed product that genuinely suits this person, budget and interests (most relevant first, up to 4), using its exact id, its name, and a price_range copied from its price. Spread them among the 8 ideas rather than all at the top. Never invent an id, and leave out listed products that don't fit.
 Mix safe picks with one or two more personal or experience-style ideas. Respect the budget strictly when one is given. If the shopper's interests are given, cover each of them.`;
 
@@ -103,6 +114,8 @@ export default async function handler(req, res) {
     ? body.tags.filter((t) => typeof t === "string").map((t) => t.trim().slice(0, 30)).filter(Boolean).slice(0, 8)
     : [];
   const budget = BUDGETS[body.budget] || null;
+  const discover = q.new === "1";
+  const tunes = (typeof q.tune === "string" ? q.tune.split(",") : []).filter((t) => TUNES[t]);
 
   const curated = await curatedProducts(body.recipient, body.occasion);
   const prompt = [
@@ -110,6 +123,11 @@ export default async function handler(req, res) {
     `Occasion: ${occasion}`,
     `Interests / keywords: ${tags.length ? tags.join(", ") : "none given, suggest broadly loved gifts"}`,
     `Budget: ${budget || "not specified, spread across price points"}`,
+    discover
+      ? "Mix: open a new world for them. About 4 familiar picks, 3 \"new\" ideas that introduce something they've never tried but that connects to what they love, and 1 wildcard."
+      : "Mix: mostly familiar picks, with at most one gentle wildcard.",
+    ...tunes.map((t) => `Refinement: ${TUNES[t]}`),
+    !budget && tunes.includes("cheaper") ? "Since no budget was given, keep most ideas under ₹1,500." : "",
     variant > 1 ? `Variation ${variant}: avoid the most obvious picks, offer fresh alternatives.` : "",
     curated.length
       ? `Hand-curated products to consider (JSON):\n${JSON.stringify(curated.map(({ id, name, note, price, tags }) => ({ id, name, note, price, tags })))}`

@@ -32,7 +32,7 @@
   <section class="edit-collection" aria-live="polite">
     <div class="edit-bar">
       <h2 class="sec" id="count">Finding little ways to make their day…</h2>
-      <button class="link-btn" id="again" type="button" hidden>Not quite their vibe? Try again ↻</button>
+      <button class="link-btn" id="again" type="button" hidden>Not quite their vibe? Refine ↓</button>
     </div>
     <div class="cards" id="ideas"></div>
     <p class="error" id="error" role="alert" hidden></p>
@@ -43,9 +43,15 @@
     <div class="cards" id="ads"></div>
   </section>
 
-  <section class="edit-more" id="more" hidden>
-    <button class="secondary" id="again2" type="button">Not quite their vibe? Try again ↻</button>
-    <a class="quiet-link" href="/">Shopping for someone else? →</a>
+  <section class="refine" id="more" hidden aria-labelledby="refine-h">
+    <h2 class="sec" id="refine-h">Not quite their vibe?</h2>
+    <p class="sub">Tell us what to change. We'll find something better.</p>
+    <div class="suggest" id="tunes" role="group" aria-labelledby="refine-h"></div>
+    <div class="refine-acts">
+      <button class="go small" id="refine" type="button">Refine my picks <span class="arr" aria-hidden="true">→</span></button>
+      <button class="link-btn" id="again2" type="button">Or just shuffle ↻</button>
+      <a class="quiet-link" href="/">Shopping for someone else? →</a>
+    </div>
   </section>
 
   <div class="toast" id="toast" role="status" hidden></div>
@@ -60,12 +66,12 @@
 <script src="/common.js"></script>
 <script>
 (() => {
-  const { BUDGETS, RECIPIENTS, OCCASIONS, toParams, fromParams, resultsTitle, safeHref, STORE_NAMES, catalog, catalogReady, pickAds } = window.WTG;
+  const { BUDGETS, RECIPIENTS, OCCASIONS, TUNES, toParams, fromParams, resultsTitle, safeHref, STORE_NAMES, catalog, catalogReady, pickAds } = window.WTG;
   const $ = (id) => document.getElementById(id);
 
   const state = fromParams(new URLSearchParams(location.search));
   if (!state.recipient || !state.occasion) { location.replace("/"); return; }
-  const key = toParams(state).toString();
+  let key = toParams(state).toString();
   let variant = 0, busy = false;
 
   // "your bestie" -> "Your bestie is going to love it!"
@@ -79,8 +85,22 @@
   // What they picked, as soft pills: who, occasion, interests, budget.
   const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
   const recip = RECIPIENTS.find((r) => r.id === state.recipient), occ = OCCASIONS.find((o) => o.id === state.occasion);
-  const bits = [recip && recip.t, occ && occ.t, ...state.tags.map(cap), BUDGETS.find((b) => b.id === state.budget)?.t].filter(Boolean);
-  for (const b of bits) { const s = document.createElement("span"); s.textContent = b; $("chips").appendChild(s); }
+  function summary() {
+    const bits = [recip && recip.t, occ && occ.t, ...state.tags.map(cap), BUDGETS.find((b) => b.id === state.budget)?.t,
+      state.discover && "✨ New world", ...TUNES.filter((t) => state.tune.includes(t.id)).map((t) => t.t)].filter(Boolean);
+    $("chips").textContent = "";
+    for (const b of bits) { const s = document.createElement("span"); s.textContent = b; $("chips").appendChild(s); }
+  }
+  summary();
+
+  // Refine chips, pre-selected from the URL so a refresh keeps them.
+  for (const t of TUNES) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "pill"; b.dataset.id = t.id; b.textContent = t.t;
+    b.setAttribute("aria-pressed", String(state.tune.includes(t.id)));
+    b.addEventListener("click", () => b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")));
+    $("tunes").appendChild(b);
+  }
 
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   const TILES = ["#F6E3E7", "#F3EBDD", "#F7EDE6", "#EFE6EC"];
@@ -93,7 +113,7 @@
     const pic = el("div", "pic");
     if (own && safeHref(idea.image)) { const img = el("img"); img.src = idea.image; img.alt = ""; img.loading = "lazy"; pic.appendChild(img); }
     else { pic.classList.add("tile"); pic.style.background = TILES[n % TILES.length]; pic.appendChild(el("span", "emoji", idea.emoji || "🎁")); }
-    pic.appendChild(el("span", "kind", own ? "Our pick" : "Gift idea"));
+    pic.appendChild(el("span", "kind", own ? "Our pick" : idea.fit === "new" ? "✨ New world" : idea.fit === "wildcard" ? "🎲 Wildcard" : "Gift idea"));
     const body = el("div", "body");
     if (idea.label || idea.tag) body.appendChild(el("p", "label", idea.label || idea.tag));
     body.append(el("h3", "", idea.name), el("p", "why", idea.why));
@@ -152,7 +172,7 @@
 
   async function load() {
     if (busy) return;
-    busy = true; $("again").disabled = $("again2").disabled = true; $("error").hidden = true;
+    busy = true; $("again").disabled = $("again2").disabled = $("refine").disabled = true; $("error").hidden = true;
     $("title").textContent = "Hunting down the good stuff…"; $("ready").hidden = $("vibe").hidden = true; $("more").hidden = true;
     variant = (variant % 3) + 1; // "Try again" cycles three cached answers
     const list = $("ideas"); list.textContent = "";
@@ -161,7 +181,7 @@
     try {
       // The catalog version busts cached searches whenever products or ads change; p=2 is the card layout's answer format.
       await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
-      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=2${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=3${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
       const data = await r.json().catch(() => ({}));
       if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");
       loading(false);
@@ -184,13 +204,21 @@
       $("error").appendChild(retry);
       $("error").hidden = false;
     } finally {
-      busy = false; $("again").disabled = $("again2").disabled = false;
+      busy = false; $("again").disabled = $("again2").disabled = $("refine").disabled = false;
     }
   }
 
   const again = () => { load(); window.scrollTo({ top: 0, behavior: "smooth" }); };
-  $("again").addEventListener("click", again);
+  $("again").addEventListener("click", () => $("more").scrollIntoView({ behavior: "smooth", block: "center" }));
   $("again2").addEventListener("click", again);
+  // Refine: new answers with these tweaks, and the URL remembers them.
+  $("refine").addEventListener("click", () => {
+    state.tune = [...$("tunes").children].filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.id);
+    key = toParams(state).toString();
+    history.replaceState(null, "", "/ideas?" + key);
+    $("edit").href = "/?" + key;
+    summary(); variant = 0; again();
+  });
   load();
 })();
 </script>

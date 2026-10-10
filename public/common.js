@@ -52,6 +52,15 @@
     { id: "3000-7000", t: "₹3,000–₹7,000" },
     { id: "7000-plus", t: "₹7,000+", note: "Going all out, huh?" },
   ];
+  // Results-page refinements ("Not quite their vibe?"). The ids are the API's whitelist too.
+  const TUNES = [
+    { id: "unusual", t: "More unusual" },
+    { id: "personal", t: "More personal" },
+    { id: "practical", t: "More practical" },
+    { id: "cheaper", t: "Less expensive" },
+    { id: "experiences", t: "More experiences" },
+    { id: "noclutter", t: "No clutter" },
+  ];
   const STORE_NAMES = { amazon: "Amazon", myntra: "Myntra", nykaa: "Nykaa", flipkart: "Flipkart" };
   const asksGender = (r) => !!RECIPIENTS.find((x) => x.id === r)?.ask;
   const safeHref = (u) => /^https:\/\//.test(u || "") ? u : null;
@@ -63,6 +72,9 @@
     if (s.budget) p.set("budget", s.budget);
     const tags = [...new Set(s.tags.map((t) => t.toLowerCase()))].sort();
     if (tags.length) p.set("tags", tags.join(","));
+    if (s.discover) p.set("new", "1");
+    const tune = TUNES.filter((t) => (s.tune || []).includes(t.id)).map((t) => t.id);
+    if (tune.length) p.set("tune", tune.join(","));
     return p;
   }
   // Reads answers from a URL, dropping anything that isn't a known option.
@@ -72,7 +84,9 @@
     const gender = asksGender(recipient) && ["him", "her"].includes(p.get("gender")) ? p.get("gender") : null;
     const budget = BUDGETS.some((b) => b.id === p.get("budget")) ? p.get("budget") : null;
     const tags = (p.get("tags") || "").split(",").map((t) => t.trim().slice(0, 30)).filter(Boolean).slice(0, 8);
-    return { recipient, gender, occasion, budget, tags };
+    const discover = p.get("new") === "1";
+    const tune = (p.get("tune") || "").split(",").filter((t) => TUNES.some((x) => x.id === t));
+    return { recipient, gender, occasion, budget, tags, discover, tune };
   }
 
   function resultsTitle(s) {
@@ -361,7 +375,7 @@
   }
 
   window.WTG = {
-    RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES,
+    RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES, TUNES,
     asksGender, safeHref, toParams, fromParams, resultsTitle,
     catalog, catalogReady, pickAds, mountFeatured, mountBoard,
   };

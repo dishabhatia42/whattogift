@@ -141,6 +141,23 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .pill:active { transform: scale(.97); }
 .pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 
+/* "Open a new world": a switch, not an interest, so it can sit alongside any of them. */
+.discover {
+  appearance: none; font: inherit; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 14px;
+  width: 100%; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--fg);
+  transition: border-color .18s, background .18s;
+}
+.discover:hover { border-color: var(--tint); background: var(--tint); }
+.discover .txt { display: flex; flex-direction: column; gap: 2px; }
+.discover strong { font-weight: 600; font-size: 15px; }
+.discover small { font-size: 13.5px; color: var(--muted); }
+.discover .sw { flex: none; width: 40px; height: 24px; border-radius: 999px; background: var(--line); position: relative; transition: background .2s; }
+.discover .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(38, 32, 30, .25); transition: transform .2s var(--ease); }
+.discover[aria-pressed="true"] { border-color: var(--primary); background: var(--tint); }
+.discover[aria-pressed="true"] .sw { background: var(--primary); }
+.discover[aria-pressed="true"] .sw::after { transform: translateX(16px); }
+.fine { font-size: 13px; color: var(--muted); }
+
 .gender { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 15px; color: var(--muted); }
 .gender .pill { min-height: 38px; padding: 0 16px; font-size: 14px; }
 
@@ -265,6 +282,10 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .link-btn { appearance: none; border: 0; background: none; padding: 0; font: inherit; font-size: 15px; font-weight: 600; color: var(--primary); cursor: pointer; }
 .link-btn:hover { text-decoration: underline; text-underline-offset: 3px; }
 .link-btn:disabled { opacity: .5; cursor: progress; }
+.refine { display: flex; flex-direction: column; gap: 12px; background: var(--surface); border-radius: 18px; padding: 22px; box-shadow: var(--shadow-sm); }
+.refine .suggest .pill { min-height: 40px; font-size: 14px; }
+.refine-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; margin-top: 4px; }
+.go.small { width: auto; min-height: 48px; padding: 0 22px; font-size: 16px; }
 .edit-more { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
 
 .cards { display: grid; grid-template-columns: 1fr; gap: 18px; }
