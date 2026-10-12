@@ -333,7 +333,7 @@ footer p + p { margin-top: 4px; }
   background-size: 34px 34px; background-position: -1px -1px;
   box-shadow: inset 0 0 0 1px var(--line), var(--shadow-sm);
 }
-.stickers { position: relative; height: 360px; }
+.stickers { position: relative; height: 300px; }
 .sticker {
   position: absolute; width: var(--size); transform: rotate(var(--tilt)) translateY(calc(var(--scroll, 0) * var(--drift) * -0.06px)) scale(var(--fit, 1));
   animation: pop .7s var(--ease) both; animation-delay: var(--d);
@@ -397,19 +397,21 @@ footer p + p { margin-top: 4px; }
   .sticker.real.open .tname { -webkit-line-clamp: 3; }
 }
 
-.board-copy { position: relative; padding: 4px 18px 26px; display: flex; flex-direction: column; gap: 18px; }
+.board-copy { position: relative; padding: 0 18px 22px; display: flex; flex-direction: column; gap: 14px; }
 .board .type { font-family: "Space Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--body); max-width: 34ch; line-height: 1.8; }
 .board-hero h1 { font-size: clamp(34px, 9vw, 64px); }
 .board-hero .lede { font-size: 16px; }
 
 @media (min-width: 720px) {
   .board { padding: 12px 24px 0; }
-  .board-inner { height: min(720px, 86vh); min-height: 600px; }
+  /* Short enough that the first question peeks in below on a laptop's first screen. */
+  .board-inner { height: clamp(460px, calc(100vh - 290px), 620px); }
   .stickers { position: absolute; inset: 0 0 0 0; height: auto; }
-  .board-copy { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 48px 40px; flex-direction: row; align-items: flex-end; justify-content: space-between; gap: 40px; pointer-events: none; }
+  .board-copy { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 44px 30px; flex-direction: row; align-items: flex-end; justify-content: space-between; gap: 40px; pointer-events: none; }
   .board-copy > * { pointer-events: auto; }
   .board .type { font-size: 13px; padding-bottom: 6px; }
   .board-hero { max-width: 600px; text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
   .board-hero .lede { max-width: 44ch; }
+  .board-hero h1 { font-size: clamp(34px, min(5.2vw, 7.5vh), 64px); }
 }
 @media (prefers-reduced-motion: reduce) { .sticker { animation: none; } }
