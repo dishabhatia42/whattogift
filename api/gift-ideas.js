@@ -1,6 +1,6 @@
 // Vercel serverless function: turns who + occasion + optional tags into gift ideas.
 // It's a GET so Vercel's CDN can cache each answer: identical searches within
-// CACHE_SECONDS are served free, without calling Claude again.
+// CACHE_SECONDS are served free, without calling Claude again (and never reach this function).
 // Needs ANTHROPIC_API_KEY set in the Vercel project's environment variables.
 import Anthropic from "@anthropic-ai/sdk";
 import { readData } from "./_lib/store.js";
@@ -45,7 +45,23 @@ const TUNES = {
   experiences: "Lean towards experiences, classes, subscriptions and outings over physical things.",
   noclutter: "No clutter: only consumables, experiences, subscriptions or genuinely useful items; no knick-knacks or decor.",
 };
-const CACHE_SECONDS = 12 * 60 * 60;
+// A week: gift ideas don't go stale overnight. Changing products or ads still refreshes
+// everything at once, because the page adds the catalog version (cv) to the URL.
+const CACHE_SECONDS = 7 * 24 * 60 * 60;
+
+// Per-visitor limit on NEW searches (cached ones never reach this code). Kept in this server
+// instance's memory, so it's a soft guard against bots looping through combinations; the hard
+// ceiling is the monthly spend limit set in the Anthropic Console.
+const SEARCHES_PER_HOUR = 20;
+const recent = new Map(); // ip -> timestamps of recent searches
+function overLimit(ip) {
+  const now = Date.now(), hourAgo = now - 60 * 60 * 1000;
+  const times = (recent.get(ip) || []).filter((t) => t > hourAgo);
+  if (times.length >= SEARCHES_PER_HOUR) { recent.set(ip, times); return true; }
+  times.push(now); recent.set(ip, times);
+  if (recent.size > 5000) for (const [k, v] of recent) if (!v.some((t) => t > hourAgo)) recent.delete(k);
+  return false;
+}
 const VARIANTS = 3; // "Show different ideas" cycles through this many cached answers
 
 const SCHEMA = {
@@ -117,6 +133,12 @@ export default async function handler(req, res) {
   const discover = q.new === "1";
   const tunes = (typeof q.tune === "string" ? q.tune.split(",") : []).filter((t) => TUNES[t]);
 
+  const ip = String(req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || "").split(",")[0].trim() || "unknown";
+  if (overLimit(ip)) {
+    res.setHeader("Retry-After", "1800");
+    return res.status(429).json({ error: "You're on a gifting roll! Take a little breather and try again in a bit." });
+  }
+
   const curated = await curatedProducts(body.recipient, body.occasion);
   const prompt = [
     `Gift for: ${recipient}${GENDERS[body.gender] ? ` (${GENDERS[body.gender]})` : ""}`,
@@ -163,7 +185,7 @@ export default async function handler(req, res) {
       used.add(product.id);
       return { ...idea, name: product.name, price_range: product.price || idea.price_range, url: product.url, image: product.image, own: true };
     });
-    res.setHeader("Cache-Control", `public, s-maxage=${CACHE_SECONDS}, stale-while-revalidate=3600`);
+    res.setHeader("Cache-Control", `public, s-maxage=${CACHE_SECONDS}, stale-while-revalidate=86400`);
     return res.status(200).json({ vibe: typeof data.vibe === "string" ? data.vibe.slice(0, 80) : "", ideas });
   } catch (err) {
     if (err instanceof Anthropic.RateLimitError) {

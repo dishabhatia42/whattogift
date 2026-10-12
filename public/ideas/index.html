@@ -182,6 +182,7 @@
       await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
       const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=3${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
       const data = await r.json().catch(() => ({}));
+      if (r.status === 429) throw new Error(data.error || "busy");
       if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");
       loading(false);
       list.textContent = "";
@@ -197,7 +198,8 @@
       loading(false);
       $("title").textContent = finalTitle; $("count").textContent = "";
       list.textContent = "";
-      $("error").textContent = "Even we couldn't crack this one. Let's try again? ";
+      // A busy message from the server (too many searches) is shown as is; anything else gets the usual line.
+      $("error").textContent = /roll|breather/.test(err.message) ? err.message + " " : "Even we couldn't crack this one. Let's try again? ";
       const retry = el("button", "secondary", "Try again"); retry.type = "button"; retry.style.marginTop = "12px";
       retry.addEventListener("click", () => { variant -= 1; load(); }); // retry the same answer
       $("error").appendChild(retry);

@@ -50,11 +50,10 @@ export async function autofill(rawUrl) {
   // If the AI can't run (e.g. credits ran out), still fill in what the store page says.
   let data, aiProblem = "";
   try {
-    const response = await client.beta.messages.create({
-      model: "claude-opus-5-5",
+    // Haiku: filling in a note, tags and who it suits is light work, at a fraction of Opus's price.
+    const response = await client.messages.create({
+      model: "claude-haiku-5-5",
       max_tokens: 4000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
       output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
       system: SYSTEM,
       messages: [{ role: "user", content: `Link: ${url}\n${details}` }],
