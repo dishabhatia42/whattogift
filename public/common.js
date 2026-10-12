@@ -77,13 +77,39 @@
     if (tune.length) p.set("tune", tune.join(","));
     return p;
   }
+  // Interests are typed freely and travel in shareable links, so rude words and "ignore the
+  // rules…" tricks are dropped here (and again on the server: api/_lib/interests.js; keep in sync).
+  const BLOCKED = new RegExp(
+    "\\b(" + [
+      "fuck\\w*", "shit\\w*", "bitch\\w*", "bastards?", "cunts?", "dicks?", "cocks?", "pussy", "whores?", "sluts?",
+      "rap(e|es|ed|ist|ists)", "porn\\w*", "nudes?", "naked", "sex\\w*", "nazis?", "hitler", "kill(ing|er|s)?", "murder\\w*",
+      "suicide", "terroris\\w*", "bombs?", "guns?", "drugs?", "cocaine", "heroin",
+      "nigg\\w*", "fag\\w*", "retard\\w*",
+      "chutiy\\w*", "madarchod\\w*", "bh?e+n+chod\\w*", "behenchod\\w*", "bhosd\\w*", "bsdk", "gandu", "randi", "lund", "chut",
+    ].join("|") + ")\\b",
+    "i",
+  );
+  
+  // Looks like an instruction to the AI rather than an interest.
+  const INSTRUCTION = /\b(ignore|disregard|forget|override)\b|\b(instructions?|prompts?|system prompt|jailbreak|roleplay|pretend)\b|\b(act as|you are|write (a|an|me)|tell me|repeat after)\b|https?:|www\.|\.(com|in|net|org)\b/i;
+  
+  // Plain words only: letters (any language), digits, spaces and a little punctuation.
+  const ALLOWED_CHARS = /^[\p{L}\p{M}\p{N} &'’.,+\-/]+$/u;
+  function cleanInterests(list) {
+    return (Array.isArray(list) ? list : [])
+      .filter((t) => typeof t === "string")
+      .map((t) => t.trim().replace(/\s+/g, " ").slice(0, 30))
+      .filter((t) => t && ALLOWED_CHARS.test(t) && t.split(" ").length <= 5 && !BLOCKED.test(t) && !INSTRUCTION.test(t))
+      .slice(0, 8);
+  }
+
   // Reads answers from a URL, dropping anything that isn't a known option.
   function fromParams(p) {
     const recipient = RECIPIENTS.some((r) => r.id === p.get("recipient")) ? p.get("recipient") : null;
     const occasion = recipient && occasionsFor(recipient).some((o) => o.id === p.get("occasion")) ? p.get("occasion") : null;
     const gender = asksGender(recipient) && ["him", "her"].includes(p.get("gender")) ? p.get("gender") : null;
     const budget = BUDGETS.some((b) => b.id === p.get("budget")) ? p.get("budget") : null;
-    const tags = (p.get("tags") || "").split(",").map((t) => t.trim().slice(0, 30)).filter(Boolean).slice(0, 8);
+    const tags = cleanInterests((p.get("tags") || "").split(","));
     const discover = p.get("new") === "1";
     const tune = (p.get("tune") || "").split(",").filter((t) => TUNES.some((x) => x.id === t));
     return { recipient, gender, occasion, budget, tags, discover, tune };
@@ -388,7 +414,7 @@
 
   window.WTG = {
     RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES, TUNES,
-    asksGender, safeHref, toParams, fromParams, resultsTitle,
+    asksGender, safeHref, toParams, fromParams, resultsTitle, cleanInterests,
     catalog, catalogReady, pickAds, mountFeatured, mountBoard, adMedia,
   };
 })();

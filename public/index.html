@@ -140,6 +140,8 @@
   function addTag(raw) {
     const t = raw.trim().replace(/\s+/g, " ").slice(0, 30);
     if (!t || state.tags.length >= 8) return;
+    // Not a genuine interest (rude, or an instruction): don't add it, just give the box a little shake.
+    if (!WTG.cleanInterests([t]).length) { const box = $("tagbox"); box.classList.remove("nudge"); void box.offsetWidth; box.classList.add("nudge"); return; }
     if (state.tags.some((x) => x.toLowerCase() === t.toLowerCase())) return;
     state.tags.push(t); render();
   }
