@@ -5,7 +5,10 @@ import { readData, writeData, saveImage } from "./_lib/store.js";
 import { autofill, UserError, aiTrouble } from "./_lib/autofill.js";
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const VIDEO_TYPES = ["video/mp4", "video/webm"];
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+// Uploads travel as base64 inside one request, and Vercel caps a request at 4.5 MB.
+const MAX_VIDEO_BYTES = 3 * 1024 * 1024;
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -31,11 +34,13 @@ export default async function handler(req, res) {
       case "save":
         return res.status(200).json(await writeData(body.data));
       case "upload": {
-        if (!IMAGE_TYPES.includes(body.contentType) || typeof body.base64 !== "string") {
-          return res.status(400).json({ error: "Upload a JPEG, PNG or WebP image." });
+        const video = VIDEO_TYPES.includes(body.contentType);
+        if ((!IMAGE_TYPES.includes(body.contentType) && !video) || typeof body.base64 !== "string") {
+          return res.status(400).json({ error: "Upload a JPEG, PNG or WebP image, or an MP4/WebM video." });
         }
         const buffer = Buffer.from(body.base64, "base64");
-        if (buffer.length > MAX_IMAGE_BYTES) return res.status(413).json({ error: "Image is too large (2 MB max)." });
+        if (!video && buffer.length > MAX_IMAGE_BYTES) return res.status(413).json({ error: "Image is too large (2 MB max)." });
+        if (video && buffer.length > MAX_VIDEO_BYTES) return res.status(413).json({ error: "Video is too large (3 MB max). Try a shorter clip." });
         return res.status(200).json({ url: await saveImage(buffer, body.contentType) });
       }
       case "autofill":

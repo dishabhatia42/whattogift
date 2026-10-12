@@ -7,7 +7,7 @@ const DATA_PATH = "gift-finder/data.json";
 
 export const RECIPIENT_IDS = ["partner", "friend", "mom", "dad", "parents", "sibling", "colleague", "couple", "child"];
 export const OCCASION_IDS = ["birthday", "anniversary", "wedding", "just-because"];
-export const AD_SLOTS = 5;
+export const AD_SLOTS = 6;
 const MAX_PRODUCTS = 200;
 
 export async function readData() {
@@ -37,7 +37,7 @@ export async function writeData(data) {
 }
 
 export async function saveImage(buffer, contentType) {
-  const ext = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" }[contentType];
+  const ext = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "video/mp4": "mp4", "video/webm": "webm" }[contentType];
   const blob = await put(`gift-finder/images/item.${ext}`, buffer, {
     access: "public",
     contentType,
@@ -73,15 +73,17 @@ export function clean(data) {
       brand: str(a.brand, 60),
       title: str(a.title, 120),
       tagline: str(a.tagline, 200),
+      category: str(a.category, 40),  // shown under the tile, e.g. "Jewellery"
       url: httpsUrl(a.url),
       image: httpsUrl(a.image),
+      video: httpsUrl(a.video),        // optional short looping clip; plays muted in the tile
       recipients: oneOf(a.recipients, RECIPIENT_IDS),
       occasions: oneOf(a.occasions, OCCASION_IDS),
       endsOn: /^\d{4}-\d{2}-\d{2}$/.test(a.endsOn) ? a.endsOn : "",
       active: a.active !== false,
     });
   }
-  const ads = [...bySlot.values()].filter((a) => a.brand && a.title && a.url).sort((x, y) => x.slot - y.slot);
+  const ads = [...bySlot.values()].filter((a) => a.brand && a.url).sort((x, y) => x.slot - y.slot);
   return { products, ads };
 }
 

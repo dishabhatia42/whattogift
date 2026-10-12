@@ -66,7 +66,7 @@
 <script src="/common.js"></script>
 <script>
 (() => {
-  const { BUDGETS, RECIPIENTS, OCCASIONS, TUNES, toParams, fromParams, resultsTitle, safeHref, STORE_NAMES, catalog, catalogReady, pickAds } = window.WTG;
+  const { BUDGETS, RECIPIENTS, OCCASIONS, TUNES, adMedia, toParams, fromParams, resultsTitle, safeHref, STORE_NAMES, catalog, catalogReady, pickAds } = window.WTG;
   const $ = (id) => document.getElementById(id);
 
   const state = fromParams(new URLSearchParams(location.search));
@@ -132,17 +132,15 @@
     c.append(pic, body);
     return c;
   }
+  // Sponsored: the same card, picture or looping video, with just the brand and its category.
   function adCard(ad, n) {
-    const c = el("article", "card sponsored rise"); c.style.setProperty("--i", n);
-    const pic = el("div", "pic");
-    if (safeHref(ad.image)) { const img = el("img"); img.src = ad.image; img.alt = ""; img.loading = "lazy"; pic.appendChild(img); }
-    else { pic.classList.add("tile"); pic.style.background = TILES[1]; pic.appendChild(el("span", "emoji", "🛍️")); }
+    const c = el("a", "card sponsored rise"); c.style.setProperty("--i", n);
+    c.href = ad.url; c.target = "_blank"; c.rel = "sponsored noopener noreferrer";
+    const pic = el("div", "pic fill"); pic.appendChild(adMedia(ad));
     pic.appendChild(el("span", "kind ad", "Sponsored"));
     const body = el("div", "body");
-    body.append(el("p", "label", ad.brand), el("h3", "", ad.title));
-    if (ad.tagline) body.appendChild(el("p", "why", ad.tagline));
-    const a = el("a", "shop", `Shop ${ad.brand} ↗`); a.href = ad.url; a.target = "_blank"; a.rel = "sponsored noopener noreferrer";
-    const acts = el("div", "acts"); acts.appendChild(a); body.appendChild(acts);
+    body.appendChild(el("h3", "", ad.brand));
+    if (ad.category) body.appendChild(el("p", "why", ad.category));
     c.append(pic, body);
     return c;
   }

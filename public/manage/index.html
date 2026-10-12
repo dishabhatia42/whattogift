@@ -133,7 +133,7 @@
     <!-- ads -->
     <section class="panel">
       <h2>Ad slots</h2>
-      <p class="muted">Five slots. Each search shows up to two matching ads inside the results (after the 2nd and 6th idea), rotating so every slot gets seen. They're labelled "Sponsored".</p>
+      <p class="muted">Six slots. Each ad shows as a tall picture (or a short looping video) with just the brand and its category underneath, in the home-page strip, and up to two matching ones in "Sponsored picks" on the results page. They're marked as ads.</p>
       <div id="ad-slots" style="display:flex;flex-direction:column;gap:16px"></div>
     </section>
 
@@ -146,7 +146,7 @@
 (() => {
   const RECIPIENTS = [["partner", "Partner"], ["friend", "Friend"], ["mom", "Mom"], ["dad", "Dad"], ["parents", "Parents"], ["sibling", "Sibling"], ["colleague", "Colleague"], ["couple", "A couple"], ["child", "A child"]];
   const OCCASIONS = [["birthday", "Birthday"], ["anniversary", "Anniversary"], ["wedding", "Wedding"], ["just-because", "Just because"]];
-  const SLOTS = 5;
+  const SLOTS = 6;
   let key = "";
   let data = { products: [], ads: [] };
   const $ = (s, el = document) => el.querySelector(s);
@@ -414,6 +414,25 @@
   }
 
   // ---- ad slots
+  // Ad videos upload as they are (no re-encoding in the browser), so keep them short.
+  function wireVideo(form, current) {
+    const file = $("[data-vfile]", form), pv = $("[data-vpreview]", form), hidden = form.elements.video, clear = $("[data-vclear]", form);
+    const show = (url) => { hidden.value = url || ""; pv.hidden = !url; clear.hidden = !url; if (url) pv.src = url; else pv.removeAttribute("src"); };
+    show(current);
+    clear.addEventListener("click", () => show(""));
+    file.addEventListener("change", async () => {
+      const f = file.files[0]; file.value = "";
+      if (!f) return;
+      if (f.size > 3 * 1024 * 1024) return toast("That video is over 3 MB. Trim it to a few seconds and try again.", true);
+      toast("Uploading video…");
+      try {
+        const base64 = await new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = bad; r.readAsDataURL(f); });
+        const { url } = await call({ action: "upload", contentType: f.type, base64 });
+        show(url); toast("Video ready. Save the slot to use it.");
+      } catch (e) { toast(e.message, true); }
+    });
+  }
+
   function renderAds() {
     const box = $("#ad-slots"); box.textContent = "";
     for (let slot = 1; slot <= SLOTS; slot++) {
@@ -424,22 +443,23 @@
         <div class="row" style="justify-content:space-between"><strong style="color:var(--fg)">Slot ${slot}</strong><span class="muted" data-state></span></div>
         <div class="grid">
           <label class="f">Brand *<input type="text" name="brand" maxlength="60" required></label>
-          <label class="f">Headline *<input type="text" name="title" maxlength="120" required></label>
+          <label class="f">Category * (e.g. Jewellery)<input type="text" name="category" maxlength="40" required></label>
         </div>
-        <label class="f">Short line<input type="text" name="tagline" maxlength="200"></label>
         <div class="grid">
           <label class="f">Link *<input type="url" name="url" required placeholder="https://"></label>
           <label class="f">Runs until (optional)<input type="date" name="endsOn"></label>
         </div>
         <div class="f">Show for (nothing ticked in a row = all)<div data-occ style="display:flex;flex-direction:column;gap:6px"></div></div>
-        <div class="row"><img class="preview" data-preview hidden alt=""><label class="f">Banner image<input type="file" accept="image/*" data-file></label><input type="hidden" name="image"></div>
+        <div class="row"><img class="preview" data-preview hidden alt=""><label class="f">Picture * (tall photos look best)<input type="file" accept="image/*" data-file></label><input type="hidden" name="image"></div>
+        <div class="row"><video class="preview" data-vpreview hidden muted loop playsinline autoplay></video><label class="f">Video (optional, MP4 up to 3 MB; plays silently on a loop over the picture)<input type="file" accept="video/mp4,video/webm" data-vfile></label><input type="hidden" name="video"><button type="button" data-vclear hidden>Remove video</button></div>
         <div class="row"><button class="primary" type="submit">Save slot ${slot}</button><button type="button" data-toggle hidden></button><button type="button" class="danger" data-clear hidden>Clear slot</button></div>`;
       occasionBoxes($("[data-occ]", form), ad || {});
       wireImage(form);
+      wireVideo(form, ad && ad.video);
       const st = $("[data-state]", form);
       if (ad) {
         const f = form.elements;
-        f.brand.value = ad.brand; f.title.value = ad.title; f.tagline.value = ad.tagline; f.url.value = ad.url; f.endsOn.value = ad.endsOn;
+        f.brand.value = ad.brand; f.category.value = ad.category || ""; f.url.value = ad.url; f.endsOn.value = ad.endsOn;
         setImage(form, ad.image);
         const expired = ad.endsOn && ad.endsOn < new Date().toISOString().slice(0, 10);
         st.textContent = (!ad.active ? "Paused" : expired ? "Ended" : "Live") + " · " + describeTargets(ad);
@@ -454,8 +474,8 @@
         e.preventDefault();
         const f = form.elements;
         const next = {
-          slot, brand: f.brand.value, title: f.title.value, tagline: f.tagline.value, url: f.url.value,
-          endsOn: f.endsOn.value, image: f.image.value, recipients: checked(form, "recipients"), occasions: checked(form, "occasions"), active: ad ? ad.active : true,
+          slot, brand: f.brand.value, category: f.category.value, title: ad ? ad.title : "", tagline: ad ? ad.tagline : "", url: f.url.value,
+          endsOn: f.endsOn.value, image: f.image.value, video: f.video.value, recipients: checked(form, "recipients"), occasions: checked(form, "occasions"), active: ad ? ad.active : true,
         };
         save({ ...data, ads: [...data.ads.filter((a) => a.slot !== slot), next] });
       });

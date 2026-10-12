@@ -125,6 +125,21 @@
   // ---- "Featured" strip: every live ad, ones matching the current answers first.
   // On desktop with more than 3 ads it auto-advances every 5 s (pauses on hover/focus/hidden tab,
   // never for reduced motion or on touch screens).
+  // The picture or video inside an ad tile. Videos play muted on a loop (not for reduced motion).
+  function adMedia(ad) {
+    const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (safeHref(ad.video)) {
+      const v = document.createElement("video");
+      v.src = ad.video; v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = !calm; v.preload = "metadata";
+      v.setAttribute("muted", ""); v.setAttribute("playsinline", ""); v.setAttribute("aria-hidden", "true");
+      if (safeHref(ad.image)) v.poster = ad.image;
+      return v;
+    }
+    if (safeHref(ad.image)) { const img = document.createElement("img"); img.src = ad.image; img.alt = ""; img.loading = "lazy"; return img; }
+    const ph = document.createElement("span"); ph.className = "ph"; ph.setAttribute("aria-hidden", "true"); ph.textContent = (ad.brand || "?").trim()[0].toUpperCase();
+    return ph;
+  }
+
   function mountFeatured(getState) {
     const $ = (id) => document.getElementById(id);
     const section = $("featured"), row = $("feat-row");
@@ -133,7 +148,7 @@
     const carousel = { active: false, paused: false, timer: null };
     let lastKey = null;
 
-    const tileStep = () => { const t = row.querySelector(".feat"); return t ? t.getBoundingClientRect().width + 12 : 0; };
+    const tileStep = () => { const t = row.querySelector(".feat"); return t ? t.getBoundingClientRect().width + 14 : 0; };
     // "At the end" once under 24 px is left to reveal: the last ad is fully shown, but no tiny nudge before wrapping.
     const atEnd = () => row.scrollLeft + row.clientWidth >= row.scrollWidth - 24;
     function step(dir) {
@@ -180,23 +195,18 @@
       const live = catalog.ads.filter((a) => safeHref(a.url));
       const ordered = s.recipient ? [...live.filter((a) => matches(a, s)), ...live.filter((a) => !matches(a, s))] : live;
       row.textContent = "";
+      // Each ad is a tall picture (or a muted looping video) with just the brand and category below.
       for (const ad of ordered) {
         const a = document.createElement("a");
         a.className = "feat"; a.href = ad.url; a.target = "_blank"; a.rel = "sponsored noopener noreferrer";
-        if (safeHref(ad.image)) {
-          const img = document.createElement("img"); img.src = ad.image; img.alt = ""; img.loading = "lazy"; a.appendChild(img);
-        } else {
-          const ph = document.createElement("span"); ph.className = "ph"; ph.setAttribute("aria-hidden", "true"); ph.textContent = (ad.brand || "?").trim()[0].toUpperCase(); a.appendChild(ph);
-        }
-        const tx = document.createElement("span"); tx.className = "tx";
-        const who = document.createElement("span"); who.className = "who";
-        const brand = document.createElement("span"); brand.textContent = ad.brand; who.appendChild(brand);
-        const tag = document.createElement("b"); tag.textContent = "Ad"; who.appendChild(tag);
-        const title = document.createElement("strong"); title.textContent = ad.title;
-        tx.append(who, title);
-        if (ad.tagline) { const tl = document.createElement("span"); tl.className = "tl"; tl.textContent = ad.tagline; tx.appendChild(tl); }
-        const go = document.createElement("span"); go.className = "go2"; go.textContent = live.length > 1 ? "Explore →" : "Explore this find →"; tx.appendChild(go);
-        a.appendChild(tx); row.appendChild(a);
+        a.setAttribute("aria-label", `${ad.brand}${ad.category ? ", " + ad.category : ""} (ad)`);
+        const box = document.createElement("span"); box.className = "box";
+        box.appendChild(adMedia(ad));
+        const tag = document.createElement("b"); tag.className = "ad"; tag.textContent = "Ad"; box.appendChild(tag);
+        const name = document.createElement("span"); name.className = "nm"; name.textContent = ad.brand;
+        a.append(box, name);
+        if (ad.category) { const cat = document.createElement("span"); cat.className = "cat"; cat.textContent = ad.category; a.appendChild(cat); }
+        row.appendChild(a);
       }
       section.hidden = !ordered.length;
       setupCarousel();
@@ -377,6 +387,6 @@
   window.WTG = {
     RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES, TUNES,
     asksGender, safeHref, toParams, fromParams, resultsTitle,
-    catalog, catalogReady, pickAds, mountFeatured, mountBoard,
+    catalog, catalogReady, pickAds, mountFeatured, mountBoard, adMedia,
   };
 })();

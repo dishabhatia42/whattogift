@@ -202,42 +202,38 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
   *, *::before, *::after { transition-duration: 0s !important; }
 }
 
-/* Featured ads (below the form) */
+/* Featured ads (below the form): tall rounded tiles, picture or video only, brand + category below */
 .featured { display: flex; flex-direction: column; gap: 12px; }
 .featured-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
-.featured-head .sub { margin-top: 4px; }
+.featured-head .kicker { white-space: nowrap; flex: none; padding-bottom: 4px; }
+@media (min-width: 900px) {
+  /* Break out of the narrow form column so five tiles fit side by side. */
+  .featured { width: min(1040px, calc(100vw - 64px)); margin-left: 50%; transform: translateX(-50%); }
+}
 .feat-wrap { position: relative; }
 .feat-row {
-  display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
+  display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
   margin-inline: -16px; padding: 4px 16px 16px; scroll-padding-inline: 16px; overscroll-behavior-x: contain;
 }
 .feat-row::-webkit-scrollbar { display: none; }
 .feat {
-  flex: 0 0 min(calc((100% - 24px) / 2.5), 200px); scroll-snap-align: start; min-width: 0; overflow: hidden;
-  display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: inherit;
-  background: var(--surface); border-radius: 20px; padding: 8px 8px 12px; box-shadow: var(--shadow-sm);
-  transition: transform .18s var(--ease), box-shadow .18s;
+  flex: 0 0 calc((100% - 28px) / 2.3); scroll-snap-align: start; min-width: 0;
+  display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: inherit;
 }
-.feat:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
-.feat:active { transform: scale(.98); }
-.feat img, .feat .ph { width: 100%; aspect-ratio: 1; border-radius: 14px; object-fit: cover; background: var(--line); display: block; }
-.feat .ph { display: grid; place-items: center; background: var(--tint); color: var(--primary); font: 800 34px var(--font-display); }
-.feat .tx { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; padding-inline: 4px; }
-.feat .who { font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); display: flex; gap: 5px; align-items: center; min-width: 0; }
-.feat .who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.feat .who b { flex: none; background: var(--gold-chip); color: var(--on-gold); font-weight: 700; border-radius: 999px; padding: 0 6px; font-size: 10px; }
-.feat strong { font-family: var(--font-display); font-weight: 700; font-size: 14px; line-height: 1.3; color: var(--fg); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.feat .tl { display: none; }
-.feat .go2 { font-size: 13px; font-weight: 600; color: var(--link); margin-top: auto; padding-top: 4px; white-space: nowrap; }
-.feat-row > .feat:only-child { flex: 1 1 100%; flex-direction: row; align-items: center; gap: 14px; padding: 10px 16px 10px 10px; }
-.feat-row > .feat:only-child img, .feat-row > .feat:only-child .ph { width: 88px; flex: none; }
-.feat-row > .feat:only-child strong { font-size: 16px; }
-.feat-row > .feat:only-child .tl { display: -webkit-box; font-size: 13px; line-height: 1.4; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+@media (min-width: 900px) { .feat { flex-basis: calc((100% - 4 * 14px) / 5); } }
+.feat .box { position: relative; display: block; aspect-ratio: 3 / 4; border-radius: 20px; overflow: hidden; background: var(--cream); margin-bottom: 8px; box-shadow: var(--shadow-sm); transition: transform .2s var(--ease), box-shadow .2s; }
+.feat:hover .box { transform: translateY(-3px); box-shadow: var(--shadow); }
+.feat:active .box { transform: scale(.98); }
+.feat .box img, .feat .box video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.feat .ph { display: grid; place-items: center; width: 100%; height: 100%; background: var(--tint); color: var(--primary); font: 800 40px var(--font-display); }
+.feat .ad { position: absolute; top: 10px; left: 10px; font-size: 10.5px; font-weight: 700; color: var(--on-gold); background: rgba(255, 255, 255, .9); border-radius: 999px; padding: 2px 8px; }
+.feat .nm { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-inline: 2px; }
+.feat .cat { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-inline: 2px; }
 
 /* desktop carousel controls, shown only while auto-advance is active */
 .feat-nav, .feat-dots { display: none; }
 .featured.auto .feat-nav {
-  display: grid; place-items: center; position: absolute; top: 38%; transform: translateY(-50%); z-index: 1;
+  display: grid; place-items: center; position: absolute; top: 40%; transform: translateY(-50%); z-index: 1;
   width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer;
   background: var(--surface); color: var(--primary); font: 600 18px/1 var(--font-body);
   box-shadow: var(--shadow); transition: transform .15s;
@@ -294,6 +290,9 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .card .pic { position: relative; aspect-ratio: 4 / 3; background: var(--cream); display: grid; place-items: center; overflow: hidden; }
 /* Product photos are shown whole, never cropped. */
 .card .pic img { position: absolute; inset: 0; width: 100%; height: 100%; padding: 7%; object-fit: contain; filter: drop-shadow(0 8px 12px rgba(38, 32, 30, .14)); }
+.card.sponsored { text-decoration: none; color: inherit; }
+.card .pic.fill > img, .card .pic.fill > video { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; object-fit: cover; filter: none; }
+.card .pic.fill > .ph { position: absolute; inset: 0; display: grid; place-items: center; background: var(--tint); color: var(--primary); font: 800 40px var(--font-display); }
 .card .pic.tile .emoji { font-size: 76px; line-height: 1; filter: drop-shadow(0 8px 10px rgba(38, 32, 30, .16)); transition: transform .3s var(--ease); }
 .card:hover .pic.tile .emoji { transform: scale(1.08) rotate(-4deg); }
 .card .kind { position: absolute; top: 12px; left: 12px; font-size: 11px; font-weight: 600; letter-spacing: .04em; color: var(--fg); background: rgba(255, 255, 255, .88); border-radius: 999px; padding: 3px 10px; }
