@@ -116,13 +116,6 @@ h1 span { color: var(--primary); }
 .sub { font-size: 15px; color: var(--muted); }
 .aside { font-size: 14px; font-style: italic; color: var(--primary); }
 h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: -0.02em; color: var(--fg); line-height: 1.2; }
-.era, .note-card { display: flex; flex-direction: column; gap: 12px; }
-.era p { font-size: 16px; }
-.era .secondary { text-decoration: none; display: inline-flex; align-items: center; }
-.note-card { background: var(--surface); border-radius: 20px; padding: 24px; box-shadow: var(--shadow-sm); }
-.note-card p { font-size: 16px; }
-.note-card .beat { font-family: var(--font-display); font-weight: 800; font-size: 20px; color: var(--primary); }
-.note-card .sign { font-weight: 600; color: var(--fg); }
 .kicker { font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 
 /* form steps */
@@ -186,11 +179,16 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
   box-shadow: var(--shadow-cta); display: flex; align-items: center; justify-content: center; gap: 10px;
   transition: transform .15s var(--ease), box-shadow .15s, opacity .15s;
 }
-.go:hover { transform: translateY(-1px); }
+.go:not(.waiting):hover { transform: translateY(-1px); }
 .go:active { transform: scale(.99); }
-.go:disabled { opacity: .35; cursor: not-allowed; transform: none; box-shadow: none; }
+.go.waiting { opacity: .35; transform: none; box-shadow: none; }
+.go:disabled { opacity: .5; cursor: progress; }
+/* A gentle wiggle on the question that still needs an answer. */
+.nudge { animation: nudge .45s var(--ease); }
+@keyframes nudge { 20% { transform: translateX(-6px); } 45% { transform: translateX(5px); } 70% { transform: translateX(-3px); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .nudge { animation: none; } }
 .go .arr { transition: transform .2s var(--ease); }
-.go:not(:disabled):hover .arr { transform: translateX(3px); }
+.go:not(.waiting):hover .arr { transform: translateX(3px); }
 .note { font-size: 14px; color: var(--muted); }
 .error { color: var(--err); font-size: 15px; }
 

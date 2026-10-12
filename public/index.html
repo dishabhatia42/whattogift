@@ -74,8 +74,7 @@
     </section>
 
     <div class="cta-wrap rise" style="--i:5" id="cta">
-      <button class="go" id="go" type="button" disabled>Find gifts they'll actually love <span class="arr" aria-hidden="true">→</span></button>
-      <p class="note" id="hint">First things first. Who are we spoiling?</p>
+      <button class="go waiting" id="go" type="button" aria-disabled="true">Find gifts they'll actually love <span class="arr" aria-hidden="true">→</span></button>
       <p class="note" id="mug" hidden>Because another generic coffee mug isn't the answer.</p>
     </div>
     <div id="cta-end" aria-hidden="true" style="margin-top:-36px;height:1px"></div>
@@ -92,21 +91,6 @@
       <button class="feat-nav next" id="feat-next" type="button" aria-label="Next ad">›</button>
     </div>
     <div class="feat-dots" id="feat-dots"></div>
-  </section>
-
-  <section class="era">
-    <h2 class="sec">Your gifting era starts here.</h2>
-    <p>You know that feeling when someone opens your gift and says, “HOW DID YOU KNOW?!” Yeah. We're here for more of that.</p>
-    <p>No endless scrolling. No panic-buying something vaguely acceptable. Just lovely, thoughtful finds that make people feel seen.</p>
-    <a class="secondary" href="#s1" id="era-go">Go make someone's day →</a>
-  </section>
-
-  <section class="note-card">
-    <p class="kicker">A little note from Serial Gifter</p>
-    <p>The best gifts aren't always expensive. Sometimes they're silly. Sometimes they're sentimental. Sometimes they're something someone mentioned once, six months ago, and forgot about.</p>
-    <p class="beat">But you didn't.</p>
-    <p>And that's what makes a gift special. We're just here to make finding it a whole lot easier.</p>
-    <p class="sign">Made for people who give a damn. ♡</p>
   </section>
 
   <footer>
@@ -205,9 +189,9 @@
     }
 
     const ready = !!(state.recipient && state.occasion);
-    $("go").disabled = !ready;
+    $("go").classList.toggle("waiting", !ready);
+    $("go").setAttribute("aria-disabled", String(!ready));
     $("cta").classList.toggle("ready", ready);
-    $("hint").hidden = ready;
     $("mug").hidden = !ready;
     const note = BUDGETS.find((b) => b.id === state.budget)?.note;
     $("budget-note").textContent = note || "";
@@ -216,14 +200,19 @@
   }
 
   // Results open on their own page; the answers travel in the URL.
+  // Not ready yet? The button shows what's missing: it scrolls to the question and gives it a wiggle.
+  const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function nudge(row) {
+    row.closest(".step").scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "center" });
+    row.classList.remove("nudge"); void row.offsetWidth; row.classList.add("nudge");
+  }
   $("go").addEventListener("click", () => {
-    if (!state.recipient || !state.occasion) return;
+    if (!state.recipient) return nudge($("recipients"));
+    if (!state.occasion) return nudge($("occasions"));
     location.href = "/ideas?" + toParams(state).toString();
   });
-  // "Go make someone's day" and the header button jump to the first question.
-  const toQuestions = (e) => { e.preventDefault(); $("s1").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }); };
-  $("era-go").addEventListener("click", toQuestions);
-  $("header-cta").addEventListener("click", toQuestions);
+  // The header button jumps to the first question.
+  $("header-cta").addEventListener("click", (e) => { e.preventDefault(); $("s1").scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "center" }); });
   // The button is "stuck" (following you down the page) while its real spot is still below the screen.
   new IntersectionObserver(([e]) => {
     $("cta").classList.toggle("stuck", !e.isIntersecting && e.boundingClientRect.top > 0);
