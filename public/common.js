@@ -166,6 +166,7 @@
     return ph;
   }
 
+  const AD_SLOT_COUNT = 6; // matches AD_SLOTS in api/_lib/store.js
   function mountFeatured(getState) {
     const $ = (id) => document.getElementById(id);
     const section = $("featured"), row = $("feat-row");
@@ -236,7 +237,26 @@
         if (ad.category) { const cat = document.createElement("span"); cat.className = "cat"; cat.textContent = ad.category; a.appendChild(cat); }
         row.appendChild(a);
       }
-      section.hidden = !ordered.length;
+      // Empty ad slots invite brands in: each opens an email to Disha. They disappear as slots fill.
+      // (The address is put together here, in the page, so simple spam bots reading the HTML don't see it.)
+      const mail = ["dishabhatia42", "gmail.com"].join("@");
+      const subject = encodeURIComponent("Featuring my brand on Serial Gifter");
+      const body = encodeURIComponent("Hi Disha,\n\nI'd love to feature my brand on Serial Gifter.\n\nBrand:\nWebsite / Instagram:\nCategory:\n\nThanks!");
+      for (let n = ordered.length; n < AD_SLOT_COUNT; n++) {
+        const a = document.createElement("a");
+        a.className = "feat open-slot"; a.href = `mailto:${mail}?subject=${subject}&body=${body}`;
+        a.setAttribute("aria-label", "Grab your slot now. Are you a brand? Write to us to get featured here.");
+        const box = document.createElement("span"); box.className = "box";
+        const inner = document.createElement("span"); inner.className = "slot-msg";
+        const big = document.createElement("strong"); big.textContent = "Grab your slot now";
+        const small = document.createElement("span"); small.textContent = "Are you a brand? Get featured right here.";
+        inner.append("✨", big, small); box.appendChild(inner);
+        const go = document.createElement("span"); go.className = "go-arrow"; go.setAttribute("aria-hidden", "true"); go.textContent = "↗"; box.appendChild(go);
+        const name = document.createElement("span"); name.className = "nm"; name.textContent = "Your brand here";
+        const cat = document.createElement("span"); cat.className = "cat write"; cat.textContent = "Write to me →";
+        a.append(box, name, cat); row.appendChild(a);
+      }
+      section.hidden = false;
       setupCarousel();
     }
 

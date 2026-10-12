@@ -234,6 +234,13 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
   font: 700 16px/1 var(--font-body); box-shadow: 0 2px 8px rgba(38, 32, 30, .15); transition: transform .2s var(--ease), background .2s, color .2s;
 }
 .feat:hover .go-arrow, .card.sponsored:hover .go-arrow { background: var(--primary); color: #fff; transform: translate(2px, -2px); }
+/* Open ad slots: an invitation to brands, styled as a dashed "empty frame". */
+.feat.open-slot .box { background: var(--surface); border: 2px dashed var(--tint); box-shadow: none; display: grid; place-items: center; }
+.feat.open-slot:hover .box { border-color: var(--primary); }
+.feat .slot-msg { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px; text-align: center; font-size: 22px; }
+.feat .slot-msg strong { font-family: var(--font-display); font-weight: 800; font-size: 17px; line-height: 1.2; color: var(--primary); }
+.feat .slot-msg span { font-size: 13px; line-height: 1.4; color: var(--muted); }
+.feat .cat.write { color: var(--primary); font-weight: 600; }
 .feat .nm { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-inline: 2px; }
 .feat .cat { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-inline: 2px; }
 
