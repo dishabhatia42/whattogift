@@ -138,6 +138,7 @@
     c.href = ad.url; c.target = "_blank"; c.rel = "sponsored noopener noreferrer";
     const pic = el("div", "pic fill"); pic.appendChild(adMedia(ad));
     pic.appendChild(el("span", "kind ad", "Sponsored"));
+    const go = el("span", "go-arrow", "↗"); go.setAttribute("aria-hidden", "true"); pic.appendChild(go);
     const body = el("div", "body");
     body.appendChild(el("h3", "", ad.brand));
     if (ad.category) body.appendChild(el("p", "why", ad.category));

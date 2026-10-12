@@ -203,6 +203,8 @@
         const box = document.createElement("span"); box.className = "box";
         box.appendChild(adMedia(ad));
         const tag = document.createElement("b"); tag.className = "ad"; tag.textContent = "Ad"; box.appendChild(tag);
+        // The whole tile is the link; the arrow just makes that obvious.
+        const go = document.createElement("span"); go.className = "go-arrow"; go.setAttribute("aria-hidden", "true"); go.textContent = "↗"; box.appendChild(go);
         const name = document.createElement("span"); name.className = "nm"; name.textContent = ad.brand;
         a.append(box, name);
         if (ad.category) { const cat = document.createElement("span"); cat.className = "cat"; cat.textContent = ad.category; a.appendChild(cat); }
