@@ -340,9 +340,10 @@
           tag.append(n, arr);
           if (product.line) { const l = document.createElement("span"); l.className = "tline"; l.textContent = product.line; tag.appendChild(l); }
           el.append(photo, tag);
-          // On touch screens the first tap on the photo shows Disha's line, the second opens the product.
+          // On touch screens the first tap on the photo shows its tag (name, and Disha's line if any);
+          // tapping the tag, or the photo again, opens the product.
           photo.addEventListener("click", (e) => {
-            if (matchMedia("(hover: hover)").matches || el.classList.contains("open") || !product.line) return;
+            if (matchMedia("(hover: hover)").matches || el.classList.contains("open")) return;
             e.preventDefault();
             box.querySelectorAll(".open").forEach((o) => o.classList.remove("open"));
             el.classList.add("open");

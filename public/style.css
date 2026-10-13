@@ -409,14 +409,17 @@ footer p + p { margin-top: 4px; }
 .sticker .tname { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .sticker .tarr { color: #96364D; font-weight: 700; }
 .sticker .tline { display: none; grid-column: 1 / -1; margin-top: 2px; font-weight: 400; color: #5f544d; }
-.sticker .tag:hover { background: #96364D; color: #fff; }
-.sticker .tag:hover .tarr, .sticker .tag:hover .tline { color: #fff; }
-.sticker .tag:hover::before { border-bottom-color: #96364D; }
+/* Mouse only: on phones a tapped tag would otherwise stay red; there it stays white. */
+@media (hover: hover) {
+  .sticker .tag:hover { background: #96364D; color: #fff; }
+  .sticker .tag:hover .tarr, .sticker .tag:hover .tline { color: #fff; }
+  .sticker .tag:hover::before { border-bottom-color: #96364D; }
+}
 .sticker.real:hover .tag, .sticker.real:focus-within .tag, .sticker.real.open .tag { max-width: 180px; opacity: 1; margin-top: 0; pointer-events: auto; }
 .sticker.real:hover .tline, .sticker.real:focus-within .tline, .sticker.real.open .tline { display: block; }
 .sticker .tag:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 /* Touch screens can't hover, so tags stay on show there; a tap on the photo adds Disha's line. */
-@media (hover: none) { .sticker.real .tag { opacity: 1; margin-top: 0; pointer-events: auto; } }
+/* Touch screens: no tags until a product is tapped; the tapped one shows its tag, which opens the product. */
 /* Phones: a touch smaller still, so neighbours don't collide; the full name shows when opened. */
 @media (max-width: 719px) {
   .sticker .tag { top: calc(100% - 5px); max-width: calc(var(--size) + 6px); padding: 3px 6px; font-size: 9.5px; border-radius: 5px; }
