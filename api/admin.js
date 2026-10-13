@@ -4,7 +4,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { readData, writeData, saveImage } from "./_lib/store.js";
 import { autofill, UserError, aiTrouble } from "./_lib/autofill.js";
 import { readCatalog, refreshCatalog, refreshBrand, dropBrand } from "./_lib/catalog.js";
-import { readBrands, updateBrands, sameShop, slug } from "./_lib/brands.js";
+import { readBrands, updateBrands, sameShop, slug, cleanDomain } from "./_lib/brands.js";
 import { checkShop, suggestBrands, ScoutError } from "./_lib/scout.js";
 
 // Finding brand suggestions searches the web, which can take a minute or two.
@@ -64,7 +64,19 @@ export default async function handler(req, res) {
       case "brandCheck":
         return res.status(200).json(await checkShop(body.link));
       case "brandAdd": {
-        const shop = await checkShop(body.link || body.domain, { name: typeof body.name === "string" && body.name.trim() ? body.name.trim() : undefined });
+        const wantName = typeof body.name === "string" && body.name.trim() ? body.name.trim() : undefined;
+        let shop;
+        try {
+          shop = await checkShop(body.link || body.domain, { name: wantName });
+        } catch (err) {
+          // A suggestion already passed this check when it was found. If the shop's site is briefly
+          // unreachable now (some rate-limit unfamiliar visitors), add it from that check anyway;
+          // the nightly read tries its products again.
+          const pending = (await readBrands()).suggestions.find((s) => sameShop(s.domain, cleanDomain(body.link || body.domain)));
+          if (!pending) throw err;
+          console.warn("Brand re-check failed, adding from its suggestion", pending.domain, err.message);
+          shop = { name: wantName || pending.name, domain: pending.domain, platform: pending.platform };
+        }
         let brand;
         const saved = await updateBrands((list) => {
           if (list.brands.some((b) => sameShop(b.domain, shop.domain))) throw new UserError(`${shop.name} is already in your brands.`);
@@ -76,7 +88,15 @@ export default async function handler(req, res) {
             skipped: list.skipped.filter((d) => !sameShop(d, shop.domain)),
           };
         });
-        const catalog = await refreshBrand(brand); // its products are searchable straight away
+        // Its products are searchable straight away. If reading them fails, the brand is still
+        // saved (the nightly read will try again), so this must not turn into an error.
+        let catalog;
+        try { catalog = await refreshBrand(brand); }
+        catch (err) {
+          console.error("Added brand, but couldn't read its products yet", brand.domain, err);
+          const c = await readCatalog({ fresh: true });
+          catalog = { updatedAt: c.updatedAt, total: c.items.length, brands: c.brands || [] };
+        }
         return res.status(200).json({ ...saved, added: brand, catalog });
       }
       case "brandRemove": {
@@ -115,7 +135,10 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Unknown action." });
     }
   } catch (err) {
-    if (err instanceof UserError || err instanceof ScoutError) return res.status(400).json({ error: err.message });
+    if (err instanceof UserError || err instanceof ScoutError) {
+      console.warn(`Admin ${body?.action} refused:`, err.message, body?.domain || body?.link || "");
+      return res.status(400).json({ error: err.message });
+    }
     console.error(err);
     // Name the real problem: an AI error, or storage.
     if (err?.status && err?.headers) return res.status(502).json({ error: aiTrouble(err) });

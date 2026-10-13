@@ -249,7 +249,7 @@
 
   function toast(msg, isErr) {
     const s = $("#status"); s.textContent = msg; s.className = isErr ? "err" : ""; s.hidden = false;
-    clearTimeout(toast.t); toast.t = setTimeout(() => { s.hidden = true; }, 3000);
+    clearTimeout(toast.t); toast.t = setTimeout(() => { s.hidden = true; }, isErr ? 7000 : 3000);
   }
 
   async function call(payload) {
@@ -313,7 +313,12 @@
       const acts = mk("div", "acts");
       const add = mk("button", "primary", "＋ Add"); add.type = "button";
       const skip = mk("button", "", "Skip"); skip.type = "button";
-      add.addEventListener("click", () => { skip.disabled = true; card.style.opacity = ".5"; addBrand({ domain: s.domain, name: s.name }, add).then((ok) => { if (!ok) { skip.disabled = false; card.style.opacity = ""; } }); });
+      // If an add fails, the reason stays on the card (not just a passing toast).
+      add.addEventListener("click", async () => {
+        skip.disabled = true; card.style.opacity = ".5"; $(".err-line", card)?.remove();
+        const out = await addBrand({ domain: s.domain, name: s.name }, add);
+        if (out !== true) { skip.disabled = false; card.style.opacity = ""; acts.before(mk("p", "err-line", out)); }
+      });
       skip.addEventListener("click", async () => {
         skip.disabled = add.disabled = true;
         card.style.opacity = ".5";
@@ -400,7 +405,7 @@
       const got = (out.catalog.brands || []).find((r) => r.id === out.added.id);
       toast(`${out.added.name} added${got ? ` with ${got.count} products` : ""}. It's live in searches now.`);
       return true;
-    } catch (e) { toast(e.message, true); if (btn) btn.disabled = false; return false; }
+    } catch (e) { toast(e.message, true); if (btn) btn.disabled = false; return e.message || "Couldn't add it."; }
   }
 
   // Paste a link -> see the brand's real products -> add it.
