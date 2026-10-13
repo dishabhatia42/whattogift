@@ -134,7 +134,7 @@
     else { pic.classList.add("tile"); pic.style.background = TILES[n % TILES.length]; pic.appendChild(el("span", "emoji", idea.emoji || "🎁")); }
     const fit = idea.fit === "new" ? "✨ New world" : idea.fit === "wildcard" ? "🎲 Wildcard" : "";
     const badge = !exact ? "💡 Gift idea" : idea.own ? "Our pick" : fit;
-    if (badge) pic.appendChild(el("span", "kind" + (exact ? "" : " idea-kind"), badge));
+    if (badge) pic.appendChild(el("span", "kind" + (exact ? " solid" : " idea-kind"), badge)); // solid: product photos are mostly white
     const body = el("div", "body");
     if (idea.label || idea.tag) body.appendChild(el("p", "label", idea.label || idea.tag));
     body.appendChild(el("h3", "", idea.name));
