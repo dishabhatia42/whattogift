@@ -352,7 +352,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 @media (prefers-reduced-motion: reduce) { .card.skeleton::after { animation: none; } .card:hover, .card:hover .pic.tile .emoji { transform: none; } }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .card .pic.tile { filter: brightness(.82); } }
 
-footer { font-size: 13px; color: var(--muted); }
+footer { font-size: 13px; color: var(--muted); margin-top: -16px; } /* sits a little closer to the section above */
 footer p + p { margin-top: 4px; }
 
 /* ---- home-page board: gifts pinned to grid paper ---- */
