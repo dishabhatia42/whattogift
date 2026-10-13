@@ -6,6 +6,7 @@ import { autofill, UserError, aiTrouble } from "./_lib/autofill.js";
 import { readCatalog, refreshCatalog, refreshBrand, dropBrand } from "./_lib/catalog.js";
 import { readBrands, updateBrands, sameShop, slug, cleanDomain } from "./_lib/brands.js";
 import { checkShop, suggestBrands, ScoutError } from "./_lib/scout.js";
+import { isShortLink, expandShortLink } from "./_lib/links.js";
 
 // Finding brand suggestions searches the web, which can take a minute or two.
 export const config = { maxDuration: 180 };
@@ -37,8 +38,15 @@ export default async function handler(req, res) {
     switch (body.action) {
       case "load":
         return res.status(200).json(await readData());
-      case "save":
-        return res.status(200).json(await writeData(body.data));
+      case "save": {
+        // Short share links (amzn.in/…) are swapped for the full address, so the affiliate tag sticks.
+        const d = body.data || {};
+        for (const list of [d.products, d.ads]) {
+          if (!Array.isArray(list)) continue;
+          await Promise.all(list.map(async (x) => { if (x && isShortLink(x.url)) x.url = await expandShortLink(x.url); }));
+        }
+        return res.status(200).json(await writeData(d));
+      }
       case "upload": {
         const video = VIDEO_TYPES.includes(body.contentType);
         if ((!IMAGE_TYPES.includes(body.contentType) && !video) || typeof body.base64 !== "string") {

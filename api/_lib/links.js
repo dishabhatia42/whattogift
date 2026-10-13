@@ -43,3 +43,25 @@ export function cleanAffiliates(list) {
     value: String(r?.value || "").trim(),
   })).filter((r) => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(r.domain) && /^[A-Za-z0-9_]{1,30}$/.test(r.param) && /^[\w.\-~]{1,80}$/.test(r.value)).slice(0, 20);
 }
+
+// Share links like amzn.in/d/abc or amzn.to/xyz redirect to the real product page, and an affiliate
+// tag added to them is lost on the way. So when a product is saved, they're swapped for the full
+// address they lead to (outbound() then trims it and adds the tag).
+const SHORT_HOSTS = /^(amzn\.in|amzn\.to|amzn\.eu|a\.co|fkrt\.it|fkrt\.co|dl\.flipkart\.com|myntr\.it|nykaa\.me|bit\.ly|tinyurl\.com|rb\.gy)$/i;
+export function isShortLink(url) {
+  try { return SHORT_HOSTS.test(new URL(url).hostname); } catch { return false; }
+}
+export async function expandShortLink(url) {
+  if (!isShortLink(url)) return url;
+  try {
+    const res = await fetch(url, {
+      redirect: "follow",
+      signal: AbortSignal.timeout(8000),
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36" },
+    });
+    const final = res.url && new URL(res.url);
+    return final && final.protocol === "https:" && !isShortLink(final.toString()) ? final.toString() : url;
+  } catch {
+    return url; // couldn't reach it now: keep the short link rather than lose the product
+  }
+}

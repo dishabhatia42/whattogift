@@ -1,6 +1,7 @@
 // Turns a product link into a filled-in product: fetches the page, pulls out
 // what the store publishes about it (title, price, photo), and asks Claude to
 // write the rest. Only called from the password-protected admin.
+import { expandShortLink } from "./links.js";
 import Anthropic from "@anthropic-ai/sdk";
 import { RECIPIENT_IDS, OCCASION_IDS, saveImage } from "./store.js";
 
@@ -34,8 +35,9 @@ const SYSTEM = `You catalogue products for an Indian gift-finder site. From the 
 Never invent a price. If the page details are missing, work from the words in the link and say so in check.`;
 
 export async function autofill(rawUrl) {
-  const url = safeProductUrl(rawUrl);
-  if (!url) throw new UserError("Paste a full https:// product link.");
+  const pasted = safeProductUrl(rawUrl);
+  if (!pasted) throw new UserError("Paste a full https:// product link.");
+  const url = await expandShortLink(pasted); // amzn.in/… share links -> the real product page
 
   const page = await readPage(url);
   const details = page
