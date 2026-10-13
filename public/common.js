@@ -166,7 +166,7 @@
     return ph;
   }
 
-  const AD_SLOT_COUNT = 6; // matches AD_SLOTS in api/_lib/store.js
+  const AD_SLOT_COUNT = 5; // matches AD_SLOTS in api/_lib/store.js
   function mountFeatured(getState) {
     const $ = (id) => document.getElementById(id);
     const section = $("featured"), row = $("feat-row");
@@ -208,7 +208,7 @@
           dots.appendChild(d);
         }
       }
-      $("feat-count").textContent = !carousel.active && tiles > 2 ? "Swipe →" : "";
+      $("feat-count").textContent = !carousel.active && overflow > 8 ? "Swipe →" : ""; // only when there's more to see
       row.scrollLeft = 0;
       updateDots();
       restartTimer();
@@ -237,24 +237,37 @@
         if (ad.category) { const cat = document.createElement("span"); cat.className = "cat"; cat.textContent = ad.category; a.appendChild(cat); }
         row.appendChild(a);
       }
-      // Empty ad slots invite brands in: each opens an email to Disha. They disappear as slots fill.
+      // Empty ad slots invite brands in. The pitch is said once, on the first open spot, with how many
+      // are left; the rest are quiet empty frames that show the space is free. Every one opens an
+      // email to Disha. They turn into real ads as slots fill.
       // (The address is put together here, in the page, so simple spam bots reading the HTML don't see it.)
       const mail = ["dishabhatia42", "gmail.com"].join("@");
       const subject = encodeURIComponent("Featuring my brand on Serial Gifter");
       const body = encodeURIComponent("Hi Disha,\n\nI'd love to feature my brand on Serial Gifter.\n\nBrand:\nWebsite / Instagram:\nCategory:\n\nThanks!");
-      for (let n = ordered.length; n < AD_SLOT_COUNT; n++) {
+      const open = AD_SLOT_COUNT - ordered.length;
+      for (let n = 0; n < open; n++) {
+        const pitch = n === 0;
         const a = document.createElement("a");
-        a.className = "feat open-slot"; a.href = `mailto:${mail}?subject=${subject}&body=${body}`;
-        a.setAttribute("aria-label", "Grab your slot now. Are you a brand? Write to us to get featured here.");
+        a.className = "feat open-slot" + (pitch ? "" : " quiet"); a.href = `mailto:${mail}?subject=${subject}&body=${body}`;
+        a.setAttribute("aria-label", pitch
+          ? `Your brand here: ${open} of ${AD_SLOT_COUNT} spots open. Write to me to get featured.`
+          : "Open spot. Write to me to feature your brand here.");
         const box = document.createElement("span"); box.className = "box";
         const inner = document.createElement("span"); inner.className = "slot-msg";
-        const big = document.createElement("strong"); big.textContent = "Grab your slot now";
-        const small = document.createElement("span"); small.textContent = "Are you a brand? Get featured right here.";
-        inner.append("✨", big, small); box.appendChild(inner);
-        const go = document.createElement("span"); go.className = "go-arrow"; go.setAttribute("aria-hidden", "true"); go.textContent = "↗"; box.appendChild(go);
-        const name = document.createElement("span"); name.className = "nm"; name.textContent = "Your brand here";
-        const cat = document.createElement("span"); cat.className = "cat write"; cat.textContent = "Write to me →";
-        a.append(box, name, cat); row.appendChild(a);
+        if (pitch) {
+          const big = document.createElement("strong"); big.textContent = "Your brand here";
+          const left = document.createElement("span"); left.textContent = `${open} of ${AD_SLOT_COUNT} spots open`;
+          inner.append("✨", big, left);
+          const go = document.createElement("span"); go.className = "go-arrow"; go.setAttribute("aria-hidden", "true"); go.textContent = "↗"; box.appendChild(go);
+        } else {
+          const plus = document.createElement("span"); plus.className = "plus"; plus.setAttribute("aria-hidden", "true"); plus.textContent = "+";
+          inner.append(plus);
+        }
+        box.prepend(inner);
+        const name = document.createElement("span"); name.className = "nm"; name.textContent = pitch ? "Feature your brand" : "Open spot";
+        a.append(box, name);
+        if (pitch) { const cat = document.createElement("span"); cat.className = "cat write"; cat.textContent = "Write to me →"; a.appendChild(cat); }
+        row.appendChild(a);
       }
       section.hidden = false;
       setupCarousel();

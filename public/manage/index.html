@@ -196,7 +196,7 @@
     <!-- ads -->
     <section class="panel" role="tabpanel" id="panel-ads" aria-labelledby="tab-ads">
       <h2>Ad slots</h2>
-      <p class="muted">Six slots. Each ad shows as a tall picture (or a short looping video) with just the brand and its category underneath, in the home-page strip, and up to two matching ones in "Sponsored picks" on the results page. They're marked as ads.</p>
+      <p class="muted">Five slots. Each ad shows as a tall picture (3:4, about 1200 × 1600 px; keep the product in the middle, since the results page crops to a wider shape) or a short looping video, with just the brand and its category underneath, in the home-page strip, and up to two matching ones in "Sponsored picks" on the results page. They're marked as ads.</p>
       <div id="ad-slots" style="display:flex;flex-direction:column;gap:16px"></div>
     </section>
 
@@ -240,7 +240,7 @@
 (() => {
   const RECIPIENTS = [["partner", "Partner"], ["friend", "Friend"], ["mom", "Mom"], ["dad", "Dad"], ["parents", "Parents"], ["sibling", "Sibling"], ["colleague", "Colleague"], ["couple", "A couple"], ["child", "A child"]];
   const OCCASIONS = [["birthday", "Birthday"], ["anniversary", "Anniversary"], ["wedding", "Wedding"], ["just-because", "Just because"]];
-  const SLOTS = 6;
+  const SLOTS = 5;
   let key = "";
   let data = { products: [], ads: [] };
   const $ = (s, el = document) => el.querySelector(s);

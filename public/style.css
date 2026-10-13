@@ -241,6 +241,11 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .feat .slot-msg strong { font-family: var(--font-display); font-weight: 800; font-size: 17px; line-height: 1.2; color: var(--primary); }
 .feat .slot-msg span { font-size: 13px; line-height: 1.4; color: var(--muted); }
 .feat .cat.write { color: var(--primary); font-weight: 600; }
+/* The other open spots: just the empty frame and a soft plus, so the pitch isn't repeated. */
+.feat.open-slot.quiet .box { background: transparent; border-color: color-mix(in srgb, var(--tint) 70%, transparent); }
+.feat.open-slot.quiet .plus { font: 300 40px/1 var(--font-display); color: var(--tint); transition: color .2s, transform .2s var(--ease); }
+.feat.open-slot.quiet:hover .plus { color: var(--primary); transform: scale(1.15); }
+.feat.open-slot.quiet .nm { color: var(--muted); font-weight: 600; }
 .feat .nm { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-inline: 2px; }
 .feat .cat { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-inline: 2px; }
 
