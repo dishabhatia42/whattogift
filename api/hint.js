@@ -5,7 +5,7 @@
 // to find a gift of their own.
 import { readData } from "./_lib/store.js";
 import { readCatalog } from "./_lib/catalog.js";
-import { outbound } from "./_lib/links.js";
+import { outbound, isAffiliate, isAmazon } from "./_lib/links.js";
 
 const SITE = "https://www.serialgifter.com";
 
@@ -23,6 +23,8 @@ export default async function handler(req, res) {
     }
     if (!gift) { res.setHeader("Location", "/"); return res.status(302).end(); }
     gift.url = outbound(gift.url, data.affiliates);
+    gift.affiliate = isAffiliate(gift.url, data.affiliates);
+    if (isAmazon(gift.url)) gift.price = ""; // Amazon only allows prices from its own data service
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=604800");
     return res.status(200).send(page(gift, id));
@@ -78,6 +80,7 @@ function page(g, id) {
       <div class="acts">
         <a class="shop" href="${esc(g.url)}" target="_blank" rel="noopener noreferrer" data-umami-event="Hint shop click" data-umami-event-brand="${esc(g.brand)}" data-umami-event-product="${esc(String(g.name).slice(0, 80))}">${g.brand ? `See it at ${esc(g.brand)}` : "See it"} ↗</a>
       </div>
+      ${g.affiliate ? '<p class="aff-note">Affiliate link: we may earn a commission at no extra cost to you.</p>' : ""}
     </div>
   </article>
   <section class="hint-invite">
@@ -85,9 +88,11 @@ function page(g, id) {
     <p class="sub">Tell us who they are. We'll find something they'll actually love, from brands we love.</p>
     <a class="go" href="/" data-umami-event="Hint to finder">Find a gift for someone you love <span class="arr" aria-hidden="true">→</span></a>
   </section>
-  <footer><p>Picked with thought, powered by a little magic (and a lot of clever tech).</p>
-  <p class="disclosure">Some links are affiliate links: as an Amazon Associate, Serial Gifter earns from qualifying purchases, at no extra cost to you.</p></footer>
+  <footer class="site-footer" id="site-footer">
+    <p class="foot-disclosure">Some links may earn us a commission at no extra cost to you. As an Amazon Associate I earn from qualifying purchases. <a href="/legal">Terms &amp; Privacy</a></p>
+  </footer>
 </main>
+<script src="/common.js"></script>
 </body>
 </html>`;
 }

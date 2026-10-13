@@ -16,7 +16,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { readData } from "./_lib/store.js";
 import { readCatalog } from "./_lib/catalog.js";
 import { cleanInterests } from "./_lib/interests.js";
-import { outbound } from "./_lib/links.js";
+import { outbound, isAffiliate, isAmazon } from "./_lib/links.js";
 
 const client = new Anthropic();
 
@@ -72,13 +72,18 @@ const SHORTLIST = 450;      // products the AI reads per search (~15k tokens, a 
 // instance's memory, so it's a soft guard against bots looping through combinations; the hard
 // ceiling is the monthly spend limit set in the Anthropic Console.
 const SEARCHES_PER_HOUR = 20;
-const recent = new Map(); // ip -> timestamps of recent searches
+const recent = new Map(); // ip -> timestamps of recent searches (in memory only, never stored)
+let lastSweep = 0;
 function overLimit(ip) {
   const now = Date.now(), hourAgo = now - 60 * 60 * 1000;
   const times = (recent.get(ip) || []).filter((t) => t > hourAgo);
   if (times.length >= SEARCHES_PER_HOUR) { recent.set(ip, times); return true; }
   times.push(now); recent.set(ip, times);
-  if (recent.size > 5000) for (const [k, v] of recent) if (!v.some((t) => t > hourAgo)) recent.delete(k);
+  // Forget addresses with no searches in the last hour (the privacy policy says IPs are held about an hour).
+  if (now - lastSweep > 5 * 60 * 1000) {
+    lastSweep = now;
+    for (const [k, v] of recent) if (!v.some((t) => t > hourAgo)) recent.delete(k);
+  }
   return false;
 }
 const VARIANTS = 3; // "Show different ideas" cycles through this many cached answers
@@ -208,7 +213,13 @@ export default async function handler(req, res) {
 
     // Every link out carries the affiliate ID or UTM tags (see _lib/links.js).
     const ideas = assemble(data, shortlist, { roomForIdeas: tunes.includes("experiences") ? 3 : 0 })
-      .map((i) => ({ ...i, url: outbound(i.url, affiliates) }));
+      .map((i) => {
+        const url = outbound(i.url, affiliates);
+        const out = { ...i, url, affiliate: isAffiliate(url, affiliates || undefined) };
+        // Amazon only allows prices from its own data service, so hand-typed Amazon prices aren't shown.
+        if (i.kind === "product" && isAmazon(url)) { out.price_range = ""; delete out.price; delete out.was; }
+        return out;
+      });
     if (!ideas.length) return res.status(502).json({ error: "Got a garbled answer. Please try again." });
     res.setHeader("Cache-Control", `public, s-maxage=${CACHE_SECONDS}, stale-while-revalidate=86400`);
     return res.status(200).json({ vibe: typeof data.vibe === "string" ? data.vibe.slice(0, 80) : "", ideas });

@@ -65,3 +65,17 @@ export async function expandShortLink(url) {
     return url; // couldn't reach it now: keep the short link rather than lose the product
   }
 }
+
+// Does this (already outbound()-processed) link earn us a commission? Used to label it "Affiliate link".
+export function isAffiliate(url, affiliates = DEFAULT_AFFILIATES) {
+  try {
+    const u = new URL(url), host = u.hostname.toLowerCase();
+    return affiliates.some((r) => (host === r.domain || host.endsWith("." + r.domain)) && u.searchParams.get(r.param) === r.value);
+  } catch { return false; }
+}
+
+// Amazon's Associates agreement only allows Amazon prices that come from its own data service (with a
+// timestamp). Prices typed in by hand for Amazon products are therefore never shown.
+export function isAmazon(url) {
+  try { return /(^|\.)amazon\.(in|com)$/i.test(new URL(url).hostname); } catch { return false; }
+}

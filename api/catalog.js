@@ -1,7 +1,7 @@
 // Public, read-only: the live ad slots and the products pinned to the home-page board.
 import { readData } from "./_lib/store.js";
 import { catalogVersion } from "./_lib/catalog.js";
-import { outbound } from "./_lib/links.js";
+import { outbound, isAffiliate, isAmazon } from "./_lib/links.js";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -17,7 +17,11 @@ export default async function handler(req, res) {
       version: `${updatedAt || 0}-${brandsAt}`,
       ads: ads.filter((a) => a.active && (!a.endsOn || a.endsOn >= today)).map((a) => ({ ...a, url: out(a.url) })),
       board: products.filter((p) => p.active && p.board).slice(0, 10)
-        .map(({ id, name, line, url, image, cutout, price, phone }) => ({ id, name, line, url: out(url), image, cutout, price, phone })),
+        .map(({ id, name, line, url, image, cutout, price, phone }) => {
+          const link = out(url);
+          // Amazon only allows prices from its own data service, so hand-typed Amazon prices aren't shown.
+          return { id, name, line, url: link, image, cutout, price: isAmazon(link) ? "" : price, phone, affiliate: isAffiliate(link, affiliates) };
+        }),
     });
   } catch (err) {
     console.error(err);

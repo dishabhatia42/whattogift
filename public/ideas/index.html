@@ -69,10 +69,9 @@
 
   <div class="toast" id="toast" role="status" hidden></div>
 
-  <footer>
-    <p>Product prices and stock come from each brand's own website, checked every night, so confirm on their page before buying. "Gift idea" cards open a store search and their prices are estimates. Cards marked "Sponsored" are paid placements.</p>
-    <p>Picked with thought, powered by a little magic (and a lot of clever tech).</p>
-    <p class="disclosure">Some links are affiliate links: as an Amazon Associate, Serial Gifter earns from qualifying purchases, at no extra cost to you.</p>
+  <p class="fine-print">Brand prices and stock are read from each brand's own website once a day, so check their page before you buy; the shop's checkout decides the final price. "Gift idea" cards open a store search, and their prices are estimates. Links marked "Affiliate link" may earn us a commission; cards marked "Sponsored" are paid placements.</p>
+  <footer class="site-footer" id="site-footer">
+    <p class="foot-disclosure">Some links may earn us a commission at no extra cost to you. As an Amazon Associate I earn from qualifying purchases. <a href="/legal">Terms &amp; Privacy</a></p>
   </footer>
 </main>
 
@@ -156,6 +155,7 @@
     const price = el("span", "price", idea.price_range || "");
     if (exact && idea.was > idea.price) { const was = el("s", "was", "₹" + Number(idea.was).toLocaleString("en-IN")); price.append(" ", was); }
     if (!exact && idea.price_range) price.textContent = `About ${idea.price_range}`;
+    if (exact && !idea.price_range && /(^|\.)amazon\.in$/.test(new URL(idea.url).hostname)) { price.textContent = "Price on Amazon"; price.classList.add("muted-price"); }
     meta.appendChild(price);
     body.append(meta, el("p", "why", idea.why));
     const a = el("a", "shop"); a.target = "_blank"; a.rel = "noopener noreferrer";
@@ -173,6 +173,8 @@
     hint.addEventListener("click", () => share(idea, idea.pid ? `${location.origin}/h/${encodeURIComponent(idea.pid)}` : a.href, hint));
     const acts = el("div", "acts"); acts.append(a, hint);
     body.append(acts);
+    // Links that may earn us a commission say so right beside the button.
+    if (idea.affiliate) body.appendChild(el("p", "aff-note", "Affiliate link"));
     c.append(pic, body);
     return c;
   }
@@ -255,9 +257,9 @@
     for (let i = 0; i < 6; i++) list.appendChild(el("div", "card skeleton"));
     loading(true);
     try {
-      // The catalog version busts cached searches whenever products or ads change; p=5 is the answer format with hint ids.
+      // The catalog version busts cached searches whenever products or ads change; p=6 is the answer format with affiliate labels.
       await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
-      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=5${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=6${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
       const data = await r.json().catch(() => ({}));
       if (r.status === 429) throw new Error(data.error || "busy");
       if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");

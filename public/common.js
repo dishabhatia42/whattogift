@@ -1,5 +1,13 @@
 // Serial Gifter: data and helpers shared by the form (/) and the results page (/ideas).
 (() => {
+  // ---- Site details, in one place: the footer, the legal page and the ad invitations all read these.
+  const SITE = {
+    email: ["dishabhatia42", "gmail.com"].join("@"), // put together here so simple spam bots reading the HTML don't see it
+    legal: "/legal",
+    year: 2026,
+    amazonDisclosure: "As an Amazon Associate I earn from qualifying purchases.", // Amazon's exact wording: don't change
+  };
+
   // Who: relationships only. Gender is a separate, optional follow-up where it matters.
   const RECIPIENTS = [
     { id: "partner", e: "❤️", t: "My person", ask: true },
@@ -231,7 +239,7 @@
         a.setAttribute("aria-label", `${ad.brand}${ad.category ? ", " + ad.category : ""} (ad)`);
         const box = document.createElement("span"); box.className = "box";
         box.appendChild(adMedia(ad));
-        const tag = document.createElement("b"); tag.className = "ad"; tag.textContent = "Ad"; box.appendChild(tag);
+        const tag = document.createElement("b"); tag.className = "ad"; tag.textContent = "Sponsored"; box.appendChild(tag);
         // The whole tile is the link; the arrow just makes that obvious.
         const go = document.createElement("span"); go.className = "go-arrow"; go.setAttribute("aria-hidden", "true"); go.textContent = "↗"; box.appendChild(go);
         const name = document.createElement("span"); name.className = "nm"; name.textContent = ad.brand;
@@ -243,7 +251,7 @@
       // are left; the rest are quiet empty frames that show the space is free. Every one opens an
       // email to Disha. They turn into real ads as slots fill.
       // (The address is put together here, in the page, so simple spam bots reading the HTML don't see it.)
-      const mail = ["dishabhatia42", "gmail.com"].join("@");
+      const mail = SITE.email;
       const subject = encodeURIComponent("Featuring my brand on Serial Gifter");
       const body = encodeURIComponent("Hi Disha,\n\nI'd love to feature my brand on Serial Gifter.\n\nBrand:\nWebsite / Instagram:\nCategory:\n\nThanks!");
       const open = AD_SLOT_COUNT - ordered.length;
@@ -344,6 +352,7 @@
           const arr = document.createElement("span"); arr.className = "tarr"; arr.setAttribute("aria-hidden", "true"); arr.textContent = "↗";
           tag.append(n, arr);
           if (product.line) { const l = document.createElement("span"); l.className = "tline"; l.textContent = product.line; tag.appendChild(l); }
+          if (product.affiliate) { const af = document.createElement("span"); af.className = "taff"; af.textContent = "Affiliate link"; tag.appendChild(af); }
           el.append(photo, tag);
           // On touch screens the first tap on the photo shows its tag (name, and Disha's line if any);
           // tapping the tag, or the photo again, opens the product.
@@ -427,6 +436,29 @@
     logo.addEventListener("focus", pop);
   }
 
+  // ---- The footer, the same on every page: tagline, Terms & Privacy, email, the affiliate
+  // disclosures (Amazon's own words, kept readable, never hidden) and the copyright line.
+  function mountFooter() {
+    const f = document.getElementById("site-footer");
+    if (!f) return;
+    const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+    f.textContent = "";
+    const top = mk("div", "foot-top");
+    const brand = mk("div", "foot-brand");
+    brand.append(mk("span", "foot-mark", "serialgifter"), mk("span", "foot-tag", "Picked with thought, powered by a little magic (and a lot of clever tech)."));
+    const nav = mk("nav", "foot-nav"); nav.setAttribute("aria-label", "Footer");
+    const legal = mk("a", "", "Terms & Privacy"); legal.href = SITE.legal;
+    const mail = mk("a", "", "Email us"); mail.href = `mailto:${SITE.email}`;
+    nav.append(legal, mail);
+    top.append(brand, nav);
+    const disc = mk("p", "foot-disclosure");
+    disc.append("Some links may earn us a commission at no extra cost to you. ", mk("span", "", SITE.amazonDisclosure));
+    f.append(top, disc, mk("p", "foot-copy", `© ${SITE.year} Serial Gifter`));
+  }
+  mountFooter();
+  // Any link marked data-site-email (e.g. on the legal page) becomes the contact email.
+  document.querySelectorAll("a[data-site-email]").forEach((a) => { a.href = `mailto:${SITE.email}`; a.textContent = SITE.email; });
+
   // Click tracking (Umami): marks an element so a click on it is counted as `name`, with details.
   // Umami reads these attributes itself; values are kept short and plain.
   function track(el, name, details = {}) {
@@ -440,6 +472,6 @@
   window.WTG = {
     RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES, TUNES,
     asksGender, safeHref, toParams, fromParams, resultsTitle, cleanInterests,
-    catalog, catalogReady, pickAds, mountFeatured, mountBoard, adMedia, track,
+    catalog, catalogReady, pickAds, mountFeatured, mountBoard, adMedia, track, SITE,
   };
 })();

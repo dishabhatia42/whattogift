@@ -488,3 +488,46 @@ footer .disclosure { font-size: 12px; opacity: .85; }
   text-align: left; text-decoration: none; padding: 10px 12px; border-radius: 10px; cursor: pointer;
 }
 .hint-menu a:hover, .hint-menu button:hover, .hint-menu a:focus-visible, .hint-menu button:focus-visible { background: var(--tint); outline: none; }
+
+/* Footer: one line of brand, two links, the disclosures (readable, never hidden), copyright. */
+.site-footer { display: flex; flex-direction: column; gap: 10px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.site-footer .foot-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 20px; }
+.site-footer .foot-brand { display: flex; flex-direction: column; gap: 2px; }
+.site-footer .foot-mark { font-family: var(--font-display); font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: var(--accent); }
+.site-footer .foot-nav { display: flex; gap: 18px; }
+.site-footer a { color: var(--fg); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line); }
+.site-footer a:hover { text-decoration-color: currentColor; }
+.site-footer .foot-disclosure, .site-footer .foot-copy { font-size: 12.5px; line-height: 1.55; }
+.fine-print { font-size: 12.5px; line-height: 1.55; color: var(--muted); margin-bottom: -8px; }
+/* "Affiliate link" note beside a product's shop button */
+.aff-note { font-size: 11.5px; color: var(--muted); letter-spacing: .01em; }
+.card .price.muted-price { font-weight: 600; color: var(--muted); font-size: 13.5px; }
+.card .aff-note { margin-top: 2px; }
+.sticker .taff { grid-column: 1 / -1; font-weight: 500; font-size: 9.5px; color: #736860; }
+
+/* Terms & Privacy (/legal): a calm reading page in the site's own type and colours. */
+.page.legal { max-width: 720px; gap: 36px; }
+.legal-head { display: flex; flex-direction: column; gap: 8px; }
+.legal-head .kicker { display: none; }
+.legal-head h1 { font-size: clamp(34px, 7vw, 48px); }
+.legal-head .sub { font-size: 17px; color: var(--body); }
+.legal-date { font-size: 14px; color: var(--muted); }
+.legal-toc { border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; background: var(--surface); }
+.legal-toc .toc-title { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--fg); margin-bottom: 8px; }
+.legal-toc ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.legal-toc > ol { padding-left: 0; list-style: none; gap: 12px; }
+.legal-toc > ol > li > a { font-family: var(--font-display); font-weight: 700; color: var(--fg); }
+.legal-toc ol ol { margin-top: 6px; columns: 2 220px; column-gap: 24px; display: block; }
+.legal-toc ol ol li { margin-bottom: 4px; break-inside: avoid; }
+.legal-toc a { color: var(--body); text-decoration: none; font-size: 14.5px; }
+.legal-toc a:hover { color: var(--accent-text); text-decoration: underline; text-underline-offset: 3px; }
+.legal-part { display: flex; flex-direction: column; gap: 12px; scroll-margin-top: 90px; }
+.legal-part .part-label { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-text); }
+.legal-part h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 5vw, 32px); letter-spacing: -0.02em; color: var(--fg); margin-top: -6px; }
+.legal-part h3 { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--fg); margin-top: 14px; scroll-margin-top: 90px; }
+.legal-part p, .legal-part li { font-size: 16px; line-height: 1.7; color: var(--body); }
+.legal-part ul { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.legal-part strong { color: var(--fg); font-weight: 600; }
+.legal-part a, .legal-part a:visited { color: var(--accent-text); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+#privacy { border-top: 1px solid var(--line); padding-top: 32px; }
+.legal a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
