@@ -90,6 +90,12 @@
   .tabs button[aria-selected="true"] { background: var(--card); color: var(--fg); box-shadow: 0 1px 4px rgba(38, 32, 30, .12); }
   .tabs .count { font-family: var(--font-body); font-weight: 500; font-size: 12.5px; color: var(--muted); }
   .tabs .count:empty { display: none; }
+  /* Phones: four tabs must fit, so they get snugger and drop the counts. */
+  @media (max-width: 480px) {
+    .tabs button { padding: 8px 4px; font-size: 14px; min-width: 0; }
+    .tabs .count { display: none; }
+    header.top h1 { font-size: 22px; }
+  }
   .sub-h { margin: 0; font-family: var(--font-display); font-size: 16px; color: var(--fg); }
   /* Suggested brands: a sideways row of cards, like "Fans also like" */
   .sugs { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 2px 10px; margin: 0 -2px; }
@@ -148,6 +154,7 @@
       <button type="button" role="tab" id="tab-products" aria-controls="panel-products" data-tab="products">Products <span class="count" data-count="products"></span></button>
       <button type="button" role="tab" id="tab-ads" aria-controls="panel-ads" data-tab="ads">Ad slots <span class="count" data-count="ads"></span></button>
       <button type="button" role="tab" id="tab-brands" aria-controls="panel-brands" data-tab="brands">Brands <span class="count" data-count="brands"></span></button>
+      <button type="button" role="tab" id="tab-affiliates" aria-controls="panel-affiliates" data-tab="affiliates">Affiliates <span class="count" data-count="affiliates"></span></button>
     </nav>
 
     <!-- products -->
@@ -233,6 +240,20 @@
       <nav class="pager" id="brand-pager" aria-label="Brand list pages"></nav>
     </section>
 
+    <!-- affiliates -->
+    <section class="panel" role="tabpanel" id="panel-affiliates" aria-labelledby="tab-affiliates">
+      <h2>Affiliate IDs</h2>
+      <p class="muted">Every link out of Serial Gifter is checked against this list. A link to a shop listed here gets your ID added (for example Amazon's <code>tag=</code>); a link to any other shop gets Serial Gifter's tracking tags (<code>utm_source=serialgifter</code>) so the brand sees the visits you send in its own analytics. Changes reach the site within a minute.</p>
+      <div id="aff-list"></div>
+      <form id="aff-form" class="grid" style="align-items:end">
+        <label class="f">Shop's website<input type="text" name="domain" placeholder="amazon.in" required autocomplete="off"></label>
+        <label class="f">Link parameter<input type="text" name="param" placeholder="tag" required autocomplete="off"></label>
+        <label class="f">Your ID<input type="text" name="value" placeholder="serialgifte0a-21" required autocomplete="off"></label>
+        <button type="submit" class="primary">Add</button>
+      </form>
+      <p class="muted">The shop's affiliate programme tells you the parameter name and your ID. Amazon: <code>tag</code>. Many Shopify brand programmes use <code>ref</code> or <code>sca_ref</code>.</p>
+    </section>
+
   </div>
 </main>
 <div id="status" role="status" hidden></div>
@@ -243,7 +264,7 @@
   const OCCASIONS = [["birthday", "Birthday"], ["anniversary", "Anniversary"], ["wedding", "Wedding"], ["just-because", "Just because"]];
   const SLOTS = 5;
   let key = "";
-  let data = { products: [], ads: [] };
+  let data = { products: [], ads: [], affiliates: [] };
   const $ = (s, el = document) => el.querySelector(s);
 
   try { key = sessionStorage.getItem("gf-admin") || ""; } catch {}
@@ -268,11 +289,11 @@
   async function unlock() {
     try {
       const loaded = await call({ action: "load" });
-      data = { products: loaded.products || [], ads: loaded.ads || [] };
+      data = { products: loaded.products || [], ads: loaded.ads || [], affiliates: loaded.affiliates || [] };
       try { sessionStorage.setItem("gf-admin", key); } catch {}
       $("#login").hidden = true; $("#app").hidden = false; $("#logout").hidden = false;
       showTab(tabFromUrl());
-      renderProducts(); renderAds();
+      renderProducts(); renderAds(); renderAffiliates();
       Promise.all([call({ action: "brandsLoad" }), call({ action: "catalogStatus" })])
         .then(([b, c]) => { brandData = b; report = c; renderBrands(); }, () => { $("#cat-status").textContent = "Couldn't load your brands."; });
     } catch (e) { toast(e.message, true); }
@@ -464,7 +485,7 @@
 
   // ---- Tabs: Products / Ad slots / Brands. The open tab is kept in the URL (#brands),
   // so a refresh or a bookmark lands on the same one.
-  const TABS = ["products", "ads", "brands"];
+  const TABS = ["products", "ads", "brands", "affiliates"];
   function tabFromUrl() { const t = location.hash.slice(1); return TABS.includes(t) ? t : "products"; }
   function showTab(name) {
     for (const t of TABS) {
@@ -488,10 +509,37 @@
     set("products", data.products.length);
     set("ads", data.ads.filter((a) => a.brand).length ? `${data.ads.filter((a) => a.brand).length}/${SLOTS}` : "");
     set("brands", brandData.brands.length);
+    set("affiliates", data.affiliates.length);
   }
 
+  // ---- affiliate IDs
+  function renderAffiliates() {
+    updateCounts();
+    const box = $("#aff-list"); box.textContent = "";
+    if (!data.affiliates.length) { box.appendChild(Object.assign(document.createElement("p"), { className: "muted", textContent: "None yet. Every shop link gets Serial Gifter's tracking tags." })); return; }
+    for (const r of data.affiliates) {
+      const row = document.createElement("div"); row.className = "brand-row";
+      const txt = document.createElement("div"); txt.className = "txt";
+      const b = document.createElement("strong"); b.textContent = r.domain;
+      const n = document.createElement("div"); n.className = "n"; n.textContent = `adds ${r.param}=${r.value} to every link`;
+      txt.append(b, n);
+      const rm = document.createElement("button"); rm.type = "button"; rm.className = "danger"; rm.textContent = "Remove";
+      rm.addEventListener("click", () => { if (confirm(`Stop adding your ID to ${r.domain} links?`)) save({ ...data, affiliates: data.affiliates.filter((x) => x !== r) }); });
+      row.append(txt, rm); box.appendChild(row);
+    }
+  }
+  $("#aff-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = e.target.elements;
+    const rule = { domain: f.domain.value.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/.*$/, ""), param: f.param.value.trim(), value: f.value.value.trim() };
+    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(rule.domain)) return toast("Use the shop's website, like amazon.in", true);
+    if (!/^[A-Za-z0-9_]{1,30}$/.test(rule.param)) return toast("The parameter is a short word like tag or ref.", true);
+    if (!/^[\w.\-~]{1,80}$/.test(rule.value)) return toast("That ID has characters links can't carry.", true);
+    if (await save({ ...data, affiliates: [...data.affiliates.filter((x) => x.domain !== rule.domain), rule] })) e.target.reset();
+  });
+
   async function save(next) {
-    try { const saved = await call({ action: "save", data: next }); data = { products: saved.products || [], ads: saved.ads || [] }; renderProducts(); renderAds(); toast("Saved. Live within a minute."); return true; }
+    try { const saved = await call({ action: "save", data: next }); data = { products: saved.products || [], ads: saved.ads || [], affiliates: saved.affiliates || [] }; renderProducts(); renderAds(); renderAffiliates(); toast("Saved. Live within a minute."); return true; }
     catch (e) { toast(e.message, true); return false; }
   }
 

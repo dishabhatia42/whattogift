@@ -2,6 +2,7 @@
 // the products Disha adds herself and the sponsored ad slots. Needs BLOB_READ_WRITE_TOKEN,
 // which Vercel adds automatically when a Blob store is connected to the project.
 import { head, put } from "@vercel/blob";
+import { cleanAffiliates } from "./links.js";
 
 const DATA_PATH = "gift-finder/data.json";
 
@@ -62,12 +63,12 @@ export async function updateJson(path, change) {
 
 export async function readData() {
   const text = await readFresh(DATA_PATH);
-  if (text == null) return { products: [], ads: [] };
+  if (text == null) return { products: [], ads: [], affiliates: cleanAffiliates() };
   try {
     const parsed = JSON.parse(text);
     return { ...clean(parsed), updatedAt: Number(parsed.updatedAt) || 0 };
   } catch {
-    return { products: [], ads: [] };
+    return { products: [], ads: [], affiliates: cleanAffiliates() };
   }
 }
 
@@ -134,7 +135,7 @@ export function clean(data) {
     });
   }
   const ads = [...bySlot.values()].filter((a) => a.brand && a.url).sort((x, y) => x.slot - y.slot);
-  return { products, ads };
+  return { products, ads, affiliates: cleanAffiliates(data?.affiliates) };
 }
 
 function str(v, max) {

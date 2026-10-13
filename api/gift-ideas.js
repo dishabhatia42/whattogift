@@ -16,6 +16,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { readData } from "./_lib/store.js";
 import { readCatalog } from "./_lib/catalog.js";
 import { cleanInterests } from "./_lib/interests.js";
+import { outbound } from "./_lib/links.js";
 
 const client = new Anthropic();
 
@@ -166,7 +167,11 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: "You're on a gifting roll! Take a little breather and try again in a bit." });
   }
 
-  const shortlist = await buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags, range, variant });
+  // The affiliate rules come with the stored products; storage trouble just means the defaults.
+  const [shortlist, affiliates] = await Promise.all([
+    buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags, range, variant }),
+    readData().then((d) => d.affiliates, () => undefined),
+  ]);
   const prompt = [
     `Gift for: ${recipient}${GENDERS[q.gender] ? ` (${GENDERS[q.gender]})` : ""}`,
     `Occasion: ${occasion}`,
@@ -201,7 +206,9 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: "Got a garbled answer. Please try again." });
     }
 
-    const ideas = assemble(data, shortlist, { roomForIdeas: tunes.includes("experiences") ? 3 : 0 });
+    // Every link out carries the affiliate ID or UTM tags (see _lib/links.js).
+    const ideas = assemble(data, shortlist, { roomForIdeas: tunes.includes("experiences") ? 3 : 0 })
+      .map((i) => ({ ...i, url: outbound(i.url, affiliates) }));
     if (!ideas.length) return res.status(502).json({ error: "Got a garbled answer. Please try again." });
     res.setHeader("Cache-Control", `public, s-maxage=${CACHE_SECONDS}, stale-while-revalidate=86400`);
     return res.status(200).json({ vibe: typeof data.vibe === "string" ? data.vibe.slice(0, 80) : "", ideas });

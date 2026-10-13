@@ -369,6 +369,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 
 footer { font-size: 13px; color: var(--muted); margin-top: -16px; } /* sits a little closer to the section above */
 footer p + p { margin-top: 4px; }
+footer .disclosure { font-size: 12px; opacity: .85; }
 
 /* ---- home-page board: gifts pinned to grid paper ---- */
 .board { --grid: rgba(110, 175, 200, .28); --paper: #fbfbf8; padding: 8px 12px 0; }
