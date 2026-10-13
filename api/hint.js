@@ -49,7 +49,7 @@ function page(g, id) {
 <meta name="description" content="${esc(desc)}">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
-<meta property="og:image" content="${esc(g.image || SITE + "/og.jpg")}">
+<meta property="og:image" content="${esc(g.image || SITE + "/share.jpg")}">
 <meta property="og:url" content="${SITE}/h/${esc(id)}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Serial Gifter">
