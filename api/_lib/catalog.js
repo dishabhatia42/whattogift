@@ -3,8 +3,8 @@
 // https://<shop>/products.json (name, price, photos, stock, link). Once a night
 // refreshCatalog() reads those feeds and saves a compact copy in Vercel Blob, so a
 // search never waits on a brand's website and never shows a made-up product.
-import { head, put } from "@vercel/blob";
-import { readFresh } from "./store.js";
+import { head } from "@vercel/blob";
+import { readFresh, updateJson } from "./store.js";
 import { readBrands, NOT_GIFTS } from "./brands.js";
 
 const CATALOG_PATH = "gift-finder/catalog.json";
@@ -46,35 +46,42 @@ export async function catalogVersion() {
 // ---- Refreshing (nightly cron, or the button in the admin) ----
 
 export async function refreshCatalog() {
+  const startedAt = Date.now();
   const { brands } = await readBrands();
   const results = await Promise.all(brands.map(readOne));
-
-  // A brand whose site was down tonight keeps yesterday's products rather than vanishing.
-  const old = await readCatalog({ fresh: true });
-  const items = [];
-  const report = [];
-  for (const r of results) {
-    const kept = r.ok && r.items.length ? r.items : old.items.filter((i) => i.brandId === r.brand.id);
-    items.push(...kept);
-    report.push(reportLine(r, kept.length));
-  }
-  return save(items, report);
+  // Saved safely (see updateJson), so a brand added or removed while this ran isn't undone.
+  return save((old) => {
+    const fetched = new Set(results.map((r) => r.brand.id));
+    const items = [], report = [];
+    for (const r of results) {
+      // A brand whose site was down tonight keeps yesterday's products rather than vanishing.
+      const kept = r.ok && r.items.length ? r.items : old.items.filter((i) => i.brandId === r.brand.id);
+      items.push(...kept);
+      report.push(reportLine(r, kept.length));
+    }
+    // Brands added in the admin while this ran keep the products they were just given.
+    for (const b of old.brands) if (!fetched.has(b.id) && b.added > startedAt) {
+      items.push(...old.items.filter((i) => i.brandId === b.id)); report.push(b);
+    }
+    return { items, report };
+  });
 }
 
 // Just one brand, right after Disha adds it in the admin, so she sees it working at once.
 export async function refreshBrand(brand) {
   const r = await readOne(brand);
-  const old = await readCatalog({ fresh: true });
-  const others = old.items.filter((i) => i.brandId !== brand.id);
-  const kept = r.ok && r.items.length ? r.items : old.items.filter((i) => i.brandId === brand.id);
-  const report = (old.brands || []).filter((b) => b.id !== brand.id).concat(reportLine(r, kept.length));
-  return save(others.concat(kept), report);
+  return save((old) => {
+    const kept = r.ok && r.items.length ? r.items : old.items.filter((i) => i.brandId === brand.id);
+    return {
+      items: old.items.filter((i) => i.brandId !== brand.id).concat(kept),
+      report: old.brands.filter((b) => b.id !== brand.id).concat({ ...reportLine(r, kept.length), added: Date.now() }),
+    };
+  });
 }
 
 // A removed brand's products leave the catalogue straight away.
 export async function dropBrand(id) {
-  const old = await readCatalog({ fresh: true });
-  return save(old.items.filter((i) => i.brandId !== id), (old.brands || []).filter((b) => b.id !== id));
+  return save((old) => ({ items: old.items.filter((i) => i.brandId !== id), report: old.brands.filter((b) => b.id !== id) }));
 }
 
 async function readOne(brand) {
@@ -87,17 +94,14 @@ async function readOne(brand) {
 function reportLine(r, keptCount) {
   return { id: r.brand.id, name: r.brand.name, ok: r.ok, count: r.items.length, kept: !r.ok || !r.items.length ? keptCount : 0, error: r.error || "" };
 }
-async function save(items, report) {
-  const data = { updatedAt: Date.now(), brands: report, items };
-  await put(CATALOG_PATH, JSON.stringify(data), {
-    access: "public",
-    contentType: "application/json",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    cacheControlMaxAge: 60,
+async function save(change) {
+  const data = await updateJson(CATALOG_PATH, (raw) => {
+    const old = { items: Array.isArray(raw?.items) ? raw.items : [], brands: Array.isArray(raw?.brands) ? raw.brands : [] };
+    const { items, report } = change(old);
+    return { updatedAt: Date.now(), brands: report, items };
   });
-  memo = { at: Date.now(), data };
-  return { updatedAt: data.updatedAt, total: items.length, brands: report };
+  memo = { at: Date.now(), data: { items: data.items, updatedAt: data.updatedAt, brands: data.brands } };
+  return { updatedAt: data.updatedAt, total: data.items.length, brands: data.brands };
 }
 
 // A quick look at a shop: its first few gift-worthy products, or an error saying why it can't be read.

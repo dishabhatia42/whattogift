@@ -16,6 +16,9 @@ const MAX_PRODUCTS = 200;
 // version (and a read-change-save would then quietly undo the last change). Asking the Blob
 // API for the file's current upload time and fetching that exact version avoids the cache.
 export async function readFresh(path) {
+  return (await readVersion(path))?.text ?? null;
+}
+async function readVersion(path) {
   let meta;
   try {
     meta = await head(path);
@@ -26,7 +29,35 @@ export async function readFresh(path) {
   const r = await fetch(`${meta.url}?v=${new Date(meta.uploadedAt).getTime()}`);
   if (r.status === 404) return null;
   if (!r.ok) throw new Error(`Storage read failed (${r.status})`);
-  return r.text();
+  return { text: await r.text(), etag: meta.etag };
+}
+
+// Read, change, save, without losing someone else's save in between. Two actions at once
+// (adding two brands in quick succession, or an add during the nightly refresh) would each
+// read the same old copy, and the later save would wipe out the earlier one. So the save only
+// goes through if the file is still the version we read (its ETag); otherwise we re-read and
+// apply the change again. `change` gets the parsed file (or null) and returns the new contents.
+export async function updateJson(path, change) {
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const current = await readVersion(path);
+    const next = await change(current ? JSON.parse(current.text) : null);
+    try {
+      await put(path, JSON.stringify(next), {
+        access: "public",
+        contentType: "application/json",
+        addRandomSuffix: false,
+        cacheControlMaxAge: 60,
+        // First save: fail if someone else created it meanwhile. Later saves: only over the copy we read.
+        ...(!current ? { allowOverwrite: false } : current.etag ? { ifMatch: current.etag } : { allowOverwrite: true }),
+      });
+      return next;
+    } catch (err) {
+      const clash = err?.name === "BlobPreconditionFailedError" || /precondition|already exists/i.test(String(err?.message));
+      if (!clash) throw err;
+      await new Promise((r) => setTimeout(r, 120 * (attempt + 1) + Math.random() * 100));
+    }
+  }
+  throw new Error("Lots of changes at once. Please try that again.");
 }
 
 export async function readData() {

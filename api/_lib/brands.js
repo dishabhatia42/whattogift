@@ -7,8 +7,7 @@
 //   name      shown on cards as "by <name>" and on the "Shop at <name>" button
 //   domain    the shop's own domain, no tracking bits
 //   platform  "shopify" (default) or "woocommerce"
-import { put } from "@vercel/blob";
-import { readFresh } from "./store.js";
+import { readFresh, updateJson } from "./store.js";
 
 const BRANDS_PATH = "gift-finder/brands.json";
 const MAX_BRANDS = 150;
@@ -70,24 +69,22 @@ export async function readBrands() {
   // Always the latest save (see readFresh): adding or skipping right after "Find more"
   // must build on the list that was just saved, never an older cached copy.
   const text = await readFresh(BRANDS_PATH);
-  if (text == null) return clean({ brands: STARTER });
-  const saved = clean(JSON.parse(text));
+  return fromSaved(text == null ? null : JSON.parse(text));
+}
+
+// Change the brand list safely (see updateJson): `change` gets the current list and returns
+// the new one; it may throw a UserError to cancel (e.g. "already in your brands").
+export async function updateBrands(change) {
+  return updateJson(BRANDS_PATH, async (raw) => clean(await change(fromSaved(raw))));
+}
+
+function fromSaved(raw) {
+  if (!raw) return clean({ brands: STARTER });
+  const saved = clean(raw);
   // Brands added to the starter list in code after the first save still join, unless
   // Disha removed or skipped them (removing a brand puts it on the skipped list).
   const missing = STARTER.filter((s) => !saved.brands.some((b) => sameShop(b.domain, s.domain)) && !saved.skipped.some((d) => sameShop(d, s.domain)));
   return missing.length ? clean({ ...saved, brands: [...saved.brands, ...missing] }) : saved;
-}
-
-export async function writeBrands(data) {
-  const safe = clean(data);
-  await put(BRANDS_PATH, JSON.stringify(safe), {
-    access: "public",
-    contentType: "application/json",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    cacheControlMaxAge: 60,
-  });
-  return safe;
 }
 
 // Everything in or out passes through here, so a bad save can't break the nightly refresh.

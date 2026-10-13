@@ -216,8 +216,11 @@
       <!-- suggestions -->
       <div class="row" style="justify-content:space-between;margin-top:8px">
         <div><h3 class="sub-h">Brands you might like</h3><p class="muted" id="sug-note">Based on the brands you've picked.</p></div>
-        <button type="button" id="sug-find">✨ Find more like mine</button>
       </div>
+      <form id="sug-form" class="row" style="flex-wrap:nowrap">
+        <input type="text" id="sug-focus" maxlength="60" autocomplete="off" placeholder="Focus (optional): chocolate, for dads, ceramics…" aria-label="What kind of brands to look for (optional)">
+        <button type="submit" id="sug-find" style="flex:none">✨ Find more like mine</button>
+      </form>
       <div id="sugs" class="sugs"></div>
 
       <!-- your brands -->
@@ -275,6 +278,15 @@
   }
 
   // ---- Brand catalogue: your brands, adding one, and AI suggestions ----
+  // Brand changes go to the server one at a time, in the order they were clicked, so quick
+  // clicks (Add, Add, Skip…) can never overlap and the page always shows the latest list.
+  let brandQueue = Promise.resolve();
+  function brandCall(payload) {
+    const run = () => call(payload);
+    const p = brandQueue.then(run, run);
+    brandQueue = p.catch(() => {});
+    return p;
+  }
   let brandData = { brands: [], suggestions: [], skipped: [] };
   let report = { brands: [], total: 0, updatedAt: 0 };
   const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -301,11 +313,12 @@
       const acts = mk("div", "acts");
       const add = mk("button", "primary", "＋ Add"); add.type = "button";
       const skip = mk("button", "", "Skip"); skip.type = "button";
-      add.addEventListener("click", () => addBrand({ domain: s.domain, name: s.name }, add));
+      add.addEventListener("click", () => { skip.disabled = true; card.style.opacity = ".5"; addBrand({ domain: s.domain, name: s.name }, add).then((ok) => { if (!ok) { skip.disabled = false; card.style.opacity = ""; } }); });
       skip.addEventListener("click", async () => {
         skip.disabled = add.disabled = true;
-        try { brandData = await call({ action: "brandSkip", domain: s.domain }); renderBrands(); }
-        catch (e) { toast(e.message, true); skip.disabled = add.disabled = false; }
+        card.style.opacity = ".5";
+        try { brandData = await brandCall({ action: "brandSkip", domain: s.domain }); renderBrands(); }
+        catch (e) { toast(e.message, true); skip.disabled = add.disabled = false; card.style.opacity = ""; }
       });
       acts.append(add, skip); inner.appendChild(acts);
       card.append(mosaic(s.samples || []), inner);
@@ -344,7 +357,7 @@
       rm.addEventListener("click", async () => {
         if (!confirm(`Remove ${b.name}? Its products leave the gift finder straight away.`)) return;
         rm.disabled = true;
-        try { const out = await call({ action: "brandRemove", id: b.id }); brandData = out; report = out.catalog; renderBrands(); toast(`${b.name} removed.`); }
+        try { const out = await brandCall({ action: "brandRemove", id: b.id }); brandData = out; report = out.catalog; renderBrands(); toast(`${b.name} removed.`); }
         catch (e) { toast(e.message, true); rm.disabled = false; }
       });
       row.append(txt, rm); list.appendChild(row);
@@ -381,12 +394,13 @@
     if (btn) btn.disabled = true;
     toast(`Adding ${shop.name || shop.domain} and reading its products…`);
     try {
-      const out = await call({ action: "brandAdd", domain: shop.domain, name: shop.name });
+      const out = await brandCall({ action: "brandAdd", domain: shop.domain, name: shop.name });
       brandData = out; report = out.catalog; renderBrands();
       $("#brand-preview").hidden = true; $("#brand-link").value = "";
       const got = (out.catalog.brands || []).find((r) => r.id === out.added.id);
       toast(`${out.added.name} added${got ? ` with ${got.count} products` : ""}. It's live in searches now.`);
-    } catch (e) { toast(e.message, true); if (btn) btn.disabled = false; }
+      return true;
+    } catch (e) { toast(e.message, true); if (btn) btn.disabled = false; return false; }
   }
 
   // Paste a link -> see the brand's real products -> add it.
@@ -411,13 +425,19 @@
     } finally { btn.disabled = false; }
   });
 
-  $("#sug-find").addEventListener("click", async (e) => {
-    const btn = e.currentTarget; btn.disabled = true;
+  $("#sug-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = $("#sug-find"); btn.disabled = true;
     const old = btn.textContent; btn.textContent = "Looking… (about a minute)";
+    const note = $("#sug-note");
     try {
-      const out = await call({ action: "brandSuggest" });
+      const out = await brandCall({ action: "brandSuggest", focus: $("#sug-focus").value.trim() });
       brandData = out; renderBrands();
-      toast(out.found ? `Found ${out.found} brand${out.found === 1 ? "" : "s"} you might like.` : "Nothing new that passed the checks this time. Try again later.");
+      // Say what happened, so an empty round isn't a mystery.
+      const st = out.stats || {};
+      const parts = [`${st.passed || 0} new`, st.unreadable ? `${st.unreadable} can't be read automatically` : "", st.alreadyKnown ? `${st.alreadyKnown} already yours or skipped` : "", st.notGiftable ? `${st.notGiftable} too pricey to gift` : ""].filter(Boolean);
+      note.textContent = `Looked for: ${out.theme || "brands like yours"}. Checked ${st.proposed || 0}: ${parts.join(", ")}.`;
+      toast(out.found ? `Found ${out.found} brand${out.found === 1 ? "" : "s"} you might like.` : "Nothing new passed the checks this round. Press again: each round looks somewhere different.");
       if (out.found) $("#sugs").scrollTo({ left: 0, behavior: "smooth" });
     } catch (err) { toast(err.message, true); }
     finally { btn.disabled = false; btn.textContent = old; }

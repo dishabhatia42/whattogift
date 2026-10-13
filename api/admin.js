@@ -4,7 +4,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { readData, writeData, saveImage } from "./_lib/store.js";
 import { autofill, UserError, aiTrouble } from "./_lib/autofill.js";
 import { readCatalog, refreshCatalog, refreshBrand, dropBrand } from "./_lib/catalog.js";
-import { readBrands, writeBrands, sameShop, slug } from "./_lib/brands.js";
+import { readBrands, updateBrands, sameShop, slug } from "./_lib/brands.js";
 import { checkShop, suggestBrands, ScoutError } from "./_lib/scout.js";
 
 // Finding brand suggestions searches the web, which can take a minute or two.
@@ -65,37 +65,51 @@ export default async function handler(req, res) {
         return res.status(200).json(await checkShop(body.link));
       case "brandAdd": {
         const shop = await checkShop(body.link || body.domain, { name: typeof body.name === "string" && body.name.trim() ? body.name.trim() : undefined });
-        const list = await readBrands();
-        if (list.brands.some((b) => sameShop(b.domain, shop.domain))) throw new UserError(`${shop.name} is already in your brands.`);
-        const brand = { id: uniqueId(shop.name, list.brands), name: shop.name, domain: shop.domain, platform: shop.platform };
-        const saved = await writeBrands({
-          ...list,
-          brands: [...list.brands, brand],
-          suggestions: list.suggestions.filter((s) => !sameShop(s.domain, shop.domain)),
-          skipped: list.skipped.filter((d) => !sameShop(d, shop.domain)),
+        let brand;
+        const saved = await updateBrands((list) => {
+          if (list.brands.some((b) => sameShop(b.domain, shop.domain))) throw new UserError(`${shop.name} is already in your brands.`);
+          brand = { id: uniqueId(shop.name, list.brands), name: shop.name, domain: shop.domain, platform: shop.platform };
+          return {
+            ...list,
+            brands: [...list.brands, brand],
+            suggestions: list.suggestions.filter((s) => !sameShop(s.domain, shop.domain)),
+            skipped: list.skipped.filter((d) => !sameShop(d, shop.domain)),
+          };
         });
         const catalog = await refreshBrand(brand); // its products are searchable straight away
         return res.status(200).json({ ...saved, added: brand, catalog });
       }
       case "brandRemove": {
-        const list = await readBrands();
-        const gone = list.brands.find((b) => b.id === body.id);
-        if (!gone) throw new UserError("That brand isn't in your list.");
-        const saved = await writeBrands({ ...list, brands: list.brands.filter((b) => b.id !== gone.id), skipped: [...list.skipped, gone.domain] });
+        let gone;
+        const saved = await updateBrands((list) => {
+          gone = list.brands.find((b) => b.id === body.id);
+          if (!gone) throw new UserError("That brand isn't in your list.");
+          return { ...list, brands: list.brands.filter((b) => b.id !== gone.id), skipped: [...list.skipped, gone.domain] };
+        });
         const catalog = await dropBrand(gone.id);
         return res.status(200).json({ ...saved, catalog });
       }
       case "brandSkip": {
-        const list = await readBrands();
         const domain = String(body.domain || "");
-        return res.status(200).json(await writeBrands({ ...list, suggestions: list.suggestions.filter((s) => s.domain !== domain), skipped: [...list.skipped, domain] }));
+        return res.status(200).json(await updateBrands((list) => ({
+          ...list, suggestions: list.suggestions.filter((s) => !sameShop(s.domain, domain)), skipped: [...list.skipped, domain],
+        })));
       }
       case "brandSuggest": {
         const list = await readBrands();
         const { items } = await readCatalog();
-        const { suggestions, tried } = await suggestBrands({ brands: list.brands, skipped: list.skipped, pending: list.suggestions.map((s) => s.domain), catalogItems: items });
-        const saved = await writeBrands({ ...list, suggestions: [...suggestions, ...list.suggestions], suggestedAt: Date.now() });
-        return res.status(200).json({ ...saved, found: suggestions.length, tried });
+        const focus = typeof body.focus === "string" ? body.focus.replace(/[^\p{L}\p{N} ,&'-]/gu, "").trim().slice(0, 60) : "";
+        const result = await suggestBrands({ brands: list.brands, skipped: list.skipped, pending: list.suggestions.map((s) => s.domain), catalogItems: items, focus });
+        // Merged into the latest list, so brands added or skipped while the search ran stay that way.
+        const saved = await updateBrands((latest) => ({
+          ...latest,
+          suggestions: [
+            ...result.suggestions.filter((s) => !latest.brands.some((b) => sameShop(b.domain, s.domain)) && !latest.skipped.some((d) => sameShop(d, s.domain))),
+            ...latest.suggestions,
+          ],
+          suggestedAt: Date.now(),
+        }));
+        return res.status(200).json({ ...saved, found: result.suggestions.length, stats: result.stats, theme: result.theme });
       }
       default:
         return res.status(400).json({ error: "Unknown action." });

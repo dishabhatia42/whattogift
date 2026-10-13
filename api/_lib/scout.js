@@ -45,6 +45,7 @@ export async function checkShop(link, { name } = {}) {
     domain: found.host,
     platform: found.platform,
     sells: types.join(", ").slice(0, 60),
+    minPrice: prices[0],
     priceRange: prices.length > 1 && prices[0] !== prices.at(-1) ? `₹${fmt(prices[0])} – ₹${fmt(prices.at(-1))}` : `₹${fmt(prices[0])}`,
     samples: pickSamples(items).map(({ title, image, price }) => ({ title, image, price })),
   };
@@ -69,10 +70,21 @@ const client = new Anthropic();
 const SUGGEST_SYSTEM = `You help the founder of Serial Gifter, an Indian gift-finder, discover brands for her catalogue.
 You'll get the brands she has already chosen (her taste) and brands she has said no to.
 Use web search to find NEW Indian direct-to-consumer brands she would love: in the same spirit as her picks (independent, design-led, beautifully made, genuinely giftable), selling on their OWN website in rupees, ideally on Shopify. Spread across different kinds of gifts, including some her list doesn't cover yet. No marketplaces, no big conglomerates, nothing already on either list.
-Finish with only a JSON array (no other text after it) of up to 14 brands:
+Each round has a focus: dig into that corner of gifting properly (search for it specifically, look past the usual "top D2C brands" listicles to smaller labels), rather than repeating famous names.
+Finish with only a JSON array (no other text after it) of up to 20 brands:
 [{"name": "Brand name", "domain": "brandsite.com", "sells": "what they make, 2-5 words", "why": "why it fits her taste, max 18 words"}]`;
 
-export async function suggestBrands({ brands, skipped, pending, catalogItems }) {
+// Each press explores a different corner of gifting, so "Find more" keeps finding new brands
+// instead of the same famous names. Disha can also type her own focus ("chocolate", "for dads").
+const THEMES = [
+  "artisanal chocolate, mithai and gourmet food gifts", "handmade ceramics, tableware and glassware", "candles, incense and home fragrance",
+  "kids' toys, games and children's books", "pets: accessories and treats", "skincare, bath and wellness rituals",
+  "jewellery and accessories by independent designers", "art prints, illustration and stationery", "tea, coffee and barware",
+  "men's grooming and gifts for dads", "home textiles, cushions and throws", "plants, gardening and outdoor living",
+  "bags, wallets and leather goods", "experiential kits: DIY, craft and hobby kits", "sustainable and zero-waste gifts", "personalised and keepsake gifts",
+];
+
+export async function suggestBrands({ brands, skipped, pending, catalogItems, focus = "" }) {
   const sells = new Map();
   for (const i of catalogItems || []) {
     if (!sells.has(i.brandId)) sells.set(i.brandId, new Map());
@@ -83,7 +95,9 @@ export async function suggestBrands({ brands, skipped, pending, catalogItems }) 
     const t = [...(sells.get(b.id) || new Map()).entries()].sort((x, y) => y[1] - x[1]).slice(0, 2).map(([k]) => k);
     return `${b.name} (${b.domain})${t.length ? `: ${t.join(", ")}` : ""}`;
   });
+  const theme = focus || THEMES[Math.floor(Date.now() / 1000) % THEMES.length];
   const prompt = [
+    `This round's focus: ${theme}${focus ? " (her own request)" : ""}.`,
     `Her brands:\n${mine.join("\n")}`,
     skipped.length ? `She said no to: ${skipped.slice(-150).join(", ")}` : "",
     pending.length ? `Already suggested, waiting for her: ${pending.join(", ")}` : "",
@@ -96,28 +110,39 @@ export async function suggestBrands({ brands, skipped, pending, catalogItems }) 
       model: "claude-sonnet-5-5",
       max_tokens: 4000,
       system: SUGGEST_SYSTEM,
-      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5, user_location: { type: "approximate", country: "IN" } }],
+      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 8, user_location: { type: "approximate", country: "IN" } }],
       messages,
     });
     if (response.stop_reason !== "pause_turn") break;
     messages.push({ role: "assistant", content: response.content }); // long searches pause; let it carry on
   }
-  const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
+  // With web search the answer arrives in several text pieces (split around citations),
+  // sometimes in the middle of the list, so they're joined exactly as written.
+  const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("");
   const ideas = parseList(text);
 
   // Every idea is checked for real; only working Indian shops with in-stock products survive.
   const taken = [...brands.map((b) => b.domain), ...skipped, ...pending];
+  const stats = { proposed: ideas.length, alreadyKnown: 0, unreadable: 0, notGiftable: 0, passed: 0 };
+  const seen = new Set();
   const fresh = ideas.filter((i) => {
     const d = cleanDomain(i.domain);
-    return d && !taken.some((t) => sameShop(t, d));
-  }).slice(0, 14);
+    if (!d || seen.has(d.replace(/^www\./, ""))) return false;
+    seen.add(d.replace(/^www\./, ""));
+    if (taken.some((t) => sameShop(t, d))) { stats.alreadyKnown++; return false; }
+    return true;
+  }).slice(0, 20);
   const checked = await Promise.all(fresh.map(async (i) => {
     try {
       const shop = await checkShop(i.domain, { name: i.name });
+      // A gift shop needs something under ₹15,000 (no furniture-only stores).
+      if (!(shop.minPrice <= 15000)) { stats.notGiftable++; return null; }
+      stats.passed++;
       return { ...shop, sells: String(i.sells || shop.sells).slice(0, 60), why: String(i.why || "").slice(0, 160) };
-    } catch { return null; }
+    } catch { stats.unreadable++; return null; }
   }));
-  return { suggestions: checked.filter(Boolean), tried: fresh.length };
+  console.log("Brand suggestions", JSON.stringify({ theme, ...stats }));
+  return { suggestions: checked.filter(Boolean), stats, theme };
 }
 
 function parseList(text) {
