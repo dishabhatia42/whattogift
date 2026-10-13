@@ -1,7 +1,7 @@
 // Storage for the gift finder: one JSON document in Vercel Blob holding
 // the products Disha adds herself and the sponsored ad slots. Needs BLOB_READ_WRITE_TOKEN,
 // which Vercel adds automatically when a Blob store is connected to the project.
-import { get, put } from "@vercel/blob";
+import { head, put } from "@vercel/blob";
 
 const DATA_PATH = "gift-finder/data.json";
 
@@ -10,10 +10,28 @@ export const OCCASION_IDS = ["birthday", "anniversary", "wedding", "just-because
 export const AD_SLOTS = 6;
 const MAX_PRODUCTS = 200;
 
+// The latest saved version of a stored file, or null if it was never saved.
+// Public Blob files are served through a CDN cache, and `get(..., { useCache: false })` only
+// bypasses it for private files, so a read right after a save could return the previous
+// version (and a read-change-save would then quietly undo the last change). Asking the Blob
+// API for the file's current upload time and fetching that exact version avoids the cache.
+export async function readFresh(path) {
+  let meta;
+  try {
+    meta = await head(path);
+  } catch (err) {
+    if (err?.name === "BlobNotFoundError" || /not.*found/i.test(String(err?.message))) return null;
+    throw err;
+  }
+  const r = await fetch(`${meta.url}?v=${new Date(meta.uploadedAt).getTime()}`);
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`Storage read failed (${r.status})`);
+  return r.text();
+}
+
 export async function readData() {
-  const result = await get(DATA_PATH, { access: "public", useCache: false });
-  if (!result || result.statusCode !== 200) return { products: [], ads: [] };
-  const text = await new Response(result.stream).text();
+  const text = await readFresh(DATA_PATH);
+  if (text == null) return { products: [], ads: [] };
   try {
     const parsed = JSON.parse(text);
     return { ...clean(parsed), updatedAt: Number(parsed.updatedAt) || 0 };

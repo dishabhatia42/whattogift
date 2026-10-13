@@ -3,7 +3,8 @@
 // https://<shop>/products.json (name, price, photos, stock, link). Once a night
 // refreshCatalog() reads those feeds and saves a compact copy in Vercel Blob, so a
 // search never waits on a brand's website and never shows a made-up product.
-import { get, head, put } from "@vercel/blob";
+import { head, put } from "@vercel/blob";
+import { readFresh } from "./store.js";
 import { readBrands, NOT_GIFTS } from "./brands.js";
 
 const CATALOG_PATH = "gift-finder/catalog.json";
@@ -17,9 +18,9 @@ let memo = null; // this server instance keeps the catalogue for a few minutes
 export async function readCatalog({ fresh = false } = {}) {
   if (!fresh && memo && Date.now() - memo.at < 10 * 60 * 1000) return memo.data;
   try {
-    const result = await get(CATALOG_PATH, { access: "public", useCache: false });
-    if (!result || result.statusCode !== 200) return { items: [], updatedAt: 0 };
-    const data = JSON.parse(await new Response(result.stream).text());
+    const text = await readFresh(CATALOG_PATH);
+    if (text == null) return { items: [], updatedAt: 0 };
+    const data = JSON.parse(text);
     const clean = { items: Array.isArray(data.items) ? data.items : [], updatedAt: Number(data.updatedAt) || 0, brands: data.brands || [] };
     memo = { at: Date.now(), data: clean };
     return clean;

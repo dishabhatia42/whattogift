@@ -7,7 +7,8 @@
 //   name      shown on cards as "by <name>" and on the "Shop at <name>" button
 //   domain    the shop's own domain, no tracking bits
 //   platform  "shopify" (default) or "woocommerce"
-import { get, put } from "@vercel/blob";
+import { put } from "@vercel/blob";
+import { readFresh } from "./store.js";
 
 const BRANDS_PATH = "gift-finder/brands.json";
 const MAX_BRANDS = 150;
@@ -66,14 +67,15 @@ const STARTER = [
 ].map(([id, name, domain, platform]) => ({ id, name, domain, platform: platform || "shopify" }));
 
 export async function readBrands() {
-  try {
-    const result = await get(BRANDS_PATH, { access: "public", useCache: false });
-    if (!result || result.statusCode !== 200) return clean({ brands: STARTER });
-    return clean(JSON.parse(await new Response(result.stream).text()));
-  } catch (err) {
-    if (err?.name === "BlobNotFoundError") return clean({ brands: STARTER });
-    throw err;
-  }
+  // Always the latest save (see readFresh): adding or skipping right after "Find more"
+  // must build on the list that was just saved, never an older cached copy.
+  const text = await readFresh(BRANDS_PATH);
+  if (text == null) return clean({ brands: STARTER });
+  const saved = clean(JSON.parse(text));
+  // Brands added to the starter list in code after the first save still join, unless
+  // Disha removed or skipped them (removing a brand puts it on the skipped list).
+  const missing = STARTER.filter((s) => !saved.brands.some((b) => sameShop(b.domain, s.domain)) && !saved.skipped.some((d) => sameShop(d, s.domain)));
+  return missing.length ? clean({ ...saved, brands: [...saved.brands, ...missing] }) : saved;
 }
 
 export async function writeBrands(data) {
