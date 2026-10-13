@@ -246,6 +246,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .feat .slot-msg strong { font-family: var(--font-display); font-weight: 800; font-size: 17px; line-height: 1.2; color: var(--accent-text); }
 .feat .slot-msg span { font-size: 13px; line-height: 1.4; color: var(--muted); }
 .feat .cat.write { color: var(--accent-text); font-weight: 600; }
+.feat .nm.wrap { white-space: normal; } /* never cut the pitch short on a narrow phone */
 /* The other open spots: just the empty frame and a soft plus, so the pitch isn't repeated. */
 .feat.open-slot.quiet .box { background: transparent; border-color: color-mix(in srgb, var(--tint) 70%, transparent); }
 .feat.open-slot.quiet .plus { font: 300 40px/1 var(--font-display); color: var(--tint); transition: color .2s, transform .2s var(--ease); }

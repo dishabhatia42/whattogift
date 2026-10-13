@@ -264,7 +264,7 @@
           inner.append(plus);
         }
         box.prepend(inner);
-        const name = document.createElement("span"); name.className = "nm"; name.textContent = pitch ? "Feature your brand" : "Open spot";
+        const name = document.createElement("span"); name.className = "nm" + (pitch ? " wrap" : ""); name.textContent = pitch ? "Get featured" : "Open spot";
         a.append(box, name);
         if (pitch) { const cat = document.createElement("span"); cat.className = "cat write"; cat.textContent = "Write to me →"; a.appendChild(cat); }
         row.appendChild(a);
