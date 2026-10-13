@@ -24,7 +24,8 @@
     r === "couple" ? OCCASIONS.filter((o) => o.id !== "birthday")
     : r === "child" ? OCCASIONS.filter((o) => o.id === "birthday" || o.id === "just-because")
     : OCCASIONS;
-  const BASE_INTERESTS = ["Fashion & style", "All things tech", "Books & stories", "Experiences", "Home & cosy things", "Fitness & wellness", "Food & treats", "Handmade & artsy"];
+  // Ordered long + short in pairs, so on a phone two always share a line (four tidy rows, not six to eight).
+  const BASE_INTERESTS = ["Fashion & style", "Books & stories", "Home & cosy things", "Experiences", "Fitness & wellness", "All things tech", "Handmade & artsy", "Food & treats"];
   const SUGGESTIONS = {
     default: BASE_INTERESTS,
     partner: [...BASE_INTERESTS, "Jewellery", "Personalised"],
@@ -308,7 +309,9 @@
     const calm = matchMedia("(prefers-reduced-motion: reduce)");
     function draw() {
       const slots = wide.matches ? SLOTS_WIDE : SLOTS_NARROW;
-      const items = catalog.board.filter((p) => safeHref(p.url)).slice(0, slots.length);
+      const live = catalog.board.filter((p) => safeHref(p.url));
+      // Phones have room for six: the ones Disha ticked "Also show it on phones" first, then the rest in order.
+      const items = (wide.matches ? live : [...live.filter((p) => p.phone), ...live.filter((p) => !p.phone)]).slice(0, slots.length);
       box.textContent = "";
       slots.forEach(([x, y, size, tilt], i) => {
         const product = items[i];

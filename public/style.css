@@ -138,6 +138,11 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .pill:hover { border-color: var(--tint); background: var(--tint); }
 .pill:active { transform: scale(.97); }
 .pill[aria-pressed="true"] { background: var(--primary); border-color: var(--accent); color: var(--on-primary); }
+/* Phones: slightly snugger pills so two or three share a line instead of one each (still 40px tall to tap). */
+@media (max-width: 480px) {
+  .suggest { gap: 8px; }
+  .suggest .pill { min-height: 40px; padding: 0 13px; font-size: 14px; }
+}
 
 /* "Open a new world": a switch, not an interest, so it can sit alongside any of them. */
 .discover {

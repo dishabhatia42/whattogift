@@ -109,6 +109,7 @@ export function clean(data) {
     occasions: oneOf(p.occasions, OCCASION_IDS),
     tags: (Array.isArray(p.tags) ? p.tags : []).map((t) => str(t, 30)).filter(Boolean).slice(0, 10),
     board: p.board === true,   // shown as a sticker on the home-page board
+    phone: p.board === true && p.phone === true, // one of the six the board shows on phones
     line: str(p.line, 140),    // Disha's one-liner shown when a sticker is opened
     active: p.active !== false,
   })).filter((p) => p.name && p.url);

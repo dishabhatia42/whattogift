@@ -170,6 +170,7 @@
         <label class="f">What makes it a good gift (helps it show up for the right searches)<textarea name="note" maxlength="300"></textarea></label>
         <label class="f">Keywords (comma separated, e.g. what kind of person would love it)<input type="text" name="tags" placeholder="clothes, minimal, office"></label>
         <label class="f" style="flex-direction:row;align-items:center;gap:8px;color:var(--fg)"><input type="checkbox" name="board"> Put on the home-page board (shows as a sticker, max 10)</label>
+        <label class="f" style="flex-direction:row;align-items:center;gap:8px;color:var(--fg);padding-left:24px"><input type="checkbox" name="phone"> Also show it on phones (phones have room for 6) <span class="muted" data-phone-count></span></label>
         <label class="f">Your line (the cheeky one-liner people see when they tap it on the board)<input type="text" name="line" maxlength="140" placeholder="My most-gifted thing this year. No regrets."></label>
         <div class="f">Show for (nothing ticked in a row = all)<div data-occ style="display:flex;flex-direction:column;gap:6px"></div></div>
         <div class="row">
@@ -656,10 +657,23 @@
   });
   // The form stays closed until there's something to fill in: after "Fill in for me",
   // "Edit", or "Add one by hand". Saving or cancelling closes it again.
-  function openPickForm() { pickForm.hidden = false; pickForm.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  function openPickForm() { syncPhoneBox(); pickForm.hidden = false; pickForm.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  // "Also show it on phones": only for board products, and at most six of them.
+  const PHONE_MAX = 6;
+  function syncPhoneBox() {
+    const f = pickForm.elements, others = data.products.filter((p) => p.phone && p.id !== f.id.value).length;
+    const full = others >= PHONE_MAX && !f.phone.checked;
+    f.phone.disabled = !f.board.checked || full;
+    if (!f.board.checked) f.phone.checked = false;
+    $("[data-phone-count]", pickForm).textContent = full
+      ? `· ${PHONE_MAX} already chosen; untick one to swap`
+      : `· ${others + (f.phone.checked ? 1 : 0)} of ${PHONE_MAX} chosen` + (others + (f.phone.checked ? 1 : 0) < PHONE_MAX ? " (empty spots use other board products)" : "");
+  }
+  pickForm.elements.board.addEventListener("change", syncPhoneBox);
+  pickForm.elements.phone.addEventListener("change", syncPhoneBox);
   function resetPickForm() {
     pickForm.reset(); pickForm.elements.id.value = ""; setImage(pickForm, ""); setCutout(pickForm, "");
-    occasionBoxes($("[data-occ]", pickForm)); pickForm.hidden = true;
+    occasionBoxes($("[data-occ]", pickForm)); pickForm.hidden = true; syncPhoneBox();
   }
   $("[data-cancel]", pickForm).addEventListener("click", () => { resetPickForm(); $("#af-note").hidden = true; });
   $("#by-hand").addEventListener("click", () => { resetPickForm(); openPickForm(); pickForm.elements.name.focus({ preventScroll: true }); });
@@ -687,7 +701,7 @@
     const pick = {
       id: f.id.value || Math.random().toString(36).slice(2, 10),
       name: f.name.value, price: f.price.value, url: f.url.value, note: f.note.value, image: f.image.value, cutout: f.cutout.value,
-      board: f.board.checked, line: f.line.value,
+      board: f.board.checked, phone: f.board.checked && f.phone.checked, line: f.line.value,
       tags: f.tags.value.split(",").map((t) => t.trim()).filter(Boolean),
       recipients: checked(pickForm, "recipients"), occasions: checked(pickForm, "occasions"), active: true,
     };
@@ -705,14 +719,15 @@
       row.innerHTML = `<div class="ph"></div><div class="txt"><strong></strong><span></span></div><button type="button" data-edit>Edit</button><button type="button" data-toggle></button><button type="button" class="danger" data-del>Delete</button>`;
       if (p.cutout || p.image) { const img = document.createElement("img"); img.src = p.cutout || p.image; img.alt = ""; if (p.cutout) img.className = "cut"; row.firstChild.replaceWith(img); }
       $("strong", row).textContent = p.name;
-      $("span", row).textContent = [p.board ? (p.cutout ? "📌 On the board ✂️" : "📌 On the board") : "", p.price, describeTargets(p)].filter(Boolean).join(" · ");
+      $("span", row).textContent = [p.board ? "📌 On the board" + (p.phone ? " + 📱 phones" : "") : "", p.price, describeTargets(p)].filter(Boolean).join(" · ");
       $("[data-toggle]", row).textContent = p.active ? "Hide" : "Show";
       $("[data-toggle]", row).addEventListener("click", () => save({ ...data, products: data.products.map((x) => x.id === p.id ? { ...x, active: !x.active } : x) }));
       $("[data-del]", row).addEventListener("click", () => { if (confirm(`Delete "${p.name}"?`)) save({ ...data, products: data.products.filter((x) => x.id !== p.id) }); });
       $("[data-edit]", row).addEventListener("click", () => {
         const f = pickForm.elements;
         f.id.value = p.id; f.name.value = p.name; f.price.value = p.price; f.url.value = p.url; f.note.value = p.note; f.tags.value = p.tags.join(", ");
-        f.board.checked = !!p.board; f.line.value = p.line || "";
+        f.board.checked = !!p.board; f.phone.checked = !!p.phone; f.line.value = p.line || "";
+        syncPhoneBox();
         setImage(pickForm, p.image); setCutout(pickForm, p.cutout); occasionBoxes($("[data-occ]", pickForm), p);
         $("[data-cut-note]", pickForm).textContent = p.cutout ? "This product has a cutout." : "Board stickers look best as cutouts. Free, runs on this computer.";
         openPickForm();
