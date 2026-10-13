@@ -41,4 +41,6 @@ export const BRANDS = [
   { id: "lego", name: "LEGO", domain: "lego.in" },
   { id: "comet", name: "Comet", domain: "www.wearcomet.com" },
   { id: "gullylabs", name: "Gully Labs", domain: "gullylabs.com" },
+  { id: "latteholic", name: "Latteholic", domain: "latteholic.com" },
+  { id: "edit", name: "Edit", domain: "editeveryday.com" },
 ].map((b) => ({ skipTypes: NOT_GIFTS, ...b }));
