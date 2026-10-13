@@ -37,14 +37,14 @@
 <main class="page wide">
   <header class="edit-hero rise" style="--i:0">
     <p class="kicker" id="kicker">The gift edit</p>
-    <h1 id="title">Hunting down the good stuff…</h1>
+    <h1 id="title">Putting our gifting brain to work…</h1>
     <p class="edit-vibe" id="vibe" hidden></p>
     <a class="edit-summary" id="chips" href="/" aria-label="Change your answers"></a>
   </header>
 
   <section class="edit-collection" aria-live="polite">
     <div class="edit-bar">
-      <h2 class="sec" id="count">Finding little ways to make their day…</h2>
+      <h2 class="sec" id="count" hidden></h2>
       <button class="link-btn" id="again" type="button" hidden>Not quite their vibe? Refine ↓</button>
     </div>
     <div class="cards" id="ideas"></div>
@@ -230,20 +230,21 @@
   document.addEventListener("click", (e) => { if (!e.target.closest(".hint-menu, .hint-btn")) closeHintMenu(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeHintMenu(); });
 
-  // While Claude thinks: shimmering cards and a few playful lines.
+  // While Claude thinks: shimmering cards, and the big heading cycles through a few playful lines.
   // Shuffled fresh for every search; "Almost there" always comes last and stays until the gifts appear.
   const LINES = ["Putting our gifting brain to work…", "Keeping only the really good stuff…", "Ooh, this could be good…", "Wait till you see what we found…"];
   const LAST_LINE = "Almost there. Good things take a second…";
   let lineTimer;
   function loading(on) {
     clearInterval(lineTimer);
+    $("title").classList.toggle("cycling", on); // keeps two lines' height so the cards don't hop as lines change
     if (!on) return;
     const order = [...LINES];
     for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
     order.push(LAST_LINE);
-    let i = 0; $("count").textContent = order[0];
+    let i = 0; $("title").textContent = order[0];
     lineTimer = setInterval(() => {
-      i = Math.min(i + 1, order.length - 1); $("count").textContent = order[i];
+      i = Math.min(i + 1, order.length - 1); $("title").textContent = order[i];
       if (i === order.length - 1) clearInterval(lineTimer);
     }, 1800);
   }
@@ -251,7 +252,7 @@
   async function load() {
     if (busy) return;
     busy = true; $("again").disabled = $("again2").disabled = $("refine").disabled = true; $("error").hidden = true;
-    $("title").textContent = "Hunting down the good stuff…"; $("vibe").hidden = true; $("more").hidden = true;
+    $("count").hidden = true; $("vibe").hidden = true; $("more").hidden = true;
     variant = (variant % 3) + 1; // "Try again" cycles three cached answers
     const list = $("ideas"); list.textContent = "";
     for (let i = 0; i < 6; i++) list.appendChild(el("div", "card skeleton"));
@@ -266,7 +267,7 @@
       loading(false);
       list.textContent = "";
       data.ideas.forEach((idea, i) => list.appendChild(card(idea, i)));
-      $("count").textContent = `${data.ideas.length} little ways to make their day`;
+      $("count").textContent = `${data.ideas.length} little ways to make their day`; $("count").hidden = false;
       $("title").textContent = finalTitle;
       if (data.vibe) { $("vibe").textContent = data.vibe; $("vibe").hidden = false; }
       $("again").hidden = false; $("more").hidden = false;
