@@ -93,6 +93,12 @@
   .brand-row .n { font-size: 13px; color: var(--muted); }
   .brand-row .n.bad { color: var(--err); }
   .brand-row button { padding: 5px 12px; font-size: 13px; }
+  input[type=search] { font: inherit; font-size: 14px; color: var(--fg); background: var(--bg); border: 1.5px solid var(--line); border-radius: 999px; padding: 7px 14px; width: 100%; }
+  .pager { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; }
+  .pager:empty { display: none; }
+  .pager button { min-width: 38px; padding: 6px 10px; font-size: 14px; }
+  .pager button[aria-current="page"] { background: var(--petal); border-color: var(--petal); color: var(--bg); font-weight: 700; }
+  .pager .gap { color: var(--muted); padding: 0 2px; }
   #status { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; max-width: calc(100% - 32px); }
   #status.err { background: var(--err); color: #fff; }
 </style>
@@ -183,8 +189,12 @@
       <div id="sugs" class="sugs"></div>
 
       <!-- your brands -->
-      <h3 class="sub-h" style="margin-top:8px">Your brands <span class="muted" id="brand-count"></span></h3>
+      <div class="row" style="justify-content:space-between;margin-top:8px">
+        <h3 class="sub-h">Your brands <span class="muted" id="brand-count"></span></h3>
+        <input type="search" id="brand-search" placeholder="Find a brand" aria-label="Find a brand" style="max-width:220px">
+      </div>
       <div id="brand-list"></div>
+      <nav class="pager" id="brand-pager" aria-label="Brand list pages"></nav>
     </section>
 
     <div class="row"><button type="button" id="logout">Sign out</button></div>
@@ -273,11 +283,23 @@
       ? `Based on the brands you've picked. Last looked ${new Date(brandData.suggestedAt).toLocaleDateString("en-IN")}.`
       : "Based on the brands you've picked.";
 
-    // your brands, A to Z, with how many products each gave on the last read
-    $("#brand-count").textContent = `(${brandData.brands.length})`;
+    renderBrandList();
+  }
+
+  // Your brands, A to Z, 15 per page, with how many products each gave on the last read.
+  const PER_PAGE = 15;
+  let brandPage = 1;
+  function renderBrandList() {
+    const q = $("#brand-search").value.trim().toLowerCase();
+    const all = [...brandData.brands].sort((x, y) => x.name.localeCompare(y.name));
+    const shown = q ? all.filter((b) => b.name.toLowerCase().includes(q) || b.domain.includes(q)) : all;
+    const pages = Math.max(1, Math.ceil(shown.length / PER_PAGE));
+    brandPage = Math.min(Math.max(1, brandPage), pages);
+    $("#brand-count").textContent = q ? `(${shown.length} of ${all.length})` : `(${all.length})`;
     const byId = new Map((report.brands || []).map((r) => [r.id, r]));
     const list = $("#brand-list"); list.textContent = "";
-    for (const b of [...brandData.brands].sort((x, y) => x.name.localeCompare(y.name))) {
+    if (!shown.length) list.appendChild(mk("p", "muted", q ? "No brand matches that." : "No brands yet. Paste a website above to add one."));
+    for (const b of shown.slice((brandPage - 1) * PER_PAGE, brandPage * PER_PAGE)) {
       const r = byId.get(b.id);
       const row = mk("div", "brand-row");
       const txt = mk("div", "txt");
@@ -294,7 +316,33 @@
       });
       row.append(txt, rm); list.appendChild(row);
     }
+    renderPager(pages);
   }
+
+  // ‹ 1 2 3 … 9 › : first, last, and the pages around the current one.
+  function renderPager(pages) {
+    const nav = $("#brand-pager"); nav.textContent = "";
+    if (pages < 2) return;
+    const go = (p) => { brandPage = p; renderBrandList(); $("#brand-count").closest(".row").scrollIntoView({ block: "start", behavior: "smooth" }); };
+    const btn = (label, p, opts = {}) => {
+      const b = mk("button", "", label); b.type = "button";
+      if (opts.aria) b.setAttribute("aria-label", opts.aria);
+      if (p === brandPage && !opts.arrow) b.setAttribute("aria-current", "page");
+      b.disabled = opts.arrow && (p < 1 || p > pages);
+      b.addEventListener("click", () => go(p));
+      return b;
+    };
+    nav.appendChild(btn("‹", brandPage - 1, { arrow: true, aria: "Previous page" }));
+    let last = 0;
+    for (let p = 1; p <= pages; p++) {
+      if (p !== 1 && p !== pages && Math.abs(p - brandPage) > 1) continue;
+      if (p - last > 1) nav.appendChild(mk("span", "gap", "…"));
+      nav.appendChild(btn(String(p), p, { aria: `Page ${p}` }));
+      last = p;
+    }
+    nav.appendChild(btn("›", brandPage + 1, { arrow: true, aria: "Next page" }));
+  }
+  $("#brand-search").addEventListener("input", () => { brandPage = 1; renderBrandList(); });
 
   async function addBrand(shop, btn) {
     if (btn) btn.disabled = true;
