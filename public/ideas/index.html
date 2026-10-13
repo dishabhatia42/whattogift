@@ -170,7 +170,7 @@
     }
     const hint = track(el("button", "hint-btn", "Drop a hint ↗"), "Drop a hint", { product: idea.name }); hint.type = "button";
     // Shares a Serial Gifter page for this gift (rich WhatsApp preview), so the friend who gets it meets us too.
-    hint.addEventListener("click", () => share(idea, idea.pid ? `${location.origin}/h/${encodeURIComponent(idea.pid)}` : a.href));
+    hint.addEventListener("click", () => share(idea, idea.pid ? `${location.origin}/h/${encodeURIComponent(idea.pid)}` : a.href, hint));
     const acts = el("div", "acts"); acts.append(a, hint);
     body.append(acts);
     c.append(pic, body);
@@ -191,18 +191,42 @@
     return c;
   }
 
-  // Share one idea: the phone's share sheet where available, otherwise copy a ready-made message.
+  // Share one idea. Phones: the phone's own share sheet (WhatsApp is right there).
+  // Laptops: a small menu with the two things people actually do there: WhatsApp (Web) or copy the link.
   function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2200); }
-  async function share(idea, url) {
+  const isPhone = matchMedia("(hover: none) and (pointer: coarse)").matches;
+  async function share(idea, url, btn) {
     const text = `Not saying anything… but ${idea.name} would make a very good gift 👀`;
-    try {
-      if (navigator.share) { await navigator.share({ title: idea.name, text, url }); return; }
-      await navigator.clipboard.writeText(`${text}\n${url}`);
-      toast("Hint copied. Go drop it in the group chat 😉");
-    } catch (e) {
-      if (e && e.name !== "AbortError") toast("Couldn't share that one. Copy the link instead?");
+    if (isPhone && navigator.share) {
+      try { await navigator.share({ title: idea.name, text, url }); }
+      catch (e) { if (e && e.name !== "AbortError") copyHint(text, url); }
+      return;
     }
+    openHintMenu(btn, text, url);
   }
+  async function copyHint(text, url) {
+    try { await navigator.clipboard.writeText(`${text}\n${url}`); toast("Hint copied. Go drop it in the group chat 😉"); }
+    catch { toast("Couldn't copy that one. Try again?"); }
+  }
+  function closeHintMenu() { document.querySelectorAll(".hint-menu").forEach((m) => m.remove()); }
+  function openHintMenu(btn, text, url) {
+    const wasOpen = btn.parentElement.querySelector(".hint-menu");
+    closeHintMenu();
+    if (wasOpen) return; // a second click closes it
+    const menu = el("div", "hint-menu"); menu.setAttribute("role", "menu");
+    const wa = el("a", "", "💬 Send on WhatsApp"); wa.setAttribute("role", "menuitem");
+    wa.href = `https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`; wa.target = "_blank"; wa.rel = "noopener noreferrer";
+    track(wa, "Hint shared", { via: "whatsapp" });
+    const cp = el("button", "", "🔗 Copy link"); cp.type = "button"; cp.setAttribute("role", "menuitem");
+    track(cp, "Hint shared", { via: "copy" });
+    wa.addEventListener("click", () => setTimeout(closeHintMenu, 0));
+    cp.addEventListener("click", () => { copyHint(text, url); closeHintMenu(); });
+    menu.append(wa, cp);
+    btn.parentElement.appendChild(menu);
+    wa.focus();
+  }
+  document.addEventListener("click", (e) => { if (!e.target.closest(".hint-menu, .hint-btn")) closeHintMenu(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeHintMenu(); });
 
   // While Claude thinks: shimmering cards and a few playful lines.
   // Shuffled fresh for every search; "Almost there" always comes last and stays until the gifts appear.

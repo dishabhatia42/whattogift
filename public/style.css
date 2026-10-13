@@ -475,3 +475,16 @@ footer .disclosure { font-size: 12px; opacity: .85; }
 .hint-card .shop { width: 100%; justify-content: center; min-height: 48px; font-size: 16px; }
 .hint-invite { display: flex; flex-direction: column; gap: 10px; padding: 22px 20px; border-radius: 18px; background: var(--tint); }
 .hint-invite .go { margin-top: 6px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+/* Laptop "Drop a hint" menu: WhatsApp or copy link */
+.card .acts { position: relative; }
+.hint-menu {
+  position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 5; min-width: 210px; padding: 6px;
+  display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 14px; box-shadow: 0 12px 32px rgba(30, 25, 21, .18);
+}
+.hint-menu a, .hint-menu button {
+  appearance: none; border: 0; background: none; font: inherit; font-size: 15px; font-weight: 500; color: var(--fg);
+  text-align: left; text-decoration: none; padding: 10px 12px; border-radius: 10px; cursor: pointer;
+}
+.hint-menu a:hover, .hint-menu button:hover, .hint-menu a:focus-visible, .hint-menu button:focus-visible { background: var(--tint); outline: none; }
