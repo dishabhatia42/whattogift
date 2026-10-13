@@ -288,7 +288,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .secondary:disabled { opacity: .5; cursor: progress; }
 .quiet-link { font-size: 15px; font-weight: 500; color: var(--muted); text-decoration: none; }
 .quiet-link:hover { color: var(--accent-text); }
-.hint-btn { appearance: none; border: 0; background: none; padding: 0; font: inherit; font-size: 14px; color: var(--muted); cursor: pointer; }
+.hint-btn { appearance: none; border: 0; background: none; padding: 0; font: inherit; font-size: 14px; color: var(--muted); cursor: pointer; margin-left: auto; white-space: nowrap; } /* always on the right, even when it wraps under a long shop link */
 .hint-btn:hover { color: var(--accent-text); }
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 10; background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
 
