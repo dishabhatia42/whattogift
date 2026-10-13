@@ -52,6 +52,17 @@ const STARTER = [
   ["gullylabs", "Gully Labs", "gullylabs.com"],
   ["latteholic", "Latteholic", "latteholic.com"],
   ["edit", "Edit", "editeveryday.com"],
+  ["teabox", "Teabox", "in.teabox.com"],
+  ["farmley", "Farmley", "www.farmley.com"],
+  ["kaybeauty", "Kay Beauty", "www.kaybeauty.com"],
+  ["desiartmag", "Desi Art Mag", "desiartmag.com"],
+  ["everstylish", "Everstylish", "www.everstylish.com"],
+  ["jenniandjanki", "Jenni and Janki", "www.jenniandjanki.com"],
+  ["bose", "Bose India", "www.boseindia.com"],
+  ["antinorm", "Antinorm", "antinorm.co"],
+  ["toffeecoffee", "Toffee Coffee Roasters", "toffeecoffeeroasters.com"],
+  ["bluetokai", "Blue Tokai", "bluetokaicoffee.com"],
+  ["faebeauty", "Fae Beauty", "faebeauty.in"],
 ].map(([id, name, domain, platform]) => ({ id, name, domain, platform: platform || "shopify" }));
 
 export async function readBrands() {
