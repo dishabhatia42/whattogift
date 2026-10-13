@@ -3,7 +3,12 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { readData, writeData, saveImage } from "./_lib/store.js";
 import { autofill, UserError, aiTrouble } from "./_lib/autofill.js";
-import { readCatalog, refreshCatalog } from "./_lib/catalog.js";
+import { readCatalog, refreshCatalog, refreshBrand, dropBrand } from "./_lib/catalog.js";
+import { readBrands, writeBrands, sameShop, slug } from "./_lib/brands.js";
+import { checkShop, suggestBrands, ScoutError } from "./_lib/scout.js";
+
+// Finding brand suggestions searches the web, which can take a minute or two.
+export const config = { maxDuration: 180 };
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const VIDEO_TYPES = ["video/mp4", "video/webm"];
@@ -49,19 +54,66 @@ export default async function handler(req, res) {
       case "refreshCatalog":
         return res.status(200).json(await refreshCatalog());
       case "catalogStatus": {
-        const { updatedAt, brands, items } = await readCatalog();
+        const { updatedAt, brands, items } = await readCatalog({ fresh: true });
         return res.status(200).json({ updatedAt, brands, total: items.length });
+      }
+
+      // ---- Brands: Disha's list, plus AI suggestions she ticks or skips ----
+      case "brandsLoad":
+        return res.status(200).json(await readBrands());
+      case "brandCheck":
+        return res.status(200).json(await checkShop(body.link));
+      case "brandAdd": {
+        const shop = await checkShop(body.link || body.domain, { name: typeof body.name === "string" && body.name.trim() ? body.name.trim() : undefined });
+        const list = await readBrands();
+        if (list.brands.some((b) => sameShop(b.domain, shop.domain))) throw new UserError(`${shop.name} is already in your brands.`);
+        const brand = { id: uniqueId(shop.name, list.brands), name: shop.name, domain: shop.domain, platform: shop.platform };
+        const saved = await writeBrands({
+          ...list,
+          brands: [...list.brands, brand],
+          suggestions: list.suggestions.filter((s) => !sameShop(s.domain, shop.domain)),
+          skipped: list.skipped.filter((d) => !sameShop(d, shop.domain)),
+        });
+        const catalog = await refreshBrand(brand); // its products are searchable straight away
+        return res.status(200).json({ ...saved, added: brand, catalog });
+      }
+      case "brandRemove": {
+        const list = await readBrands();
+        const gone = list.brands.find((b) => b.id === body.id);
+        if (!gone) throw new UserError("That brand isn't in your list.");
+        const saved = await writeBrands({ ...list, brands: list.brands.filter((b) => b.id !== gone.id), skipped: [...list.skipped, gone.domain] });
+        const catalog = await dropBrand(gone.id);
+        return res.status(200).json({ ...saved, catalog });
+      }
+      case "brandSkip": {
+        const list = await readBrands();
+        const domain = String(body.domain || "");
+        return res.status(200).json(await writeBrands({ ...list, suggestions: list.suggestions.filter((s) => s.domain !== domain), skipped: [...list.skipped, domain] }));
+      }
+      case "brandSuggest": {
+        const list = await readBrands();
+        const { items } = await readCatalog();
+        const { suggestions, tried } = await suggestBrands({ brands: list.brands, skipped: list.skipped, pending: list.suggestions.map((s) => s.domain), catalogItems: items });
+        const saved = await writeBrands({ ...list, suggestions: [...suggestions, ...list.suggestions], suggestedAt: Date.now() });
+        return res.status(200).json({ ...saved, found: suggestions.length, tried });
       }
       default:
         return res.status(400).json({ error: "Unknown action." });
     }
   } catch (err) {
-    if (err instanceof UserError) return res.status(400).json({ error: err.message });
+    if (err instanceof UserError || err instanceof ScoutError) return res.status(400).json({ error: err.message });
     console.error(err);
     // Name the real problem: an AI error, or storage.
     if (err?.status && err?.headers) return res.status(502).json({ error: aiTrouble(err) });
     return res.status(500).json({ error: "Couldn't reach storage. Is a Blob store connected to this project?" });
   }
+}
+
+function uniqueId(name, brands) {
+  const base = slug(name) || "brand";
+  let id = base;
+  for (let n = 2; brands.some((b) => b.id === id); n++) id = `${base}${n}`;
+  return id;
 }
 
 function sameSecret(given, expected) {

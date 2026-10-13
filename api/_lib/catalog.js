@@ -4,7 +4,7 @@
 // refreshCatalog() reads those feeds and saves a compact copy in Vercel Blob, so a
 // search never waits on a brand's website and never shows a made-up product.
 import { get, head, put } from "@vercel/blob";
-import { BRANDS } from "./brands.js";
+import { readBrands, NOT_GIFTS } from "./brands.js";
 
 const CATALOG_PATH = "gift-finder/catalog.json";
 const PER_BRAND = 400;     // plenty for gifting; stops one huge shop crowding out the rest
@@ -14,8 +14,8 @@ const FETCH_TIMEOUT = 12000;
 // ---- Reading (used by every search) ----
 
 let memo = null; // this server instance keeps the catalogue for a few minutes
-export async function readCatalog() {
-  if (memo && Date.now() - memo.at < 10 * 60 * 1000) return memo.data;
+export async function readCatalog({ fresh = false } = {}) {
+  if (!fresh && memo && Date.now() - memo.at < 10 * 60 * 1000) return memo.data;
   try {
     const result = await get(CATALOG_PATH, { access: "public", useCache: false });
     if (!result || result.statusCode !== 200) return { items: [], updatedAt: 0 };
@@ -24,6 +24,8 @@ export async function readCatalog() {
     memo = { at: Date.now(), data: clean };
     return clean;
   } catch (err) {
+    // A refresh must not carry on from an empty list and overwrite every other brand's products.
+    if (fresh) throw err;
     console.error("Couldn't read the brand catalogue", err);
     return { items: [], updatedAt: 0 };
   }
@@ -43,25 +45,48 @@ export async function catalogVersion() {
 // ---- Refreshing (nightly cron, or the button in the admin) ----
 
 export async function refreshCatalog() {
-  const results = await Promise.all(BRANDS.map(async (brand) => {
-    try {
-      const items = await fetchBrand(brand);
-      return { brand, items, ok: true };
-    } catch (err) {
-      return { brand, items: [], ok: false, error: String(err?.message || err).slice(0, 120) };
-    }
-  }));
+  const { brands } = await readBrands();
+  const results = await Promise.all(brands.map(readOne));
 
   // A brand whose site was down tonight keeps yesterday's products rather than vanishing.
-  const old = await readCatalog();
+  const old = await readCatalog({ fresh: true });
   const items = [];
   const report = [];
   for (const r of results) {
     const kept = r.ok && r.items.length ? r.items : old.items.filter((i) => i.brandId === r.brand.id);
     items.push(...kept);
-    report.push({ id: r.brand.id, name: r.brand.name, ok: r.ok, count: r.items.length, kept: !r.ok || !r.items.length ? kept.length : 0, error: r.error || "" });
+    report.push(reportLine(r, kept.length));
   }
+  return save(items, report);
+}
 
+// Just one brand, right after Disha adds it in the admin, so she sees it working at once.
+export async function refreshBrand(brand) {
+  const r = await readOne(brand);
+  const old = await readCatalog({ fresh: true });
+  const others = old.items.filter((i) => i.brandId !== brand.id);
+  const kept = r.ok && r.items.length ? r.items : old.items.filter((i) => i.brandId === brand.id);
+  const report = (old.brands || []).filter((b) => b.id !== brand.id).concat(reportLine(r, kept.length));
+  return save(others.concat(kept), report);
+}
+
+// A removed brand's products leave the catalogue straight away.
+export async function dropBrand(id) {
+  const old = await readCatalog({ fresh: true });
+  return save(old.items.filter((i) => i.brandId !== id), (old.brands || []).filter((b) => b.id !== id));
+}
+
+async function readOne(brand) {
+  try {
+    return { brand, items: await fetchBrand(brand), ok: true };
+  } catch (err) {
+    return { brand, items: [], ok: false, error: String(err?.message || err).slice(0, 120) };
+  }
+}
+function reportLine(r, keptCount) {
+  return { id: r.brand.id, name: r.brand.name, ok: r.ok, count: r.items.length, kept: !r.ok || !r.items.length ? keptCount : 0, error: r.error || "" };
+}
+async function save(items, report) {
   const data = { updatedAt: Date.now(), brands: report, items };
   await put(CATALOG_PATH, JSON.stringify(data), {
     access: "public",
@@ -72,6 +97,15 @@ export async function refreshCatalog() {
   });
   memo = { at: Date.now(), data };
   return { updatedAt: data.updatedAt, total: items.length, brands: report };
+}
+
+// A quick look at a shop: its first few gift-worthy products, or an error saying why it can't be read.
+export async function sampleBrand(brand, count = 12) {
+  const woo = brand.platform === "woocommerce";
+  const list = woo
+    ? await fetchJson(`https://${brand.domain}/wp-json/wc/store/v1/products?per_page=${count}`, (d) => d)
+    : await fetchJson(`https://${brand.domain}/products.json?limit=${count}`, (d) => d?.products);
+  return { raw: list, items: list.map((p) => (woo ? wooItem(brand, p) : toItem(brand, p))).filter(Boolean) };
 }
 
 async function fetchBrand(brand) {
@@ -120,7 +154,7 @@ export function wooItem(brand, p) {
   const url = typeof p.permalink === "string" && p.permalink.startsWith(`https://${brand.domain}/`) ? p.permalink : "";
   if (!url) return null;
   const cats = (p.categories || []).map((c) => text(stripHtml(c.name), 24)).filter(Boolean);
-  if (brand.skipTypes && brand.skipTypes.test(`${cats.join(" ")} ${p.name}`)) return null;
+  if (NOT_GIFTS.test(`${cats.join(" ")} ${p.name}`)) return null;
   return {
     id: `${brand.id}-${p.id}`,
     brandId: brand.id,
@@ -149,7 +183,7 @@ export function toItem(brand, p) {
   if (typeof image !== "string" || !image.startsWith("https://")) return null;
   const type = text(p.product_type, 40);
   const rawTags = Array.isArray(p.tags) ? p.tags : String(p.tags || "").split(",");
-  if (brand.skipTypes && brand.skipTypes.test(`${type} ${p.title} ${rawTags.join(" ")}`)) return null; // gift cards, samples, freebies
+  if (NOT_GIFTS.test(`${type} ${p.title} ${rawTags.join(" ")}`)) return null; // gift cards, samples, freebies
   const price = Math.min(...prices);
   const cheapest = variants.find((v) => Number(v.price) === price);
   const was = Number(cheapest?.compare_at_price);

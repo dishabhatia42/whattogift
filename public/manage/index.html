@@ -68,6 +68,31 @@
   .preview { width: 96px; height: 72px; object-fit: cover; border-radius: 10px; background: var(--chip); }
   /* checkerboard so a cutout's see-through background is obvious */
   .preview.cut, .item img.cut { object-fit: contain; background: repeating-conic-gradient(#e8e2dc 0 25%, #fff 0 50%) 0 0 / 12px 12px; }
+  .sub-h { margin: 0; font-family: var(--font-display); font-size: 16px; color: var(--fg); }
+  /* Suggested brands: a sideways row of cards, like "Fans also like" */
+  .sugs { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 2px 10px; margin: 0 -2px; }
+  .sugs:empty::before { content: "No suggestions waiting. Press “Find more like mine”."; color: var(--muted); font-size: 14px; }
+  .sug { flex: 0 0 220px; scroll-snap-align: start; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; background: var(--bg); }
+  .mosaic { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; aspect-ratio: 1; background: var(--line); }
+  .mosaic img { width: 100%; height: 100%; object-fit: cover; background: var(--chip); display: block; }
+  .sug .in { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .sug strong { color: var(--fg); font-family: var(--font-display); }
+  .sug .meta { font-size: 12.5px; color: var(--muted); }
+  .sug .why { font-size: 13px; margin: 0; flex: 1; }
+  .sug .acts { display: flex; gap: 6px; margin-top: 6px; }
+  .sug .acts button { padding: 6px 12px; font-size: 14px; flex: 1; }
+  .sug a, .brand-row a { color: var(--muted); font-size: 12.5px; }
+  .preview-card { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--bg); flex-wrap: wrap; }
+  .preview-card .mosaic { width: 132px; flex: none; border-radius: 10px; overflow: hidden; }
+  .preview-card .txt { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 6px; }
+  .err-line { color: var(--err); font-size: 14px; margin: 0; }
+  .brand-row { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .brand-row:last-child { border-bottom: 0; }
+  .brand-row .txt { flex: 1; min-width: 0; }
+  .brand-row strong { color: var(--fg); }
+  .brand-row .n { font-size: 13px; color: var(--muted); }
+  .brand-row .n.bad { color: var(--err); }
+  .brand-row button { padding: 5px 12px; font-size: 13px; }
   #status { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; max-width: calc(100% - 32px); }
   #status.err { background: var(--err); color: #fff; }
 </style>
@@ -138,10 +163,28 @@
     </section>
 
     <!-- brand catalogue -->
-    <section class="panel">
-      <div class="row" style="justify-content:space-between"><h2>Brand catalogue</h2><button type="button" id="cat-refresh">Refresh now</button></div>
-      <p class="muted">Real, in-stock products from your approved brands, re-read from their websites every night. Searches pick from these.</p>
+    <section class="panel" id="brands-panel">
+      <div class="row" style="justify-content:space-between"><h2>Brand catalogue</h2><button type="button" id="cat-refresh">Refresh all now</button></div>
+      <p class="muted">Real, in-stock products from your brands, re-read from their websites every night. Searches pick from these.</p>
       <div id="cat-status" class="muted">Loading…</div>
+
+      <!-- add a brand -->
+      <form id="brand-add" class="row" style="flex-wrap:nowrap">
+        <input type="text" id="brand-link" placeholder="Paste a brand's website, e.g. subko.coffee" autocomplete="off" aria-label="Brand website">
+        <button type="submit" class="primary" style="flex:none">Check</button>
+      </form>
+      <div id="brand-preview" hidden></div>
+
+      <!-- suggestions -->
+      <div class="row" style="justify-content:space-between;margin-top:8px">
+        <div><h3 class="sub-h">Brands you might like</h3><p class="muted" id="sug-note">Based on the brands you've picked.</p></div>
+        <button type="button" id="sug-find">✨ Find more like mine</button>
+      </div>
+      <div id="sugs" class="sugs"></div>
+
+      <!-- your brands -->
+      <h3 class="sub-h" style="margin-top:8px">Your brands <span class="muted" id="brand-count"></span></h3>
+      <div id="brand-list"></div>
     </section>
 
     <div class="row"><button type="button" id="logout">Sign out</button></div>
@@ -184,26 +227,124 @@
       try { sessionStorage.setItem("gf-admin", key); } catch {}
       $("#login").hidden = true; $("#app").hidden = false;
       renderProducts(); renderAds();
-      call({ action: "catalogStatus" }).then(renderCatalog, () => { $("#cat-status").textContent = "Couldn't load the catalogue status."; });
+      Promise.all([call({ action: "brandsLoad" }), call({ action: "catalogStatus" })])
+        .then(([b, c]) => { brandData = b; report = c; renderBrands(); }, () => { $("#cat-status").textContent = "Couldn't load your brands."; });
     } catch (e) { toast(e.message, true); }
   }
 
-  function renderCatalog(c) {
-    const box = $("#cat-status"); box.textContent = "";
-    if (!c.updatedAt) { box.textContent = "Not read yet. Press Refresh now."; return; }
-    box.appendChild(document.createTextNode(`${c.total} products · last read ${new Date(c.updatedAt).toLocaleString("en-IN")}`));
-    const ul = document.createElement("ul"); ul.style.margin = "8px 0 0"; ul.style.paddingLeft = "18px";
-    for (const b of c.brands || []) {
-      const li = document.createElement("li");
-      li.textContent = b.ok ? `${b.name}: ${b.count}` : `${b.name}: couldn't read tonight (${b.error || "error"}), showing ${b.kept} from before`;
-      if (!b.ok) li.style.color = "var(--danger, #b3261e)";
-      ul.appendChild(li);
-    }
-    box.appendChild(ul);
+  // ---- Brand catalogue: your brands, adding one, and AI suggestions ----
+  let brandData = { brands: [], suggestions: [], skipped: [] };
+  let report = { brands: [], total: 0, updatedAt: 0 };
+  const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const rupees = (n) => "₹" + Math.round(n).toLocaleString("en-IN");
+  function mosaic(samples) {
+    const m = mk("div", "mosaic");
+    for (let i = 0; i < 4; i++) { const img = mk("img"); img.alt = samples[i]?.title || ""; img.loading = "lazy"; if (samples[i]) img.src = samples[i].image; m.appendChild(img); }
+    return m;
   }
+  function siteLink(domain) { const a = mk("a", "", domain + " ↗"); a.href = "https://" + domain; a.target = "_blank"; a.rel = "noopener noreferrer"; return a; }
+
+  function renderBrands() {
+    // status line
+    $("#cat-status").textContent = report.updatedAt
+      ? `${report.total.toLocaleString("en-IN")} products from ${brandData.brands.length} brands · last read ${new Date(report.updatedAt).toLocaleString("en-IN")}`
+      : "Not read yet. Press Refresh all now.";
+
+    // suggestions
+    const sugs = $("#sugs"); sugs.textContent = "";
+    for (const s of brandData.suggestions) {
+      const card = mk("article", "sug");
+      const inner = mk("div", "in");
+      inner.append(mk("strong", "", s.name), mk("span", "meta", [s.sells, s.priceRange].filter(Boolean).join(" · ")), mk("p", "why", s.why || ""), siteLink(s.domain));
+      const acts = mk("div", "acts");
+      const add = mk("button", "primary", "＋ Add"); add.type = "button";
+      const skip = mk("button", "", "Skip"); skip.type = "button";
+      add.addEventListener("click", () => addBrand({ domain: s.domain, name: s.name }, add));
+      skip.addEventListener("click", async () => {
+        skip.disabled = add.disabled = true;
+        try { brandData = await call({ action: "brandSkip", domain: s.domain }); renderBrands(); }
+        catch (e) { toast(e.message, true); skip.disabled = add.disabled = false; }
+      });
+      acts.append(add, skip); inner.appendChild(acts);
+      card.append(mosaic(s.samples || []), inner);
+      sugs.appendChild(card);
+    }
+    $("#sug-note").textContent = brandData.suggestedAt
+      ? `Based on the brands you've picked. Last looked ${new Date(brandData.suggestedAt).toLocaleDateString("en-IN")}.`
+      : "Based on the brands you've picked.";
+
+    // your brands, A to Z, with how many products each gave on the last read
+    $("#brand-count").textContent = `(${brandData.brands.length})`;
+    const byId = new Map((report.brands || []).map((r) => [r.id, r]));
+    const list = $("#brand-list"); list.textContent = "";
+    for (const b of [...brandData.brands].sort((x, y) => x.name.localeCompare(y.name))) {
+      const r = byId.get(b.id);
+      const row = mk("div", "brand-row");
+      const txt = mk("div", "txt");
+      txt.append(mk("strong", "", b.name), document.createTextNode(" "), siteLink(b.domain));
+      const n = mk("div", "n" + (r && !r.ok ? " bad" : ""),
+        !r ? "Not read yet" : r.ok ? `${r.count} products` : `Couldn't read last time (${r.error || "error"})${r.kept ? `, showing ${r.kept} from before` : ""}`);
+      txt.appendChild(n);
+      const rm = mk("button", "danger", "Remove"); rm.type = "button";
+      rm.addEventListener("click", async () => {
+        if (!confirm(`Remove ${b.name}? Its products leave the gift finder straight away.`)) return;
+        rm.disabled = true;
+        try { const out = await call({ action: "brandRemove", id: b.id }); brandData = out; report = out.catalog; renderBrands(); toast(`${b.name} removed.`); }
+        catch (e) { toast(e.message, true); rm.disabled = false; }
+      });
+      row.append(txt, rm); list.appendChild(row);
+    }
+  }
+
+  async function addBrand(shop, btn) {
+    if (btn) btn.disabled = true;
+    toast(`Adding ${shop.name || shop.domain} and reading its products…`);
+    try {
+      const out = await call({ action: "brandAdd", domain: shop.domain, name: shop.name });
+      brandData = out; report = out.catalog; renderBrands();
+      $("#brand-preview").hidden = true; $("#brand-link").value = "";
+      const got = (out.catalog.brands || []).find((r) => r.id === out.added.id);
+      toast(`${out.added.name} added${got ? ` with ${got.count} products` : ""}. It's live in searches now.`);
+    } catch (e) { toast(e.message, true); if (btn) btn.disabled = false; }
+  }
+
+  // Paste a link -> see the brand's real products -> add it.
+  $("#brand-add").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const link = $("#brand-link").value.trim(); if (!link) return;
+    const box = $("#brand-preview"); box.hidden = false; box.textContent = ""; box.appendChild(mk("p", "muted", "Checking the shop…"));
+    const btn = e.submitter || $("#brand-add button"); btn.disabled = true;
+    try {
+      const shop = await call({ action: "brandCheck", link });
+      box.textContent = "";
+      const card = mk("div", "preview-card");
+      const txt = mk("div", "txt");
+      const name = mk("input"); name.type = "text"; name.value = shop.name; name.setAttribute("aria-label", "Brand name as shown on cards");
+      txt.append(mk("span", "label", "Looks good. Name on cards:"), name, mk("span", "muted", [shop.sells, shop.priceRange, shop.domain].filter(Boolean).join(" · ")));
+      const add = mk("button", "primary", "＋ Add to catalogue"); add.type = "button"; add.style.alignSelf = "flex-start";
+      add.addEventListener("click", () => addBrand({ domain: shop.domain, name: name.value.trim() || shop.name }, add));
+      txt.appendChild(add);
+      card.append(mosaic(shop.samples || []), txt); box.appendChild(card);
+    } catch (err) {
+      box.textContent = ""; box.appendChild(mk("p", "err-line", err.message));
+    } finally { btn.disabled = false; }
+  });
+
+  $("#sug-find").addEventListener("click", async (e) => {
+    const btn = e.currentTarget; btn.disabled = true;
+    const old = btn.textContent; btn.textContent = "Looking… (about a minute)";
+    try {
+      const out = await call({ action: "brandSuggest" });
+      brandData = out; renderBrands();
+      toast(out.found ? `Found ${out.found} brand${out.found === 1 ? "" : "s"} you might like.` : "Nothing new that passed the checks this time. Try again later.");
+      if (out.found) $("#sugs").scrollTo({ left: 0, behavior: "smooth" });
+    } catch (err) { toast(err.message, true); }
+    finally { btn.disabled = false; btn.textContent = old; }
+  });
+
   $("#cat-refresh").addEventListener("click", async (e) => {
     e.target.disabled = true; $("#cat-status").textContent = "Reading every brand's website… (up to a minute)";
-    try { renderCatalog(await call({ action: "refreshCatalog" })); toast("Catalogue refreshed."); }
+    try { report = await call({ action: "refreshCatalog" }); renderBrands(); toast("Catalogue refreshed."); }
     catch (err) { $("#cat-status").textContent = err.message; toast(err.message, true); }
     finally { e.target.disabled = false; }
   });
