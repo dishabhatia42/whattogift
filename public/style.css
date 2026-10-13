@@ -8,7 +8,8 @@ body, h1, h2, h3, p { margin: 0; }
   --bg: #faf5f1; --surface: #ffffff; --fg: #26201e; --body: #4d443e; --muted: #736860; --line: #eae2db;
   /* One brand colour (cherry red) and one playful accent (muted mustard). */
   --primary: #96364d; --primary-hi: #a9465e; --on-primary: #ffffff; --tint: #f6e3e7; --cream: #f3ebdd;
-  --link: var(--primary); --gold: #d8a928; --gold-chip: #d8a928; --on-gold: #1e1915; --err: #a3262f;
+  --accent: var(--primary); /* text highlights: the logo, headline accent, labels, links */
+  --link: var(--accent); --gold: #d8a928; --gold-chip: #d8a928; --on-gold: #1e1915; --err: #a3262f;
   --shadow-sm: 0 1px 2px rgba(30, 25, 21, .06), 0 2px 8px rgba(30, 25, 21, .05);
   --shadow: 0 1px 2px rgba(30, 25, 21, .05), 0 8px 24px rgba(30, 25, 21, .08);
   --shadow-cta: 0 8px 18px rgba(150, 54, 77, .22);
@@ -19,16 +20,18 @@ body, h1, h2, h3, p { margin: 0; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #1e1915; --surface: #2a231f; --fg: #f7f0eb; --body: #d4c9c1; --muted: #9a8f87; --line: #342c27;
-    --primary: #e58c97; --primary-hi: #eea1aa; --on-primary: #1e1915; --tint: #3a2226; --cream: #352b23;
-    --link: var(--primary); --gold: #d8a928; --gold-chip: #d8a928; --err: #f2a7ad;
+    /* Dark: buttons and selected answers stay cherry (deepened to wine, white text); text highlights
+       turn warm gold, the brand's second colour. A light cherry for text would read as pink. */
+    --primary: #a63f57; --primary-hi: #b84e67; --on-primary: #ffffff; --accent: #e6bf5c; --tint: #3b3026; --cream: #352b23;
+    --link: var(--accent); --gold: #d8a928; --gold-chip: #d8a928; --err: #f2a7ad;
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3); --shadow: 0 8px 24px rgba(0, 0, 0, .35); --shadow-cta: 0 10px 24px rgba(0, 0, 0, .4);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #1e1915; --surface: #2a231f; --fg: #f7f0eb; --body: #d4c9c1; --muted: #9a8f87; --line: #342c27;
-  --primary: #e58c97; --primary-hi: #eea1aa; --on-primary: #1e1915; --tint: #3a2226; --cream: #352b23;
-  --link: var(--primary); --gold: #d8a928; --gold-chip: #d8a928; --err: #f2a7ad;
+  --primary: #a63f57; --primary-hi: #b84e67; --on-primary: #ffffff; --accent: #e6bf5c; --tint: #3b3026; --cream: #352b23;
+  --link: var(--accent); --gold: #d8a928; --gold-chip: #d8a928; --err: #f2a7ad;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3); --shadow: 0 8px 24px rgba(0, 0, 0, .35); --shadow-cta: 0 10px 24px rgba(0, 0, 0, .4);
   color-scheme: dark;
 }
@@ -44,7 +47,7 @@ body {
   padding: 20px 16px 64px;
   display: flex; flex-direction: column; gap: 40px;
 }
-button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 /* site header: the wordmark (one colour, no tagline), an action on the right, sticky with a frosted backdrop */
 .site-header {
@@ -74,7 +77,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
   100% { opacity: 0; transform: translate(calc(var(--dx) * 1.15), calc(var(--dy) + 14px)) rotate(var(--r)); }
 }
 .wordmark { display: flex; flex-direction: column; min-width: 0; }
-.wordmark .name { font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1.05; letter-spacing: -0.03em; color: var(--primary); }
+.wordmark .name { font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1.05; letter-spacing: -0.03em; color: var(--accent); }
 /* Header button: flat, softly rounded, boutique-like. */
 .header-cta {
   flex: none; text-decoration: none; font-family: var(--font-body); font-weight: 500; font-size: 14px; white-space: nowrap;
@@ -97,10 +100,10 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 
 /* top bar */
 .bar { display: flex; justify-content: space-between; align-items: center; min-height: 32px; }
-.brandline { font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--primary); letter-spacing: -0.01em; text-decoration: none; }
+.brandline { font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--accent); letter-spacing: -0.01em; text-decoration: none; }
 .brandline i { font-style: normal; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold-chip); margin-left: 4px; vertical-align: middle; }
 .back { font-size: 15px; font-weight: 500; color: var(--fg); text-decoration: none; display: inline-flex; gap: 6px; align-items: center; }
-.back:hover { color: var(--primary); }
+.back:hover { color: var(--accent); }
 
 .brandline b { color: var(--gold-chip); font-weight: 800; margin-left: 2px; }
 
@@ -109,12 +112,12 @@ h1 {
   font-family: var(--font-display); font-weight: 800; color: var(--fg);
   font-size: clamp(38px, 9.5vw, 54px); line-height: 1.04; letter-spacing: -0.035em; text-wrap: balance;
 }
-h1 span { color: var(--primary); }
+h1 span { color: var(--accent); }
 .lede { margin-top: 14px; font-size: 17px; max-width: 40ch; }
 .promise { margin-top: 10px; font-size: 15px; font-weight: 600; color: var(--fg); }
 .step-head { display: flex; flex-direction: column; gap: 4px; }
 .sub { font-size: 15px; color: var(--muted); }
-.aside { font-size: 14px; font-style: italic; color: var(--primary); }
+.aside { font-size: 14px; font-style: italic; color: var(--accent); }
 h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: -0.02em; color: var(--fg); line-height: 1.2; }
 .kicker { font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 
@@ -132,7 +135,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 }
 .pill:hover { border-color: var(--tint); background: var(--tint); }
 .pill:active { transform: scale(.97); }
-.pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.pill[aria-pressed="true"] { background: var(--primary); border-color: var(--accent); color: var(--on-primary); }
 
 /* "Open a new world": a switch, not an interest, so it can sit alongside any of them. */
 .discover {
@@ -146,7 +149,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .discover small { font-size: 13.5px; color: var(--muted); }
 .discover .sw { flex: none; width: 40px; height: 24px; border-radius: 999px; background: var(--line); position: relative; transition: background .2s; }
 .discover .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(38, 32, 30, .25); transition: transform .2s var(--ease); }
-.discover[aria-pressed="true"] { border-color: var(--primary); background: var(--tint); }
+.discover[aria-pressed="true"] { border-color: var(--accent); background: var(--tint); }
 .discover[aria-pressed="true"] .sw { background: var(--primary); }
 .discover[aria-pressed="true"] .sw::after { transform: translateX(16px); }
 .fine { font-size: 13px; color: var(--muted); }
@@ -155,7 +158,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .gender .pill { min-height: 38px; padding: 0 16px; font-size: 14px; }
 
 .tagbox { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-bottom: 1.5px solid var(--line); padding-bottom: 6px; transition: border-color .18s; }
-.tagbox:focus-within { border-color: var(--primary); }
+.tagbox:focus-within { border-color: var(--accent); }
 .tagbox input { flex: 1 1 160px; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; color: var(--fg); padding: 8px 0; }
 .tagbox input::placeholder { color: var(--muted); }
 .tag { display: inline-flex; align-items: center; gap: 6px; background: var(--primary); color: var(--on-primary); border-radius: 999px; padding: 4px 6px 4px 12px; font-size: 14px; font-weight: 500; }
@@ -225,26 +228,26 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .feat:hover .box { transform: translateY(-3px); box-shadow: var(--shadow); }
 .feat:active .box { transform: scale(.98); }
 .feat .box img, .feat .box video { width: 100%; height: 100%; object-fit: cover; display: block; }
-.feat .ph { display: grid; place-items: center; width: 100%; height: 100%; background: var(--tint); color: var(--primary); font: 800 40px var(--font-display); }
+.feat .ph { display: grid; place-items: center; width: 100%; height: 100%; background: var(--tint); color: var(--accent); font: 800 40px var(--font-display); }
 .feat .ad { position: absolute; top: 10px; left: 10px; font-size: 10.5px; font-weight: 700; color: var(--on-gold); background: rgba(255, 255, 255, .9); border-radius: 999px; padding: 2px 8px; }
 /* Arrow in the top-right corner of ad tiles and sponsored cards (the whole tile is the link). */
 .go-arrow {
   position: absolute; top: 10px; right: 10px; z-index: 1; width: 32px; height: 32px; border-radius: 50%;
-  display: grid; place-items: center; background: rgba(255, 255, 255, .92); color: var(--primary);
+  display: grid; place-items: center; background: rgba(255, 255, 255, .92); color: var(--accent);
   font: 700 16px/1 var(--font-body); box-shadow: 0 2px 8px rgba(38, 32, 30, .15); transition: transform .2s var(--ease), background .2s, color .2s;
 }
 .feat:hover .go-arrow, .card.sponsored:hover .go-arrow { background: var(--primary); color: #fff; transform: translate(2px, -2px); }
 /* Open ad slots: an invitation to brands, styled as a dashed "empty frame". */
 .feat.open-slot .box { background: var(--surface); border: 2px dashed var(--tint); box-shadow: none; display: grid; place-items: center; }
-.feat.open-slot:hover .box { border-color: var(--primary); }
+.feat.open-slot:hover .box { border-color: var(--accent); }
 .feat .slot-msg { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px; text-align: center; font-size: 22px; }
-.feat .slot-msg strong { font-family: var(--font-display); font-weight: 800; font-size: 17px; line-height: 1.2; color: var(--primary); }
+.feat .slot-msg strong { font-family: var(--font-display); font-weight: 800; font-size: 17px; line-height: 1.2; color: var(--accent); }
 .feat .slot-msg span { font-size: 13px; line-height: 1.4; color: var(--muted); }
-.feat .cat.write { color: var(--primary); font-weight: 600; }
+.feat .cat.write { color: var(--accent); font-weight: 600; }
 /* The other open spots: just the empty frame and a soft plus, so the pitch isn't repeated. */
 .feat.open-slot.quiet .box { background: transparent; border-color: color-mix(in srgb, var(--tint) 70%, transparent); }
 .feat.open-slot.quiet .plus { font: 300 40px/1 var(--font-display); color: var(--tint); transition: color .2s, transform .2s var(--ease); }
-.feat.open-slot.quiet:hover .plus { color: var(--primary); transform: scale(1.15); }
+.feat.open-slot.quiet:hover .plus { color: var(--accent); transform: scale(1.15); }
 .feat.open-slot.quiet .nm { color: var(--muted); font-weight: 600; }
 .feat .nm { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-inline: 2px; }
 .feat .cat { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-inline: 2px; }
@@ -254,7 +257,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .featured.auto .feat-nav {
   display: grid; place-items: center; position: absolute; top: 40%; transform: translateY(-50%); z-index: 1;
   width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer;
-  background: var(--surface); color: var(--primary); font: 600 18px/1 var(--font-body);
+  background: var(--surface); color: var(--accent); font: 600 18px/1 var(--font-body);
   box-shadow: var(--shadow); transition: transform .15s;
 }
 .featured.auto .feat-nav:hover { transform: translateY(-50%) scale(1.08); }
@@ -268,16 +271,16 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .secondary {
   appearance: none; font: inherit; cursor: pointer; align-self: flex-start; border: 0; border-radius: 14px;
-  min-height: 44px; padding: 0 18px; font-weight: 600; font-size: 15px; color: var(--primary);
+  min-height: 44px; padding: 0 18px; font-weight: 600; font-size: 15px; color: var(--accent);
   background: var(--surface); box-shadow: var(--shadow-sm); transition: box-shadow .15s, transform .12s;
 }
 .secondary:hover { box-shadow: var(--shadow); }
 .secondary:active { transform: scale(.98); }
 .secondary:disabled { opacity: .5; cursor: progress; }
 .quiet-link { font-size: 15px; font-weight: 500; color: var(--muted); text-decoration: none; }
-.quiet-link:hover { color: var(--primary); }
+.quiet-link:hover { color: var(--accent); }
 .hint-btn { appearance: none; border: 0; background: none; padding: 0; font: inherit; font-size: 14px; color: var(--muted); cursor: pointer; }
-.hint-btn:hover { color: var(--primary); }
+.hint-btn:hover { color: var(--accent); }
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 10; background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
 
 /* ---- results: "the gift edit", an image-led collection of cards ---- */
@@ -292,7 +295,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .edit-collection { display: flex; flex-direction: column; gap: 18px; }
 .edit-bar { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
 .edit-bar .sec { font-size: 22px; }
-.link-btn { appearance: none; border: 0; background: none; padding: 0; font: inherit; font-size: 15px; font-weight: 600; color: var(--primary); cursor: pointer; }
+.link-btn { appearance: none; border: 0; background: none; padding: 0; font: inherit; font-size: 15px; font-weight: 600; color: var(--accent); cursor: pointer; }
 .link-btn:hover { text-decoration: underline; text-underline-offset: 3px; }
 .link-btn:disabled { opacity: .5; cursor: progress; }
 .refine { display: flex; flex-direction: column; gap: 12px; background: var(--surface); border-radius: 18px; padding: 22px; box-shadow: var(--shadow-sm); }
@@ -311,13 +314,13 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .card .pic img { position: absolute; inset: 0; width: 100%; height: 100%; padding: 7%; object-fit: contain; filter: drop-shadow(0 8px 12px rgba(38, 32, 30, .14)); }
 .card.sponsored { text-decoration: none; color: inherit; }
 .card .pic.fill > img, .card .pic.fill > video { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; object-fit: cover; filter: none; }
-.card .pic.fill > .ph { position: absolute; inset: 0; display: grid; place-items: center; background: var(--tint); color: var(--primary); font: 800 40px var(--font-display); }
+.card .pic.fill > .ph { position: absolute; inset: 0; display: grid; place-items: center; background: var(--tint); color: var(--accent); font: 800 40px var(--font-display); }
 .card .pic.tile .emoji { font-size: 76px; line-height: 1; filter: drop-shadow(0 8px 10px rgba(38, 32, 30, .16)); transition: transform .3s var(--ease); }
 .card:hover .pic.tile .emoji { transform: scale(1.08) rotate(-4deg); }
 .card .kind { position: absolute; top: 12px; left: 12px; font-size: 11px; font-weight: 600; letter-spacing: .04em; color: var(--fg); background: rgba(255, 255, 255, .88); border-radius: 999px; padding: 3px 10px; }
 .card .kind.ad { background: var(--gold); color: var(--on-gold); }
 .card .body { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px 18px; flex: 1; }
-.card .label { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
+.card .label { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
 .card h3 { font-family: var(--font-display); font-weight: 700; font-size: 19px; line-height: 1.25; letter-spacing: -0.01em; color: var(--fg); }
 .card .why { font-size: 15px; line-height: 1.5; }
 .card .foot { margin-top: auto; padding-top: 8px; }
@@ -326,7 +329,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .card.idea .price { font-weight: 600; color: var(--muted); }
 .card .merchant { margin-top: -3px; font-size: 13px; font-weight: 600; color: var(--muted); }
 .card .acts { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 14px; }
-.card .shop { text-decoration: none; font-weight: 600; font-size: 15px; color: var(--primary); }
+.card .shop { text-decoration: none; font-weight: 600; font-size: 15px; color: var(--accent); }
 .card .shop:hover { text-decoration: underline; text-underline-offset: 3px; }
 .card.skeleton { min-height: 340px; position: relative; box-shadow: none; background: var(--surface); }
 .card.skeleton::before { content: ""; position: absolute; inset: 0 0 auto; aspect-ratio: 4 / 3; background: var(--cream); }
@@ -371,7 +374,7 @@ footer p + p { margin-top: 4px; }
   width: auto; height: auto; max-width: 100%; max-height: var(--size);
   filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 8px 10px rgba(30, 25, 21, .22));
 }
-.sticker.real.photo img { width: auto; height: auto; max-width: 100%; max-height: var(--size); border-radius: 12px; border: 3px solid #fff; box-shadow: 0 8px 18px rgba(30, 25, 21, .22); }
+.sticker.real.photo img { width: auto; height: auto; max-width: 100%; max-height: var(--size); border-radius: 12px; border: 3px solid #fff; background: #fff; box-shadow: 0 8px 18px rgba(30, 25, 21, .22); }
 .sticker.hide { display: none; }
 .sticker.real .noimg {
   display: block; width: 100%; aspect-ratio: 1; border-radius: 8px;
@@ -410,7 +413,8 @@ footer p + p { margin-top: 4px; }
 .sticker.real:hover .tline, .sticker.real:focus-within .tline, .sticker.real.open .tline { display: block; }
 .sticker .tag:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 /* Touch screens can't hover, so tags stay on show there; a tap on the photo adds Disha's line. */
-@media (hover: none) { .sticker.real .tag { opacity: 1; margin-top: 0; pointer-events: auto; } }
+/* Touch screens: ten always-on tags crowd the board, so a sticker's tag shows when it's tapped
+   (first tap shows the tag, second opens the product; see mountBoard). */
 /* Phones: a touch smaller still, so neighbours don't collide; the full name shows when opened. */
 @media (max-width: 719px) {
   .sticker .tag { top: calc(100% - 5px); max-width: calc(var(--size) + 6px); padding: 3px 6px; font-size: 9.5px; border-radius: 5px; }

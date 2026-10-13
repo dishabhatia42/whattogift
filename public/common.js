@@ -295,33 +295,12 @@
     [3, 6, 116, -7], [19, 12, 104, 5], [35, 5, 112, -4], [51, 11, 104, 6], [67, 5, 112, -5],
     [83, 12, 100, 7], [98, 5, 104, -6], [5, 40, 104, 5], [22, 48, 94, -6], [39, 34, 96, 4],
   ];
+  // Phone: the same ten as desktop, in two rows of five.
   const SLOTS_NARROW = [
-    [4, 5, 86, -8], [40, 2, 80, 6], [76, 6, 84, 9], [14, 56, 80, 5], [50, 52, 86, -6], [84, 58, 76, -10],
+    [2, 3, 66, -8], [26, 9, 62, 6], [50, 2, 66, -5], [74, 9, 62, 8], [98, 3, 64, -6],
+    [4, 52, 64, 6], [28, 46, 62, -7], [51, 54, 66, 5], [75, 47, 62, -8], [97, 53, 64, 7],
   ];
   const FILLERS = ["🎁", "🧸", "💐", "🍫", "📚", "🕯️", "🎀", "☕", "🪴", "💌"];
-  // Is this photo already see-through (a ready-made cutout PNG/WebP)? Real cutouts are made
-  // in the admin with an AI model; the board never guesses, because guessing shredded photos.
-  const seeThrough = new Map();
-  function isCutout(url) {
-    if (!seeThrough.has(url)) seeThrough.set(url, new Promise((done) => {
-      const im = new Image();
-      im.crossOrigin = "anonymous";
-      im.onerror = () => done(false);
-      im.onload = () => {
-        try {
-          const S = 64, c = document.createElement("canvas"); c.width = S; c.height = S;
-          const ctx = c.getContext("2d", { willReadFrequently: true }); ctx.drawImage(im, 0, 0, S, S);
-          const px = ctx.getImageData(0, 0, S, S).data;
-          let clear = 0;
-          for (let i = 0; i < S; i++) for (const p of [i, (S - 1) * S + i, i * S, i * S + S - 1]) if (px[p * 4 + 3] < 16) clear++;
-          done(clear > S * 4 * 0.6);
-        } catch { done(false); }
-      };
-      im.src = url;
-    }));
-    return seeThrough.get(url);
-  }
-
   function mountBoard() {
     const box = document.getElementById("stickers");
     if (!box) return;
@@ -346,14 +325,11 @@
             // Hidden until we know how to show it, so a square never flashes up first.
             const img = document.createElement("img"); img.alt = ""; photo.appendChild(img);
             el.classList.add("loading");
-            const show = (src, kind) => {
-              img.onload = () => { el.classList.remove("loading"); keepClear(); };
-              img.onerror = () => el.classList.remove("loading");
-              img.src = src; el.classList.add(kind);
-            };
-            // A cutout made in the admin wins; otherwise the photo is a rounded-square sticker.
-            if (safeHref(product.cutout)) show(product.cutout, "cut");
-            else isCutout(product.image).then((cut) => show(product.image, cut ? "cut" : "photo"));
+            // Every product is the same rounded-square card (photos with a see-through background
+            // sit on white inside it), so the board looks like one consistent set.
+            img.onload = () => { el.classList.remove("loading"); keepClear(); };
+            img.onerror = () => el.classList.remove("loading");
+            img.src = product.image; el.classList.add("photo");
           } else { const t = document.createElement("span"); t.className = "noimg"; t.textContent = product.name; photo.appendChild(t); }
           // Instagram-style tag with the name (and Disha's line) that goes straight to the product.
           // It appears on hover; on touch screens it is always shown.
@@ -364,9 +340,9 @@
           tag.append(n, arr);
           if (product.line) { const l = document.createElement("span"); l.className = "tline"; l.textContent = product.line; tag.appendChild(l); }
           el.append(photo, tag);
-          // On touch screens the first tap on the photo shows Disha's line, the second opens the product.
+          // On touch screens the first tap shows the name tag (and Disha's line), the second opens the product.
           photo.addEventListener("click", (e) => {
-            if (matchMedia("(hover: hover)").matches || el.classList.contains("open") || !product.line) return;
+            if (matchMedia("(hover: hover)").matches || el.classList.contains("open")) return;
             e.preventDefault();
             box.querySelectorAll(".open").forEach((o) => o.classList.remove("open"));
             el.classList.add("open");
