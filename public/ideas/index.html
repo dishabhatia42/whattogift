@@ -13,6 +13,8 @@
 <!-- Vercel Web Analytics: cookie-free visit counts (turned on in the Vercel dashboard) -->
 <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
 <script defer src="/_vercel/insights/script.js"></script>
+<!-- Umami: privacy-friendly click tracking (which brands and products people click). Counts the live site only. -->
+<script defer src="https://cloud.umami.is/script.js" data-website-id="c8b41445-4155-4f3c-a497-19051f7171f6" data-domains="www.serialgifter.com,serialgifter.com"></script>
 </head>
 <body>
 <header class="site-header" id="site-header">
@@ -50,8 +52,8 @@
     <p class="sub">Tell us what to change. We'll find something better.</p>
     <div class="suggest" id="tunes" role="group" aria-labelledby="refine-h"></div>
     <div class="refine-acts">
-      <button class="go small" id="refine" type="button">Refine my picks <span class="arr" aria-hidden="true">→</span></button>
-      <button class="link-btn" id="again2" type="button">Or just shuffle ↻</button>
+      <button class="go small" id="refine" type="button" data-umami-event="Refine">Refine my picks <span class="arr" aria-hidden="true">→</span></button>
+      <button class="link-btn" id="again2" type="button" data-umami-event="Shuffle">Or just shuffle ↻</button>
       <a class="quiet-link" href="/">Shopping for someone else? →</a>
     </div>
   </section>
@@ -68,7 +70,7 @@
 <script src="/common.js"></script>
 <script>
 (() => {
-  const { BUDGETS, RECIPIENTS, OCCASIONS, TUNES, adMedia, toParams, fromParams, resultsTitle, safeHref, STORE_NAMES, catalog, catalogReady, pickAds } = window.WTG;
+  const { BUDGETS, RECIPIENTS, OCCASIONS, TUNES, adMedia, toParams, fromParams, resultsTitle, safeHref, STORE_NAMES, catalog, catalogReady, pickAds, track } = window.WTG;
   const $ = (id) => document.getElementById(id);
 
   const state = fromParams(new URLSearchParams(location.search));
@@ -148,12 +150,16 @@
     meta.appendChild(price);
     body.append(meta, el("p", "why", idea.why));
     const a = el("a", "shop"); a.target = "_blank"; a.rel = "noopener noreferrer";
-    if (exact) { a.href = idea.url; a.textContent = "Shop now ↗"; }
+    if (exact) {
+      a.href = idea.url; a.textContent = "Shop now ↗";
+      track(a, "Shop click", { brand: idea.brand || new URL(idea.url).hostname.replace(/^www\./, ""), product: idea.name, price: idea.price || idea.price_range, kind: idea.own ? "our pick" : "brand", position: n + 1, recipient: state.recipient, occasion: state.occasion });
+    }
     else {
       a.href = /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com)\//.test(idea.url) ? idea.url : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
       a.textContent = "Find it ↗";
+      track(a, "Idea search click", { store: idea.store || "amazon", idea: idea.name, position: n + 1 });
     }
-    const hint = el("button", "hint-btn", "Drop a hint ↗"); hint.type = "button";
+    const hint = track(el("button", "hint-btn", "Drop a hint ↗"), "Drop a hint", { product: idea.name }); hint.type = "button";
     hint.addEventListener("click", () => share(idea, a.href));
     const acts = el("div", "acts"); acts.append(a, hint);
     body.append(acts);
@@ -164,6 +170,7 @@
   function adCard(ad, n) {
     const c = el("a", "card sponsored rise"); c.style.setProperty("--i", n);
     c.href = ad.url; c.target = "_blank"; c.rel = "sponsored noopener noreferrer";
+    track(c, "Ad click", { brand: ad.brand, slot: ad.slot, where: "results" });
     const pic = el("div", "pic fill"); pic.appendChild(adMedia(ad));
     pic.appendChild(el("span", "kind ad", "Sponsored"));
     const go = el("span", "go-arrow", "↗"); go.setAttribute("aria-hidden", "true"); pic.appendChild(go);

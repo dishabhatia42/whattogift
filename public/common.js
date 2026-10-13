@@ -227,6 +227,7 @@
       for (const ad of ordered) {
         const a = document.createElement("a");
         a.className = "feat"; a.href = ad.url; a.target = "_blank"; a.rel = "sponsored noopener noreferrer";
+        track(a, "Ad click", { brand: ad.brand, slot: ad.slot, where: "home" });
         a.setAttribute("aria-label", `${ad.brand}${ad.category ? ", " + ad.category : ""} (ad)`);
         const box = document.createElement("span"); box.className = "box";
         box.appendChild(adMedia(ad));
@@ -250,6 +251,7 @@
         const pitch = n === 0;
         const a = document.createElement("a");
         a.className = "feat open-slot" + (pitch ? "" : " quiet"); a.href = `mailto:${mail}?subject=${subject}&body=${body}`;
+        track(a, "Get featured click", { tile: pitch ? "pitch" : "open spot" });
         a.setAttribute("aria-label", pitch
           ? `Your brand here: ${open} of ${AD_SLOT_COUNT} spots open. Write to me to get featured.`
           : "Open spot. Write to me to feature your brand here.");
@@ -321,7 +323,7 @@
         // Keep every sticker inside the board: the left edge moves in by its own width as x grows.
         el.style.cssText = `left:calc(${x}% - ${Math.round(size * x / 100)}px);top:${y}%;--size:${size}px;--tilt:${tilt}deg;--d:${i * 60}ms;--drift:${(i % 3) - 1}`;
         if (product) {
-          const link = (cls) => { const a = document.createElement("a"); a.className = cls; a.href = product.url; a.target = "_blank"; a.rel = "noopener noreferrer"; return a; };
+          const link = (cls) => { const a = document.createElement("a"); a.className = cls; a.href = product.url; a.target = "_blank"; a.rel = "noopener noreferrer"; return track(a, "Board click", { product: product.name, device: wide.matches ? "desktop" : "phone" }); };
           const photo = link("photo");
           photo.setAttribute("aria-label", product.name);
           if (safeHref(product.image)) {
@@ -425,9 +427,19 @@
     logo.addEventListener("focus", pop);
   }
 
+  // Click tracking (Umami): marks an element so a click on it is counted as `name`, with details.
+  // Umami reads these attributes itself; values are kept short and plain.
+  function track(el, name, details = {}) {
+    el.setAttribute("data-umami-event", name);
+    for (const [k, v] of Object.entries(details)) {
+      if (v !== undefined && v !== null && v !== "") el.setAttribute(`data-umami-event-${k}`, String(v).slice(0, 80));
+    }
+    return el;
+  }
+
   window.WTG = {
     RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES, TUNES,
     asksGender, safeHref, toParams, fromParams, resultsTitle, cleanInterests,
-    catalog, catalogReady, pickAds, mountFeatured, mountBoard, adMedia,
+    catalog, catalogReady, pickAds, mountFeatured, mountBoard, adMedia, track,
   };
 })();
