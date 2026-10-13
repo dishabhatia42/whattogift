@@ -531,3 +531,7 @@ footer .disclosure { font-size: 12px; opacity: .85; }
 .legal-part a, .legal-part a:visited { color: var(--accent-text); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
 #privacy { border-top: 1px solid var(--line); padding-top: 32px; }
 .legal a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+/* Home page: the footer lines up with the wide ad strip above it on desktop. */
+@media (min-width: 900px) {
+  .site-footer.wide-foot { width: min(1040px, calc(100vw - 64px)); margin-left: 50%; transform: translateX(-50%); }
+}
