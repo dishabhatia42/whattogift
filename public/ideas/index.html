@@ -86,7 +86,7 @@
   $("kicker").textContent = `The gift edit / ${who}`;
 
   // What they picked, as one quiet line that takes them back to change it:
-  // "Anniversary · ₹1,000–₹3,000 · Food & treats +2 ✎"
+  // "Anniversary · ₹1,000–₹3,000 · Food & treats +2"
   const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
   const occ = OCCASIONS.find((o) => o.id === state.occasion);
   function summary() {
@@ -97,13 +97,8 @@
       tags.length ? tags[0] + (tags.length > 1 ? ` +${tags.length - 1}` : "") : "",
       state.discover && "✨ New world", tuned ? `${tuned} tweak${tuned > 1 ? "s" : ""}` : ""].filter(Boolean);
     const box = $("chips"); box.textContent = ""; box.href = "/?" + key;
-    // The whole line is the link; a small pencil sticks to the last item so it never wraps alone.
-    bits.forEach((b, i) => {
-      if (i) box.append(" · ");
-      const bit = el("span", "bit", b);
-      if (i === bits.length - 1) bit.appendChild(el("span", "edit-link", " ✎"));
-      box.appendChild(bit);
-    });
+    // Plain summary; "← Edit my picks" in the header is the way to change it (the line also links there).
+    bits.forEach((b, i) => { if (i) box.append(" · "); box.appendChild(el("span", "bit", b)); });
   }
   summary();
 
