@@ -68,6 +68,28 @@
   .preview { width: 96px; height: 72px; object-fit: cover; border-radius: 10px; background: var(--chip); }
   /* checkerboard so a cutout's see-through background is obvious */
   .preview.cut, .item img.cut { object-fit: contain; background: repeating-conic-gradient(#e8e2dc 0 25%, #fff 0 50%) 0 0 / 12px 12px; }
+  #pick-form:not([hidden]) { display: flex; }
+  button.linkish { border: 0; background: none; padding: 0; color: var(--petal); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; border-radius: 4px; }
+  /* Ad slots: one compact row each, opening to its form */
+  details.slot { border-top: 1px solid var(--line); }
+  details.slot > summary { list-style: none; cursor: pointer; display: flex; gap: 12px; align-items: center; padding: 10px 0; }
+  details.slot > summary::-webkit-details-marker { display: none; }
+  details.slot > summary img, details.slot > summary .ph { width: 44px; height: 56px; border-radius: 8px; object-fit: cover; background: var(--chip); flex: none; }
+  details.slot > summary .txt { flex: 1; min-width: 0; }
+  details.slot > summary strong { color: var(--fg); }
+  details.slot > summary .go { font-size: 14px; font-weight: 600; color: var(--petal); white-space: nowrap; }
+  details.slot[open] > summary .go::after { content: " ▴"; }
+  details.slot:not([open]) > summary .go::after { content: " ▾"; }
+  details.slot > form { padding-bottom: 14px; }
+  header.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+  #app { display: flex; flex-direction: column; gap: 16px; }
+  /* Tabs: one section at a time; the bar stays in reach while scrolling a long section */
+  .tabs { position: sticky; top: 0; z-index: 5; display: flex; gap: 4px; padding: 6px; margin: 0 -4px;
+    background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-radius: 999px; border: 1px solid var(--line); }
+  .tabs button { flex: 1; border: 0; background: transparent; padding: 9px 10px; font-family: var(--font-display); font-weight: 700; color: var(--muted); white-space: nowrap; }
+  .tabs button[aria-selected="true"] { background: var(--card); color: var(--fg); box-shadow: 0 1px 4px rgba(38, 32, 30, .12); }
+  .tabs .count { font-family: var(--font-body); font-weight: 500; font-size: 12.5px; color: var(--muted); }
+  .tabs .count:empty { display: none; }
   .sub-h { margin: 0; font-family: var(--font-display); font-size: 16px; color: var(--fg); }
   /* Suggested brands: a sideways row of cards, like "Fans also like" */
   .sugs { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 2px 10px; margin: 0 -2px; }
@@ -105,10 +127,13 @@
 </head>
 <body>
 <main class="page">
-  <div>
-    <span class="label">Private · not linked from the site</span>
-    <h1>Serial Gifter admin</h1>
-  </div>
+  <header class="top">
+    <div>
+      <span class="label">Private · not linked from the site</span>
+      <h1>Serial Gifter admin</h1>
+    </div>
+    <button type="button" id="logout" hidden>Sign out</button>
+  </header>
 
   <!-- login -->
   <form class="panel" id="login">
@@ -118,17 +143,24 @@
     <p class="muted">The password is checked on the server. Nothing can be changed without it.</p>
   </form>
 
-  <div id="app" hidden style="display:flex;flex-direction:column;gap:28px">
+  <div id="app" hidden>
+    <nav class="tabs" role="tablist" aria-label="Admin sections">
+      <button type="button" role="tab" id="tab-products" aria-controls="panel-products" data-tab="products">Products <span class="count" data-count="products"></span></button>
+      <button type="button" role="tab" id="tab-ads" aria-controls="panel-ads" data-tab="ads">Ad slots <span class="count" data-count="ads"></span></button>
+      <button type="button" role="tab" id="tab-brands" aria-controls="panel-brands" data-tab="brands">Brands <span class="count" data-count="brands"></span></button>
+    </nav>
+
     <!-- products -->
-    <section class="panel">
+    <section class="panel" role="tabpanel" id="panel-products" aria-labelledby="tab-products">
       <div class="row" style="justify-content:space-between"><h2>Products</h2><span class="muted" id="pick-count"></span></div>
       <p class="muted">Good finds you want people to see. They're mixed into the normal results, looking just like the other ideas, whenever they fit the person, occasion, budget and interests someone searched for.</p>
       <form id="autofill" class="row" style="align-items:flex-end">
         <label class="f" style="flex:1 1 260px">Paste a product link<input type="url" id="af-url" required placeholder="https://www.amazon.in/…"></label>
         <button class="primary" type="submit" id="af-go">Fill in for me</button>
       </form>
+      <p class="muted" style="margin-top:-4px">No link? <button type="button" class="linkish" id="by-hand">Add one by hand</button></p>
       <p class="muted" id="af-note" hidden></p>
-      <form id="pick-form" style="display:flex;flex-direction:column;gap:10px">
+      <form id="pick-form" hidden style="flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px">
         <input type="hidden" name="id">
         <div class="grid">
           <label class="f">Product name *<input type="text" name="name" maxlength="120" required></label>
@@ -154,7 +186,7 @@
         </div>
         <div class="row">
           <button class="primary" type="submit">Save product</button>
-          <button type="button" data-cancel hidden>Cancel edit</button>
+          <button type="button" data-cancel>Cancel</button>
         </div>
       </form>
       <div class="row" style="align-items:center"><button type="button" id="cut-all">✂️ Cut out all board photos</button><span class="muted" id="cut-all-note">Cuts out the board products photographed on a plain background. Lifestyle photos (a face, a desk) stay as photos. You can still cut any single one from its edit screen.</span></div>
@@ -162,14 +194,14 @@
     </section>
 
     <!-- ads -->
-    <section class="panel">
+    <section class="panel" role="tabpanel" id="panel-ads" aria-labelledby="tab-ads">
       <h2>Ad slots</h2>
       <p class="muted">Six slots. Each ad shows as a tall picture (or a short looping video) with just the brand and its category underneath, in the home-page strip, and up to two matching ones in "Sponsored picks" on the results page. They're marked as ads.</p>
       <div id="ad-slots" style="display:flex;flex-direction:column;gap:16px"></div>
     </section>
 
     <!-- brand catalogue -->
-    <section class="panel" id="brands-panel">
+    <section class="panel" role="tabpanel" id="panel-brands" aria-labelledby="tab-brands">
       <div class="row" style="justify-content:space-between"><h2>Brand catalogue</h2><button type="button" id="cat-refresh">Refresh all now</button></div>
       <p class="muted">Real, in-stock products from your brands, re-read from their websites every night. Searches pick from these.</p>
       <div id="cat-status" class="muted">Loading…</div>
@@ -197,7 +229,6 @@
       <nav class="pager" id="brand-pager" aria-label="Brand list pages"></nav>
     </section>
 
-    <div class="row"><button type="button" id="logout">Sign out</button></div>
   </div>
 </main>
 <div id="status" role="status" hidden></div>
@@ -235,7 +266,8 @@
       const loaded = await call({ action: "load" });
       data = { products: loaded.products || [], ads: loaded.ads || [] };
       try { sessionStorage.setItem("gf-admin", key); } catch {}
-      $("#login").hidden = true; $("#app").hidden = false;
+      $("#login").hidden = true; $("#app").hidden = false; $("#logout").hidden = false;
+      showTab(tabFromUrl());
       renderProducts(); renderAds();
       Promise.all([call({ action: "brandsLoad" }), call({ action: "catalogStatus" })])
         .then(([b, c]) => { brandData = b; report = c; renderBrands(); }, () => { $("#cat-status").textContent = "Couldn't load your brands."; });
@@ -284,6 +316,7 @@
       : "Based on the brands you've picked.";
 
     renderBrandList();
+    updateCounts();
   }
 
   // Your brands, A to Z, 15 per page, with how many products each gave on the last read.
@@ -398,10 +431,38 @@
   });
   function signOut() {
     key = ""; try { sessionStorage.removeItem("gf-admin"); } catch {}
-    $("#app").hidden = true; $("#login").hidden = false;
+    $("#app").hidden = true; $("#login").hidden = false; $("#logout").hidden = true;
   }
   $("#login").addEventListener("submit", (e) => { e.preventDefault(); key = $("#pw").value; unlock(); });
   $("#logout").addEventListener("click", signOut);
+
+  // ---- Tabs: Products / Ad slots / Brands. The open tab is kept in the URL (#brands),
+  // so a refresh or a bookmark lands on the same one.
+  const TABS = ["products", "ads", "brands"];
+  function tabFromUrl() { const t = location.hash.slice(1); return TABS.includes(t) ? t : "products"; }
+  function showTab(name) {
+    for (const t of TABS) {
+      const on = t === name;
+      $(`#tab-${t}`).setAttribute("aria-selected", String(on));
+      $(`#tab-${t}`).tabIndex = on ? 0 : -1;
+      $(`#panel-${t}`).hidden = !on;
+    }
+    if (location.hash.slice(1) !== name) history.replaceState(null, "", "#" + name);
+  }
+  document.querySelectorAll(".tabs [data-tab]").forEach((b) => b.addEventListener("click", () => { showTab(b.dataset.tab); window.scrollTo({ top: 0 }); }));
+  // Arrow keys move between tabs, as screen-reader users expect.
+  $(".tabs").addEventListener("keydown", (e) => {
+    if (!["ArrowLeft", "ArrowRight"].includes(e.key)) return;
+    const i = TABS.indexOf(tabFromUrl()), next = TABS[(i + (e.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length];
+    showTab(next); $(`#tab-${next}`).focus();
+  });
+  window.addEventListener("hashchange", () => showTab(tabFromUrl()));
+  function updateCounts() {
+    const set = (k, v) => { const el = document.querySelector(`[data-count="${k}"]`); if (el) el.textContent = v ? `(${v})` : ""; };
+    set("products", data.products.length);
+    set("ads", data.ads.filter((a) => a.brand).length ? `${data.ads.filter((a) => a.brand).length}/${SLOTS}` : "");
+    set("brands", brandData.brands.length);
+  }
 
   async function save(next) {
     try { const saved = await call({ action: "save", data: next }); data = { products: saved.products || [], ads: saved.ads || [] }; renderProducts(); renderAds(); toast("Saved. Live within a minute."); return true; }
@@ -568,11 +629,15 @@
     note.textContent = `Done: ${Object.keys(made).length} cut out.` + (kept.length ? ` Kept as photos: ${kept.join("; ")}.` : "") + (failed.length ? ` Couldn't do: ${failed.join("; ")}` : "");
     btn.disabled = false;
   });
+  // The form stays closed until there's something to fill in: after "Fill in for me",
+  // "Edit", or "Add one by hand". Saving or cancelling closes it again.
+  function openPickForm() { pickForm.hidden = false; pickForm.scrollIntoView({ behavior: "smooth", block: "start" }); }
   function resetPickForm() {
     pickForm.reset(); pickForm.elements.id.value = ""; setImage(pickForm, ""); setCutout(pickForm, "");
-    occasionBoxes($("[data-occ]", pickForm)); $("[data-cancel]", pickForm).hidden = true;
+    occasionBoxes($("[data-occ]", pickForm)); pickForm.hidden = true;
   }
-  $("[data-cancel]", pickForm).addEventListener("click", resetPickForm);
+  $("[data-cancel]", pickForm).addEventListener("click", () => { resetPickForm(); $("#af-note").hidden = true; });
+  $("#by-hand").addEventListener("click", () => { resetPickForm(); openPickForm(); pickForm.elements.name.focus({ preventScroll: true }); });
 
   // Paste a link -> the server reads the page and fills the form for review.
   $("#autofill").addEventListener("submit", async (e) => {
@@ -587,7 +652,7 @@
       setImage(pickForm, p.image); occasionBoxes($("[data-occ]", pickForm), p);
       note.textContent = p.check ? "Check before saving: " + p.check : "All filled in from the page. Have a quick look, then save.";
       note.hidden = false; $("#af-url").value = "";
-      pickForm.scrollIntoView({ behavior: "smooth", block: "start" });
+      openPickForm();
     } catch (err) { toast(err.message, true); }
     finally { btn.disabled = false; btn.textContent = "Fill in for me"; }
   });
@@ -607,6 +672,7 @@
     if (await save({ ...data, products: picks })) { resetPickForm(); $("#af-note").hidden = true; }
   });
   function renderProducts() {
+    updateCounts();
     const list = $("#pick-list"); list.textContent = "";
     $("#pick-count").textContent = `${data.products.length} saved`;
     for (const p of data.products) {
@@ -624,7 +690,7 @@
         f.board.checked = !!p.board; f.line.value = p.line || "";
         setImage(pickForm, p.image); setCutout(pickForm, p.cutout); occasionBoxes($("[data-occ]", pickForm), p);
         $("[data-cut-note]", pickForm).textContent = p.cutout ? "This product has a cutout." : "Board stickers look best as cutouts. Free, runs on this computer.";
-        $("[data-cancel]", pickForm).hidden = false; pickForm.scrollIntoView({ behavior: "smooth" });
+        openPickForm();
       });
       list.appendChild(row);
     }
@@ -651,13 +717,20 @@
   }
 
   function renderAds() {
+    updateCounts();
     const box = $("#ad-slots"); box.textContent = "";
     for (let slot = 1; slot <= SLOTS; slot++) {
       const ad = data.ads.find((a) => a.slot === slot);
+      // One compact row per slot; tap it to open the slot's form.
+      const wrap = document.createElement("details"); wrap.className = "slot";
+      const sum = document.createElement("summary");
+      sum.innerHTML = `<div class="ph"></div><div class="txt"><strong></strong><div class="muted" data-state></div></div><span class="go"></span>`;
+      $("strong", sum).textContent = ad ? `Slot ${slot} · ${ad.brand}${ad.category ? " · " + ad.category : ""}` : `Slot ${slot}`;
+      $(".go", sum).textContent = ad ? "Edit" : "Fill this slot";
+      if (ad && ad.image) { const im = document.createElement("img"); im.src = ad.image; im.alt = ""; sum.firstChild.replaceWith(im); }
       const form = document.createElement("form");
-      form.style.cssText = "display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px";
+      form.style.cssText = "display:flex;flex-direction:column;gap:10px";
       form.innerHTML = `
-        <div class="row" style="justify-content:space-between"><strong style="color:var(--fg)">Slot ${slot}</strong><span class="muted" data-state></span></div>
         <div class="grid">
           <label class="f">Brand *<input type="text" name="brand" maxlength="60" required></label>
           <label class="f">Category * (e.g. Jewellery)<input type="text" name="category" maxlength="40" required></label>
@@ -673,7 +746,7 @@
       occasionBoxes($("[data-occ]", form), ad || {});
       wireImage(form);
       wireVideo(form, ad && ad.video);
-      const st = $("[data-state]", form);
+      const st = $("[data-state]", sum);
       if (ad) {
         const f = form.elements;
         f.brand.value = ad.brand; f.category.value = ad.category || ""; f.url.value = ad.url; f.endsOn.value = ad.endsOn;
@@ -696,7 +769,7 @@
         };
         save({ ...data, ads: [...data.ads.filter((a) => a.slot !== slot), next] });
       });
-      box.appendChild(form);
+      wrap.append(sum, form); box.appendChild(wrap);
     }
   }
 
