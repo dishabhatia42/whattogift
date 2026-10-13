@@ -297,10 +297,11 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .edit-hero { display: flex; flex-direction: column; gap: 12px; max-width: 680px; }
 .edit-hero h1 { font-size: clamp(34px, 7vw, 56px); }
 .edit-vibe { font-size: 17px; color: var(--body); }
-.edit-sub { font-size: 15px; font-weight: 600; color: var(--fg); }
-.edit-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
-.edit-chips span { font-size: 13px; font-weight: 500; color: var(--fg); background: var(--tint); border-radius: 999px; padding: 5px 12px; }
-.edit-chips span:nth-child(even) { background: var(--cream); }
+/* What they picked: one quiet line that links back to edit it. */
+.edit-summary { display: block; font-size: 14px; line-height: 1.6; color: var(--muted); text-decoration: none; }
+.edit-summary .bit { white-space: nowrap; }
+.edit-summary .edit-link { font-weight: 600; color: var(--accent-text); white-space: nowrap; }
+.edit-summary:hover .bit { text-decoration: underline; text-underline-offset: 3px; }
 .edit-collection { display: flex; flex-direction: column; gap: 18px; }
 .edit-bar { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
 .edit-bar .sec { font-size: 22px; }

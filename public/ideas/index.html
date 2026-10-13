@@ -28,8 +28,7 @@
     <p class="kicker" id="kicker">The gift edit</p>
     <h1 id="title">Hunting down the good stuff…</h1>
     <p class="edit-vibe" id="vibe" hidden></p>
-    <p class="edit-sub" id="ready" hidden>We think we understood the assignment.</p>
-    <div class="edit-chips" id="chips"></div>
+    <a class="edit-summary" id="chips" href="/" aria-label="Change your answers"></a>
   </header>
 
   <section class="edit-collection" aria-live="polite">
@@ -86,14 +85,25 @@
   $("edit").href = "/?" + key;
   $("kicker").textContent = `The gift edit / ${who}`;
 
-  // What they picked, as soft pills: who, occasion, interests, budget.
+  // What they picked, as one quiet line that takes them back to change it:
+  // "Anniversary · ₹1,000–₹3,000 · Food & treats +2 ✎"
   const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
-  const recip = RECIPIENTS.find((r) => r.id === state.recipient), occ = OCCASIONS.find((o) => o.id === state.occasion);
+  const occ = OCCASIONS.find((o) => o.id === state.occasion);
   function summary() {
-    const bits = [recip && recip.t, occ && occ.t, ...state.tags.map(cap), BUDGETS.find((b) => b.id === state.budget)?.t,
-      state.discover && "✨ New world", ...TUNES.filter((t) => state.tune.includes(t.id)).map((t) => t.t)].filter(Boolean);
-    $("chips").textContent = "";
-    for (const b of bits) { const s = document.createElement("span"); s.textContent = b; $("chips").appendChild(s); }
+    const tags = state.tags.map(cap);
+    const tuned = TUNES.filter((t) => state.tune.includes(t.id)).length;
+    // Who it's for is already in the line above ("The gift edit / your mom"), so it's left out here.
+    const bits = [occ && occ.t, BUDGETS.find((b) => b.id === state.budget)?.t,
+      tags.length ? tags[0] + (tags.length > 1 ? ` +${tags.length - 1}` : "") : "",
+      state.discover && "✨ New world", tuned ? `${tuned} tweak${tuned > 1 ? "s" : ""}` : ""].filter(Boolean);
+    const box = $("chips"); box.textContent = ""; box.href = "/?" + key;
+    // The whole line is the link; a small pencil sticks to the last item so it never wraps alone.
+    bits.forEach((b, i) => {
+      if (i) box.append(" · ");
+      const bit = el("span", "bit", b);
+      if (i === bits.length - 1) bit.appendChild(el("span", "edit-link", " ✎"));
+      box.appendChild(bit);
+    });
   }
   summary();
 
@@ -191,7 +201,7 @@
   async function load() {
     if (busy) return;
     busy = true; $("again").disabled = $("again2").disabled = $("refine").disabled = true; $("error").hidden = true;
-    $("title").textContent = "Hunting down the good stuff…"; $("ready").hidden = $("vibe").hidden = true; $("more").hidden = true;
+    $("title").textContent = "Hunting down the good stuff…"; $("vibe").hidden = true; $("more").hidden = true;
     variant = (variant % 3) + 1; // "Try again" cycles three cached answers
     const list = $("ideas"); list.textContent = "";
     for (let i = 0; i < 6; i++) list.appendChild(el("div", "card skeleton"));
@@ -208,8 +218,8 @@
       data.ideas.forEach((idea, i) => list.appendChild(card(idea, i)));
       $("count").textContent = `${data.ideas.length} little ways to make their day`;
       $("title").textContent = finalTitle;
-      if (data.vibe) { $("vibe").textContent = `${data.vibe} We found ${data.ideas.length} ideas that feel very them.`; $("vibe").hidden = false; }
-      $("ready").hidden = false; $("again").hidden = false; $("more").hidden = false;
+      if (data.vibe) { $("vibe").textContent = data.vibe; $("vibe").hidden = false; }
+      $("again").hidden = false; $("more").hidden = false;
       const ads = pickAds(state).filter(Boolean);
       $("ads").textContent = ""; ads.forEach((ad, i) => $("ads").appendChild(adCard(ad, i)));
       $("sponsored").hidden = !ads.length;
