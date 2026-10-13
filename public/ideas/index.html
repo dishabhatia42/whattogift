@@ -61,7 +61,7 @@
 
   <footer>
     <p>Made with love, and a slight obsession with gifting.</p>
-    <p>"Gift idea" cards open a store search, so check reviews and delivery dates before buying. Prices are estimates. Cards marked "Sponsored" are paid placements.</p>
+    <p>Product prices and stock come from each brand's own website, checked every night, so confirm on their page before buying. "Gift idea" cards open a store search and their prices are estimates. Cards marked "Sponsored" are paid placements.</p>
     <p>Ideas are suggested by AI and can be imperfect. You know them best.</p>
   </footer>
 </main>
@@ -108,22 +108,29 @@
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   const TILES = ["#F6E3E7", "#F3EBDD", "#F7EDE6", "#EFE6EC"];
 
-  // Two kinds of card: an exact gift (Disha's own pick, real photo, direct link)
-  // and a gift idea (illustrated tile, opens a store search).
+  // Two kinds of card: an exact product (real photo, verified price, direct link to the
+  // brand's own product page) and a labelled gift idea (illustrated tile, opens a store search).
   function card(idea, n) {
-    const own = idea.own && safeHref(idea.url);
-    const c = el("article", "card rise" + (own ? " exact" : " idea")); c.style.setProperty("--i", n % 8);
+    const exact = (idea.kind === "product" || idea.own) && safeHref(idea.url);
+    const c = el("article", "card rise" + (exact ? " exact" : " idea")); c.style.setProperty("--i", n % 8);
     const pic = el("div", "pic");
-    if (own && safeHref(idea.image)) { const img = el("img"); img.src = idea.image; img.alt = ""; img.loading = "lazy"; pic.appendChild(img); }
+    if (exact && safeHref(idea.image)) { const img = el("img"); img.src = idea.image; img.alt = idea.name; img.loading = "lazy"; pic.appendChild(img); }
     else { pic.classList.add("tile"); pic.style.background = TILES[n % TILES.length]; pic.appendChild(el("span", "emoji", idea.emoji || "🎁")); }
-    pic.appendChild(el("span", "kind", own ? "Our pick" : idea.fit === "new" ? "✨ New world" : idea.fit === "wildcard" ? "🎲 Wildcard" : "Gift idea"));
+    const fit = idea.fit === "new" ? "✨ New world" : idea.fit === "wildcard" ? "🎲 Wildcard" : "";
+    const badge = !exact ? "💡 Gift idea" : idea.own ? "Our pick" : fit;
+    if (badge) pic.appendChild(el("span", "kind" + (exact ? "" : " idea-kind"), badge));
     const body = el("div", "body");
     if (idea.label || idea.tag) body.appendChild(el("p", "label", idea.label || idea.tag));
-    body.append(el("h3", "", idea.name), el("p", "why", idea.why));
+    body.appendChild(el("h3", "", idea.name));
+    if (exact && idea.brand) body.appendChild(el("p", "merchant", `by ${idea.brand}`));
+    body.appendChild(el("p", "why", idea.why));
     const foot = el("div", "foot");
-    foot.appendChild(el("span", "price", idea.price_range || ""));
+    const price = el("span", "price", idea.price_range || "");
+    if (exact && idea.was > idea.price) { const was = el("s", "was", "₹" + Number(idea.was).toLocaleString("en-IN")); price.append(" ", was); }
+    if (!exact && idea.price_range) price.textContent = `About ${idea.price_range}`;
+    foot.appendChild(price);
     const a = el("a", "shop"); a.target = "_blank"; a.rel = "noopener noreferrer";
-    if (own) { a.href = idea.url; a.textContent = "Shop this gift ↗"; }
+    if (exact) { a.href = idea.url; a.textContent = idea.brand ? `Shop at ${idea.brand} ↗` : "Shop this gift ↗"; }
     else {
       a.href = /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com)\//.test(idea.url) ? idea.url : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
       a.textContent = `Search on ${STORE_NAMES[idea.store] || "Amazon"} ↗`;
@@ -181,9 +188,9 @@
     for (let i = 0; i < 6; i++) list.appendChild(el("div", "card skeleton"));
     loading(true);
     try {
-      // The catalog version busts cached searches whenever products or ads change; p=2 is the card layout's answer format.
+      // The catalog version busts cached searches whenever products or ads change; p=4 is the real-products answer format.
       await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
-      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=3${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=4${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
       const data = await r.json().catch(() => ({}));
       if (r.status === 429) throw new Error(data.error || "busy");
       if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");

@@ -317,6 +317,9 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .card .why { font-size: 15px; line-height: 1.5; }
 .card .foot { margin-top: auto; padding-top: 8px; }
 .card .price { font-size: 15px; font-weight: 700; color: var(--fg); font-variant-numeric: tabular-nums; }
+.card .price .was { font-weight: 500; color: var(--muted); }
+.card.idea .price { font-weight: 600; color: var(--muted); }
+.card .merchant { margin-top: -3px; font-size: 13px; font-weight: 600; color: var(--muted); }
 .card .acts { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 14px; }
 .card .shop { text-decoration: none; font-weight: 600; font-size: 15px; color: var(--primary); }
 .card .shop:hover { text-decoration: underline; text-underline-offset: 3px; }

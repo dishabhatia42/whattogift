@@ -3,6 +3,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { readData, writeData, saveImage } from "./_lib/store.js";
 import { autofill, UserError, aiTrouble } from "./_lib/autofill.js";
+import { readCatalog, refreshCatalog } from "./_lib/catalog.js";
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const VIDEO_TYPES = ["video/mp4", "video/webm"];
@@ -45,6 +46,12 @@ export default async function handler(req, res) {
       }
       case "autofill":
         return res.status(200).json(await autofill(body.url));
+      case "refreshCatalog":
+        return res.status(200).json(await refreshCatalog());
+      case "catalogStatus": {
+        const { updatedAt, brands, items } = await readCatalog();
+        return res.status(200).json({ updatedAt, brands, total: items.length });
+      }
       default:
         return res.status(400).json({ error: "Unknown action." });
     }

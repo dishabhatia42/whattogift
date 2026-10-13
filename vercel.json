@@ -3,5 +3,6 @@
   "framework": null,
   "buildCommand": "",
   "outputDirectory": "public",
-  "cleanUrls": true
+  "cleanUrls": true,
+  "crons": [{ "path": "/api/refresh-catalog", "schedule": "30 21 * * *" }]
 }

@@ -137,6 +137,13 @@
       <div id="ad-slots" style="display:flex;flex-direction:column;gap:16px"></div>
     </section>
 
+    <!-- brand catalogue -->
+    <section class="panel">
+      <div class="row" style="justify-content:space-between"><h2>Brand catalogue</h2><button type="button" id="cat-refresh">Refresh now</button></div>
+      <p class="muted">Real, in-stock products from your approved brands, re-read from their websites every night. Searches pick from these.</p>
+      <div id="cat-status" class="muted">Loading…</div>
+    </section>
+
     <div class="row"><button type="button" id="logout">Sign out</button></div>
   </div>
 </main>
@@ -177,8 +184,29 @@
       try { sessionStorage.setItem("gf-admin", key); } catch {}
       $("#login").hidden = true; $("#app").hidden = false;
       renderProducts(); renderAds();
+      call({ action: "catalogStatus" }).then(renderCatalog, () => { $("#cat-status").textContent = "Couldn't load the catalogue status."; });
     } catch (e) { toast(e.message, true); }
   }
+
+  function renderCatalog(c) {
+    const box = $("#cat-status"); box.textContent = "";
+    if (!c.updatedAt) { box.textContent = "Not read yet. Press Refresh now."; return; }
+    box.appendChild(document.createTextNode(`${c.total} products · last read ${new Date(c.updatedAt).toLocaleString("en-IN")}`));
+    const ul = document.createElement("ul"); ul.style.margin = "8px 0 0"; ul.style.paddingLeft = "18px";
+    for (const b of c.brands || []) {
+      const li = document.createElement("li");
+      li.textContent = b.ok ? `${b.name}: ${b.count}` : `${b.name}: couldn't read tonight (${b.error || "error"}), showing ${b.kept} from before`;
+      if (!b.ok) li.style.color = "var(--danger, #b3261e)";
+      ul.appendChild(li);
+    }
+    box.appendChild(ul);
+  }
+  $("#cat-refresh").addEventListener("click", async (e) => {
+    e.target.disabled = true; $("#cat-status").textContent = "Reading every brand's website… (up to a minute)";
+    try { renderCatalog(await call({ action: "refreshCatalog" })); toast("Catalogue refreshed."); }
+    catch (err) { $("#cat-status").textContent = err.message; toast(err.message, true); }
+    finally { e.target.disabled = false; }
+  });
   function signOut() {
     key = ""; try { sessionStorage.removeItem("gf-admin"); } catch {}
     $("#app").hidden = true; $("#login").hidden = false;
