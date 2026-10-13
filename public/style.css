@@ -140,9 +140,10 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .pill[aria-pressed="true"] { background: var(--primary); border-color: var(--accent); color: var(--on-primary); }
 /* Phones: slightly snugger pills so two or three share a line instead of one each (still 40px tall to tap). */
 @media (max-width: 480px) {
-  .suggest { gap: 8px; }
-  .suggest .pill { min-height: 40px; padding: 0 13px; font-size: 14px; }
+  .suggest { gap: 7px; }
+  .suggest .pill { min-height: 40px; padding: 0 11px; font-size: 13.5px; }
 }
+@media (max-width: 345px) { .suggest { gap: 6px; } .suggest .pill { padding: 0 8px; font-size: 12.5px; } }
 
 /* "Open a new world": a switch, not an interest, so it can sit alongside any of them. */
 .discover {
