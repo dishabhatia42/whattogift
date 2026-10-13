@@ -4,5 +4,16 @@
   "buildCommand": "",
   "outputDirectory": "public",
   "cleanUrls": true,
-  "crons": [{ "path": "/api/refresh-catalog", "schedule": "30 21 * * *" }]
+  "crons": [
+    {
+      "path": "/api/refresh-catalog",
+      "schedule": "30 21 * * *"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/h/:id",
+      "destination": "/api/hint?id=:id"
+    }
+  ]
 }

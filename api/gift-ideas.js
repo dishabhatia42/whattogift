@@ -303,8 +303,8 @@ export function assemble(data, shortlist, { roomForIdeas = 0 } = {}) {
     const words = { label: clip(pick.label, 40), why: clip(pick.why, 180), emoji: clip(pick.emoji, 8) || "🎁", fit: fitOf(pick.fit) };
     const p = s.product;
     out.push(s.own
-      ? { ...words, kind: "product", own: true, name: p.name, brand: "", url: p.url, image: p.image, price_range: p.price || "" }
-      : { ...words, kind: "product", name: p.title, brand: p.brand, url: p.url, image: p.image, price: p.price, was: p.was || 0, from: !!p.options, price_range: `${p.options ? "From " : ""}₹${p.price.toLocaleString("en-IN")}` });
+      ? { ...words, kind: "product", own: true, pid: `o-${p.id}`, name: p.name, brand: "", url: p.url, image: p.image, price_range: p.price || "" }
+      : { ...words, kind: "product", pid: p.id, name: p.title, brand: p.brand, url: p.url, image: p.image, price: p.price, was: p.was || 0, from: !!p.options, price_range: `${p.options ? "From " : ""}₹${p.price.toLocaleString("en-IN")}` });
   }
   for (const idea of data.ideas || []) {
     if (out.length >= RESULTS) break;

@@ -6,6 +6,15 @@
 <title>Gift ideas · Serial Gifter</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%81%3C/text%3E%3C/svg%3E">
 <meta name="robots" content="noindex">
+<!-- Shared results links (WhatsApp, iMessage…) show the branded preview -->
+<meta property="og:title" content="Gift ideas, matched to the person you love">
+<meta property="og:description" content="Real gifts from brands we love. Less ordinary, more “Oh my god, you remembered!”">
+<meta property="og:site_name" content="Serial Gifter">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://www.serialgifter.com/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap">
@@ -160,7 +169,8 @@
       track(a, "Idea search click", { store: idea.store || "amazon", idea: idea.name, position: n + 1 });
     }
     const hint = track(el("button", "hint-btn", "Drop a hint ↗"), "Drop a hint", { product: idea.name }); hint.type = "button";
-    hint.addEventListener("click", () => share(idea, a.href));
+    // Shares a Serial Gifter page for this gift (rich WhatsApp preview), so the friend who gets it meets us too.
+    hint.addEventListener("click", () => share(idea, idea.pid ? `${location.origin}/h/${encodeURIComponent(idea.pid)}` : a.href));
     const acts = el("div", "acts"); acts.append(a, hint);
     body.append(acts);
     c.append(pic, body);
@@ -221,9 +231,9 @@
     for (let i = 0; i < 6; i++) list.appendChild(el("div", "card skeleton"));
     loading(true);
     try {
-      // The catalog version busts cached searches whenever products or ads change; p=4 is the real-products answer format.
+      // The catalog version busts cached searches whenever products or ads change; p=5 is the answer format with hint ids.
       await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
-      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=4${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=5${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
       const data = await r.json().catch(() => ({}));
       if (r.status === 429) throw new Error(data.error || "busy");
       if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");

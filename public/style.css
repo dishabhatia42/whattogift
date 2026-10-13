@@ -467,3 +467,11 @@ footer .disclosure { font-size: 12px; opacity: .85; }
   .board-hero h1 { font-size: clamp(34px, min(5.2vw, 7.5vh), 64px); }
 }
 @media (prefers-reduced-motion: reduce) { .sticker { animation: none; } }
+
+/* "Drop a hint" landing page (/h/<id>): one gift, then an invitation to find their own. */
+.hint-page { max-width: 480px; }
+.hint-card .pic { aspect-ratio: 1 / 1; }
+.hint-card h3 { font-size: 20px; }
+.hint-card .shop { width: 100%; justify-content: center; min-height: 48px; font-size: 16px; }
+.hint-invite { display: flex; flex-direction: column; gap: 10px; padding: 22px 20px; border-radius: 18px; background: var(--tint); }
+.hint-invite .go { margin-top: 6px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
