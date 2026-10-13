@@ -8,8 +8,9 @@ body, h1, h2, h3, p { margin: 0; }
   --bg: #faf5f1; --surface: #ffffff; --fg: #26201e; --body: #4d443e; --muted: #736860; --line: #eae2db;
   /* One brand colour (cherry red) and one playful accent (muted mustard). */
   --primary: #96364d; --primary-hi: #a9465e; --on-primary: #ffffff; --tint: #f6e3e7; --cream: #f3ebdd;
-  --accent: var(--primary); /* text highlights: the logo, headline accent, labels, links */
-  --link: var(--accent); --gold: #d8a928; --gold-chip: #d8a928; --on-gold: #1e1915; --err: #a3262f;
+  --accent: var(--primary); /* big highlights: the logo, the headline accent */
+  --accent-text: var(--primary); /* small highlighted text: labels, links */
+  --link: var(--accent-text); --gold: #d8a928; --gold-chip: #d8a928; --on-gold: #1e1915; --err: #a3262f;
   --shadow-sm: 0 1px 2px rgba(30, 25, 21, .06), 0 2px 8px rgba(30, 25, 21, .05);
   --shadow: 0 1px 2px rgba(30, 25, 21, .05), 0 8px 24px rgba(30, 25, 21, .08);
   --shadow-cta: 0 8px 18px rgba(150, 54, 77, .22);
@@ -20,18 +21,19 @@ body, h1, h2, h3, p { margin: 0; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #1e1915; --surface: #2a231f; --fg: #f7f0eb; --body: #d4c9c1; --muted: #9a8f87; --line: #342c27;
-    /* Dark: buttons and selected answers stay cherry (deepened to wine, white text); text highlights
-       turn warm gold, the brand's second colour. A light cherry for text would read as pink. */
-    --primary: #a63f57; --primary-hi: #b84e67; --on-primary: #ffffff; --accent: #e6bf5c; --tint: #3b3026; --cream: #352b23;
-    --link: var(--accent); --gold: #d8a928; --gold-chip: #d8a928; --err: #f2a7ad;
+    /* Dark: one brand red everywhere, the same wine as the main button (white text on it). The logo and
+       headline accent use it too; small highlighted text uses the light text colour, because wine
+       is too dark to read at small sizes on this background and any lighter red reads as pink. */
+    --primary: #a63f57; --primary-hi: #b84e67; --on-primary: #ffffff; --accent: #a63f57; --accent-text: var(--fg); --tint: #3b3026; --cream: #352b23;
+    --link: var(--accent-text); --gold: #d8a928; --gold-chip: #d8a928; --err: #f2a7ad;
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3); --shadow: 0 8px 24px rgba(0, 0, 0, .35); --shadow-cta: 0 10px 24px rgba(0, 0, 0, .4);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #1e1915; --surface: #2a231f; --fg: #f7f0eb; --body: #d4c9c1; --muted: #9a8f87; --line: #342c27;
-  --primary: #a63f57; --primary-hi: #b84e67; --on-primary: #ffffff; --accent: #e6bf5c; --tint: #3b3026; --cream: #352b23;
-  --link: var(--accent); --gold: #d8a928; --gold-chip: #d8a928; --err: #f2a7ad;
+  --primary: #a63f57; --primary-hi: #b84e67; --on-primary: #ffffff; --accent: #a63f57; --accent-text: var(--fg); --tint: #3b3026; --cream: #352b23;
+  --link: var(--accent-text); --gold: #d8a928; --gold-chip: #d8a928; --err: #f2a7ad;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3); --shadow: 0 8px 24px rgba(0, 0, 0, .35); --shadow-cta: 0 10px 24px rgba(0, 0, 0, .4);
   color-scheme: dark;
 }
@@ -47,7 +49,7 @@ body {
   padding: 20px 16px 64px;
   display: flex; flex-direction: column; gap: 40px;
 }
-button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 3px; }
 
 /* site header: the wordmark (one colour, no tagline), an action on the right, sticky with a frosted backdrop */
 .site-header {
@@ -103,7 +105,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .brandline { font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--accent); letter-spacing: -0.01em; text-decoration: none; }
 .brandline i { font-style: normal; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold-chip); margin-left: 4px; vertical-align: middle; }
 .back { font-size: 15px; font-weight: 500; color: var(--fg); text-decoration: none; display: inline-flex; gap: 6px; align-items: center; }
-.back:hover { color: var(--accent); }
+.back:hover { color: var(--accent-text); }
 
 .brandline b { color: var(--gold-chip); font-weight: 800; margin-left: 2px; }
 
@@ -117,7 +119,7 @@ h1 span { color: var(--accent); }
 .promise { margin-top: 10px; font-size: 15px; font-weight: 600; color: var(--fg); }
 .step-head { display: flex; flex-direction: column; gap: 4px; }
 .sub { font-size: 15px; color: var(--muted); }
-.aside { font-size: 14px; font-style: italic; color: var(--accent); }
+.aside { font-size: 14px; font-style: italic; color: var(--accent-text); }
 h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: -0.02em; color: var(--fg); line-height: 1.2; }
 .kicker { font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 
@@ -241,9 +243,9 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .feat.open-slot .box { background: var(--surface); border: 2px dashed var(--tint); box-shadow: none; display: grid; place-items: center; }
 .feat.open-slot:hover .box { border-color: var(--accent); }
 .feat .slot-msg { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px; text-align: center; font-size: 22px; }
-.feat .slot-msg strong { font-family: var(--font-display); font-weight: 800; font-size: 17px; line-height: 1.2; color: var(--accent); }
+.feat .slot-msg strong { font-family: var(--font-display); font-weight: 800; font-size: 17px; line-height: 1.2; color: var(--accent-text); }
 .feat .slot-msg span { font-size: 13px; line-height: 1.4; color: var(--muted); }
-.feat .cat.write { color: var(--accent); font-weight: 600; }
+.feat .cat.write { color: var(--accent-text); font-weight: 600; }
 /* The other open spots: just the empty frame and a soft plus, so the pitch isn't repeated. */
 .feat.open-slot.quiet .box { background: transparent; border-color: color-mix(in srgb, var(--tint) 70%, transparent); }
 .feat.open-slot.quiet .plus { font: 300 40px/1 var(--font-display); color: var(--tint); transition: color .2s, transform .2s var(--ease); }
@@ -257,7 +259,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .featured.auto .feat-nav {
   display: grid; place-items: center; position: absolute; top: 40%; transform: translateY(-50%); z-index: 1;
   width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer;
-  background: var(--surface); color: var(--accent); font: 600 18px/1 var(--font-body);
+  background: var(--surface); color: var(--accent-text); font: 600 18px/1 var(--font-body);
   box-shadow: var(--shadow); transition: transform .15s;
 }
 .featured.auto .feat-nav:hover { transform: translateY(-50%) scale(1.08); }
@@ -271,16 +273,16 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .secondary {
   appearance: none; font: inherit; cursor: pointer; align-self: flex-start; border: 0; border-radius: 14px;
-  min-height: 44px; padding: 0 18px; font-weight: 600; font-size: 15px; color: var(--accent);
+  min-height: 44px; padding: 0 18px; font-weight: 600; font-size: 15px; color: var(--accent-text);
   background: var(--surface); box-shadow: var(--shadow-sm); transition: box-shadow .15s, transform .12s;
 }
 .secondary:hover { box-shadow: var(--shadow); }
 .secondary:active { transform: scale(.98); }
 .secondary:disabled { opacity: .5; cursor: progress; }
 .quiet-link { font-size: 15px; font-weight: 500; color: var(--muted); text-decoration: none; }
-.quiet-link:hover { color: var(--accent); }
+.quiet-link:hover { color: var(--accent-text); }
 .hint-btn { appearance: none; border: 0; background: none; padding: 0; font: inherit; font-size: 14px; color: var(--muted); cursor: pointer; }
-.hint-btn:hover { color: var(--accent); }
+.hint-btn:hover { color: var(--accent-text); }
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 10; background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
 
 /* ---- results: "the gift edit", an image-led collection of cards ---- */
@@ -295,7 +297,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .edit-collection { display: flex; flex-direction: column; gap: 18px; }
 .edit-bar { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
 .edit-bar .sec { font-size: 22px; }
-.link-btn { appearance: none; border: 0; background: none; padding: 0; font: inherit; font-size: 15px; font-weight: 600; color: var(--accent); cursor: pointer; }
+.link-btn { appearance: none; border: 0; background: none; padding: 0; font: inherit; font-size: 15px; font-weight: 600; color: var(--accent-text); cursor: pointer; }
 .link-btn:hover { text-decoration: underline; text-underline-offset: 3px; }
 .link-btn:disabled { opacity: .5; cursor: progress; }
 .refine { display: flex; flex-direction: column; gap: 12px; background: var(--surface); border-radius: 18px; padding: 22px; box-shadow: var(--shadow-sm); }
@@ -320,7 +322,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .card .kind { position: absolute; top: 12px; left: 12px; font-size: 11px; font-weight: 600; letter-spacing: .04em; color: var(--fg); background: rgba(255, 255, 255, .88); border-radius: 999px; padding: 3px 10px; }
 .card .kind.ad { background: var(--gold); color: var(--on-gold); }
 .card .body { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px 18px; flex: 1; }
-.card .label { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.card .label { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); }
 .card h3 { font-family: var(--font-display); font-weight: 700; font-size: 19px; line-height: 1.25; letter-spacing: -0.01em; color: var(--fg); }
 .card .why { font-size: 15px; line-height: 1.5; }
 .card .foot { margin-top: auto; padding-top: 8px; }
@@ -329,7 +331,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .card.idea .price { font-weight: 600; color: var(--muted); }
 .card .merchant { margin-top: -3px; font-size: 13px; font-weight: 600; color: var(--muted); }
 .card .acts { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 14px; }
-.card .shop { text-decoration: none; font-weight: 600; font-size: 15px; color: var(--accent); }
+.card .shop { text-decoration: none; font-weight: 600; font-size: 15px; color: var(--accent-text); }
 .card .shop:hover { text-decoration: underline; text-underline-offset: 3px; }
 .card.skeleton { min-height: 340px; position: relative; box-shadow: none; background: var(--surface); }
 .card.skeleton::before { content: ""; position: absolute; inset: 0 0 auto; aspect-ratio: 4 / 3; background: var(--cream); }
@@ -357,7 +359,7 @@ footer p + p { margin-top: 4px; }
   background-size: 34px 34px; background-position: -1px -1px;
   box-shadow: inset 0 0 0 1px var(--line), var(--shadow-sm);
 }
-.stickers { position: relative; height: 300px; }
+.stickers { position: relative; height: 320px; }
 .sticker {
   position: absolute; width: var(--size); transform: rotate(var(--tilt)) translateY(calc(var(--scroll, 0) * var(--drift) * -0.06px)) scale(var(--fit, 1));
   animation: pop .7s var(--ease) both; animation-delay: var(--d);
@@ -413,8 +415,7 @@ footer p + p { margin-top: 4px; }
 .sticker.real:hover .tline, .sticker.real:focus-within .tline, .sticker.real.open .tline { display: block; }
 .sticker .tag:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 /* Touch screens can't hover, so tags stay on show there; a tap on the photo adds Disha's line. */
-/* Touch screens: ten always-on tags crowd the board, so a sticker's tag shows when it's tapped
-   (first tap shows the tag, second opens the product; see mountBoard). */
+@media (hover: none) { .sticker.real .tag { opacity: 1; margin-top: 0; pointer-events: auto; } }
 /* Phones: a touch smaller still, so neighbours don't collide; the full name shows when opened. */
 @media (max-width: 719px) {
   .sticker .tag { top: calc(100% - 5px); max-width: calc(var(--size) + 6px); padding: 3px 6px; font-size: 9.5px; border-radius: 5px; }

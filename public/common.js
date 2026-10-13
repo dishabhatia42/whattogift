@@ -295,10 +295,10 @@
     [3, 6, 116, -7], [19, 12, 104, 5], [35, 5, 112, -4], [51, 11, 104, 6], [67, 5, 112, -5],
     [83, 12, 100, 7], [98, 5, 104, -6], [5, 40, 104, 5], [22, 48, 94, -6], [39, 34, 96, 4],
   ];
-  // Phone: the same ten as desktop, in two rows of five.
+  // Phone: six bigger stickers, two staggered rows of three.
   const SLOTS_NARROW = [
-    [2, 3, 66, -8], [26, 9, 62, 6], [50, 2, 66, -5], [74, 9, 62, 8], [98, 3, 64, -6],
-    [4, 52, 64, 6], [28, 46, 62, -7], [51, 54, 66, 5], [75, 47, 62, -8], [97, 53, 64, 7],
+    [5, 3, 96, -7], [50, 0, 92, 5], [95, 5, 96, -6],
+    [8, 52, 92, 6], [50, 48, 96, -5], [92, 53, 92, 8],
   ];
   const FILLERS = ["🎁", "🧸", "💐", "🍫", "📚", "🕯️", "🎀", "☕", "🪴", "💌"];
   function mountBoard() {
@@ -340,9 +340,9 @@
           tag.append(n, arr);
           if (product.line) { const l = document.createElement("span"); l.className = "tline"; l.textContent = product.line; tag.appendChild(l); }
           el.append(photo, tag);
-          // On touch screens the first tap shows the name tag (and Disha's line), the second opens the product.
+          // On touch screens the first tap on the photo shows Disha's line, the second opens the product.
           photo.addEventListener("click", (e) => {
-            if (matchMedia("(hover: hover)").matches || el.classList.contains("open")) return;
+            if (matchMedia("(hover: hover)").matches || el.classList.contains("open") || !product.line) return;
             e.preventDefault();
             box.querySelectorAll(".open").forEach((o) => o.classList.remove("open"));
             el.classList.add("open");
