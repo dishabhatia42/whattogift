@@ -120,7 +120,17 @@
     const exact = (idea.kind === "product" || idea.own) && safeHref(idea.url);
     const c = el("article", "card rise" + (exact ? " exact" : " idea")); c.style.setProperty("--i", n % 8);
     const pic = el("div", "pic");
-    if (exact && safeHref(idea.image)) { const img = el("img"); img.src = idea.image; img.alt = idea.name; img.loading = "lazy"; pic.appendChild(img); }
+    if (exact && safeHref(idea.image)) {
+      // Brand photos mostly have white backgrounds, so they sit on white. One shaped about like the
+      // frame fills it edge to edge; any other is shown whole (never cropped) on the same white.
+      pic.classList.add("photo");
+      const img = el("img"); img.alt = idea.name; img.loading = "lazy";
+      img.onload = () => {
+        const r = img.naturalWidth / img.naturalHeight, box = pic.clientWidth / (pic.clientHeight || 1);
+        if (r && Math.abs(r - box) / box < 0.18) img.classList.add("fill");
+      };
+      img.src = idea.image; pic.appendChild(img);
+    }
     else { pic.classList.add("tile"); pic.style.background = TILES[n % TILES.length]; pic.appendChild(el("span", "emoji", idea.emoji || "🎁")); }
     const fit = idea.fit === "new" ? "✨ New world" : idea.fit === "wildcard" ? "🎲 Wildcard" : "";
     const badge = !exact ? "💡 Gift idea" : idea.own ? "Our pick" : fit;
@@ -128,23 +138,24 @@
     const body = el("div", "body");
     if (idea.label || idea.tag) body.appendChild(el("p", "label", idea.label || idea.tag));
     body.appendChild(el("h3", "", idea.name));
-    if (exact && idea.brand) body.appendChild(el("p", "merchant", `by ${idea.brand}`));
-    body.appendChild(el("p", "why", idea.why));
-    const foot = el("div", "foot");
+    // Who sells it, with the price on the right: "by Molded ········ ₹3,790"
+    const meta = el("div", "meta");
+    meta.appendChild(el("span", "merchant", exact ? (idea.brand ? `by ${idea.brand}` : `from ${new URL(idea.url).hostname.replace(/^www\./, "")}`) : `Search on ${STORE_NAMES[idea.store] || "Amazon"}`));
     const price = el("span", "price", idea.price_range || "");
     if (exact && idea.was > idea.price) { const was = el("s", "was", "₹" + Number(idea.was).toLocaleString("en-IN")); price.append(" ", was); }
     if (!exact && idea.price_range) price.textContent = `About ${idea.price_range}`;
-    foot.appendChild(price);
+    meta.appendChild(price);
+    body.append(meta, el("p", "why", idea.why));
     const a = el("a", "shop"); a.target = "_blank"; a.rel = "noopener noreferrer";
-    if (exact) { a.href = idea.url; a.textContent = idea.brand ? `Shop at ${idea.brand} ↗` : "Shop this gift ↗"; }
+    if (exact) { a.href = idea.url; a.textContent = "Shop now ↗"; }
     else {
       a.href = /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com)\//.test(idea.url) ? idea.url : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
-      a.textContent = `Search on ${STORE_NAMES[idea.store] || "Amazon"} ↗`;
+      a.textContent = "Find it ↗";
     }
     const hint = el("button", "hint-btn", "Drop a hint ↗"); hint.type = "button";
     hint.addEventListener("click", () => share(idea, a.href));
     const acts = el("div", "acts"); acts.append(a, hint);
-    body.append(foot, acts);
+    body.append(acts);
     c.append(pic, body);
     return c;
   }
