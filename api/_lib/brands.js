@@ -104,7 +104,10 @@ function clean(d) {
     sells: str(s.sells, 60),
     priceRange: str(s.priceRange, 40),
     samples: (Array.isArray(s.samples) ? s.samples : []).slice(0, 4).map((p) => ({ title: str(p.title, 80), image: https(p.image), price: Number(p.price) || 0 })).filter((p) => p.image),
-  })).filter((s) => s.name && s.domain && !seen.has(s.domain)).slice(0, 30);
+  })).filter((s) => s.name && s.domain && !seen.has(s.domain))
+    // Suggestions from before the gift-price check: drop shops whose samples are all over ₹5,000.
+    .filter((s) => !s.samples.length || s.samples.some((p) => p.price <= 5000))
+    .slice(0, 30);
   const skipped = [...new Set((Array.isArray(d?.skipped) ? d.skipped : []).map(cleanDomain).filter(Boolean))].slice(-500);
   return { brands, suggestions, skipped, suggestedAt: Number(d?.suggestedAt) || 0 };
 }

@@ -118,6 +118,10 @@
   .brand-row strong { color: var(--fg); }
   .brand-row .n { font-size: 13px; color: var(--muted); }
   .brand-row .n.bad { color: var(--err); }
+  .brand-row.attention { background: color-mix(in srgb, var(--err) 7%, transparent); border-radius: 10px; padding: 8px 10px; margin: 2px 0; border-bottom: 0; }
+  .added-log { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 14px; color: var(--fg); }
+  .added-log p { margin: 2px 0; }
+  .added-log .bad { color: var(--err); }
   .brand-row button { padding: 5px 12px; font-size: 13px; }
   input[type=search] { font: inherit; font-size: 14px; color: var(--fg); background: var(--bg); border: 1.5px solid var(--line); border-radius: 999px; padding: 7px 14px; width: 100%; }
   .pager { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; }
@@ -210,6 +214,7 @@
         <button type="submit" class="primary" style="flex:none">Check</button>
       </form>
       <div id="brand-preview" hidden></div>
+      <div id="added-log" class="added-log" hidden aria-live="polite"></div>
 
       <!-- suggestions -->
       <div class="row" style="justify-content:space-between;margin-top:8px">
@@ -354,21 +359,26 @@
   let brandPage = 1;
   function renderBrandList() {
     const q = $("#brand-search").value.trim().toLowerCase();
-    const all = [...brandData.brands].sort((x, y) => x.name.localeCompare(y.name));
+    // Brands that gave no products on the last read come first, so they can be fixed or removed.
+    const byId = new Map((report.brands || []).map((r) => [r.id, r]));
+    const empty = (b) => { const r = byId.get(b.id); return !!r && !r.count && !r.kept; };
+    const all = [...brandData.brands].sort((x, y) => (empty(y) - empty(x)) || x.name.localeCompare(y.name));
     const shown = q ? all.filter((b) => b.name.toLowerCase().includes(q) || b.domain.includes(q)) : all;
     const pages = Math.max(1, Math.ceil(shown.length / PER_PAGE));
     brandPage = Math.min(Math.max(1, brandPage), pages);
-    $("#brand-count").textContent = q ? `(${shown.length} of ${all.length})` : `(${all.length})`;
-    const byId = new Map((report.brands || []).map((r) => [r.id, r]));
+    const stuck = all.filter(empty).length;
+    $("#brand-count").textContent = (q ? `(${shown.length} of ${all.length})` : `(${all.length})`) + (stuck ? ` · ${stuck} with no products` : "");
     const list = $("#brand-list"); list.textContent = "";
     if (!shown.length) list.appendChild(mk("p", "muted", q ? "No brand matches that." : "No brands yet. Paste a website above to add one."));
     for (const b of shown.slice((brandPage - 1) * PER_PAGE, brandPage * PER_PAGE)) {
       const r = byId.get(b.id);
-      const row = mk("div", "brand-row");
+      const row = mk("div", "brand-row" + (empty(b) ? " attention" : ""));
       const txt = mk("div", "txt");
       txt.append(mk("strong", "", b.name), document.createTextNode(" "), siteLink(b.domain));
       const n = mk("div", "n" + (r && !r.ok ? " bad" : ""),
-        !r ? "Not read yet" : r.ok ? `${r.count} products` : `Couldn't read last time (${r.error || "error"})${r.kept ? `, showing ${r.kept} from before` : ""}`);
+        !r ? "Not read yet"
+        : empty(b) ? (r.ok ? "0 products: nothing in stock with a photo and a gift price. Not in any search." : `0 products: its website didn't answer (${r.error || "error"}). Not in any search.`)
+        : r.ok ? `${r.count} products` : `Couldn't read last time (${r.error || "error"}), showing ${r.kept} from before`);
       txt.appendChild(n);
       const rm = mk("button", "danger", "Remove"); rm.type = "button";
       rm.addEventListener("click", async () => {
@@ -407,6 +417,14 @@
   }
   $("#brand-search").addEventListener("input", () => { brandPage = 1; renderBrandList(); });
 
+  // Every add this visit, with what it brought in, stays listed here (a toast is easy to miss).
+  const addedLog = [];
+  function logAdd(line, bad) {
+    addedLog.unshift({ line, bad });
+    const box = $("#added-log"); box.textContent = ""; box.hidden = false;
+    box.appendChild(mk("p", "muted", "Added just now"));
+    for (const a of addedLog.slice(0, 8)) box.appendChild(mk("p", a.bad ? "bad" : "", a.line));
+  }
   async function addBrand(shop, btn) {
     if (btn) btn.disabled = true;
     toast(`Adding ${shop.name || shop.domain} and reading its products…`);
@@ -415,9 +433,15 @@
       brandData = out; report = out.catalog; renderBrands();
       $("#brand-preview").hidden = true; $("#brand-link").value = "";
       const got = (out.catalog.brands || []).find((r) => r.id === out.added.id);
-      toast(`${out.added.name} added${got ? ` with ${got.count} products` : ""}. It's live in searches now.`);
+      const n = got ? got.count || got.kept : 0;
+      logAdd(`✓ ${out.added.name}: ${n.toLocaleString("en-IN")} products now in searches`);
+      toast(`${out.added.name} added with ${n} products. It's live in searches now.`);
       return true;
-    } catch (e) { toast(e.message, true); if (btn) btn.disabled = false; return e.message || "Couldn't add it."; }
+    } catch (e) {
+      toast(e.message, true); if (btn) btn.disabled = false;
+      logAdd(`✕ ${e.message || `Couldn't add ${shop.name || shop.domain}.`}`, true);
+      return e.message || "Couldn't add it.";
+    }
   }
 
   // Paste a link -> see the brand's real products -> add it.

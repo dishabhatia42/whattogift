@@ -40,13 +40,17 @@ export async function checkShop(link, { name } = {}) {
   if (!items.length) throw new ScoutError("The shop can be read, but none of its first products are in stock with a photo and a price.");
   const prices = items.map((i) => i.price).sort((a, b) => a - b);
   const types = topTypes(items);
+  // The middle of its prices (not the extremes), so one ₹50 keychain or ₹90,000 sofa doesn't mislead.
+  const mid = [prices[Math.floor(prices.length * 0.2)], prices[Math.ceil(prices.length * 0.8) - 1]];
   return {
     name: (name || meta.name || vendorName(found.sample.raw) || prettyName(found.host)).slice(0, 60),
     domain: found.host,
     platform: found.platform,
     sells: types.join(", ").slice(0, 60),
     minPrice: prices[0],
-    priceRange: prices.length > 1 && prices[0] !== prices.at(-1) ? `₹${fmt(prices[0])} – ₹${fmt(prices.at(-1))}` : `₹${fmt(prices[0])}`,
+    giftPriced: items.filter(isGiftPriced).length, // of the products checked
+    checked: items.length,
+    priceRange: mid[0] !== mid[1] ? `mostly ₹${fmt(mid[0])} – ₹${fmt(mid[1])}` : `₹${fmt(mid[0])}`,
     samples: pickSamples(items).map(({ title, image, price }) => ({ title, image, price })),
   };
 }
@@ -135,10 +139,12 @@ export async function suggestBrands({ brands, skipped, pending, catalogItems, fo
   const checked = await Promise.all(fresh.map(async (i) => {
     try {
       const shop = await checkShop(i.domain, { name: i.name });
-      // A gift shop needs something under ₹15,000 (no furniture-only stores).
-      if (!(shop.minPrice <= 15000)) { stats.notGiftable++; return null; }
+      // A gift shop needs a real share of gift-priced things (₹300–₹5,000), not just one cheap
+      // accessory beside furniture or couture.
+      if (shop.giftPriced < Math.min(3, shop.checked) || shop.giftPriced < shop.checked * 0.25) { stats.notGiftable++; return null; }
       stats.passed++;
-      return { ...shop, sells: String(i.sells || shop.sells).slice(0, 60), why: String(i.why || "").slice(0, 160) };
+      // "Sells" comes from its real products, not the AI's description of the shop.
+      return { ...shop, sells: String(shop.sells || i.sells || "").slice(0, 60), why: String(i.why || "").slice(0, 160) };
     } catch { stats.unreadable++; return null; }
   }));
   console.log("Brand suggestions", JSON.stringify({ theme, ...stats }));
@@ -161,8 +167,10 @@ function topTypes(items) {
   for (const i of items) if (i.type) m.set(i.type, (m.get(i.type) || 0) + 1);
   return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k);
 }
-// Four samples, from different product types where possible.
-function pickSamples(items) {
+// Four samples, gift-priced first, from different product types where possible.
+const isGiftPriced = (i) => i.price >= 300 && i.price <= 5000;
+function pickSamples(all) {
+  const items = [...all.filter(isGiftPriced), ...all.filter((i) => !isGiftPriced(i))];
   const out = [], types = new Set();
   for (const i of items) if (out.length < 4 && !types.has(i.type)) { out.push(i); types.add(i.type); }
   for (const i of items) if (out.length < 4 && !out.includes(i)) out.push(i);

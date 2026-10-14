@@ -101,9 +101,19 @@ export default async function handler(req, res) {
         let catalog;
         try { catalog = await refreshBrand(brand); }
         catch (err) {
-          console.error("Added brand, but couldn't read its products yet", brand.domain, err);
+          console.error("Added brand, but couldn't save its products yet", brand.domain, err);
           const c = await readCatalog({ fresh: true });
           catalog = { updatedAt: c.updatedAt, total: c.items.length, brands: c.brands || [] };
+        }
+        // A brand that brings no products would sit in the list doing nothing, so it isn't kept.
+        const line = (catalog.brands || []).find((r) => r.id === brand.id);
+        if (line && !line.count && !line.kept) {
+          await updateBrands((list) => ({ ...list, brands: list.brands.filter((b) => b.id !== brand.id) }));
+          await dropBrand(brand.id);
+          console.warn("Brand add undone: no products", brand.domain, line.error);
+          throw new UserError(line.ok
+            ? `${brand.name} wasn't added: none of its products are in stock with a photo and a gift-friendly price right now.`
+            : `${brand.name} wasn't added: its website didn't answer when we read its products (${line.error || "error"}). Try again in a bit.`);
         }
         return res.status(200).json({ ...saved, added: brand, catalog });
       }
