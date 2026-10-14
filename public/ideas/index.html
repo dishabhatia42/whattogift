@@ -262,9 +262,9 @@
     for (let i = 0; i < 6; i++) list.appendChild(el("div", "card skeleton"));
     loading(true);
     try {
-      // The catalog version busts cached searches whenever products or ads change; p=6 is the answer format with affiliate labels.
+      // The catalog version busts cached searches whenever products or ads change; p=7 is the answer format (7: interest vocabulary).
       await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
-      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=6${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=7${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
       const data = await r.json().catch(() => ({}));
       if (r.status === 429) throw new Error(data.error || "busy");
       if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");
