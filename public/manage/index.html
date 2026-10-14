@@ -192,7 +192,12 @@
           <button type="button" data-cancel>Cancel</button>
         </div>
       </form>
+      <div class="row" style="justify-content:space-between;margin-top:8px">
+        <h3 class="sub-h">Your products <span class="muted" id="pick-shown"></span></h3>
+        <input type="search" id="pick-search" placeholder="Find a product" aria-label="Find a product" style="max-width:220px">
+      </div>
       <div id="pick-list"></div>
+      <nav class="pager" id="pick-pager" aria-label="Product list pages"></nav>
     </section>
 
     <!-- ads -->
@@ -389,31 +394,31 @@
       });
       row.append(txt, rm); list.appendChild(row);
     }
-    renderPager(pages);
+    renderPager($("#brand-pager"), pages, brandPage, (p) => { brandPage = p; renderBrandList(); $("#brand-count").closest(".row").scrollIntoView({ block: "start", behavior: "smooth" }); });
   }
 
   // ‹ 1 2 3 … 9 › : first, last, and the pages around the current one.
-  function renderPager(pages) {
-    const nav = $("#brand-pager"); nav.textContent = "";
+  // Shared by the brand and product lists: `go(p)` shows page p.
+  function renderPager(nav, pages, current, go) {
+    nav.textContent = "";
     if (pages < 2) return;
-    const go = (p) => { brandPage = p; renderBrandList(); $("#brand-count").closest(".row").scrollIntoView({ block: "start", behavior: "smooth" }); };
     const btn = (label, p, opts = {}) => {
       const b = mk("button", "", label); b.type = "button";
       if (opts.aria) b.setAttribute("aria-label", opts.aria);
-      if (p === brandPage && !opts.arrow) b.setAttribute("aria-current", "page");
+      if (p === current && !opts.arrow) b.setAttribute("aria-current", "page");
       b.disabled = opts.arrow && (p < 1 || p > pages);
       b.addEventListener("click", () => go(p));
       return b;
     };
-    nav.appendChild(btn("‹", brandPage - 1, { arrow: true, aria: "Previous page" }));
+    nav.appendChild(btn("‹", current - 1, { arrow: true, aria: "Previous page" }));
     let last = 0;
     for (let p = 1; p <= pages; p++) {
-      if (p !== 1 && p !== pages && Math.abs(p - brandPage) > 1) continue;
+      if (p !== 1 && p !== pages && Math.abs(p - current) > 1) continue;
       if (p - last > 1) nav.appendChild(mk("span", "gap", "…"));
       nav.appendChild(btn(String(p), p, { aria: `Page ${p}` }));
       last = p;
     }
-    nav.appendChild(btn("›", brandPage + 1, { arrow: true, aria: "Next page" }));
+    nav.appendChild(btn("›", current + 1, { arrow: true, aria: "Next page" }));
   }
   $("#brand-search").addEventListener("input", () => { brandPage = 1; renderBrandList(); });
 
@@ -668,11 +673,24 @@
     const picks = existing ? data.products.map((p) => p.id === pick.id ? pick : p) : [pick, ...data.products];
     if (await save({ ...data, products: picks })) { resetPickForm(); $("#af-note").hidden = true; }
   });
+  const PICKS_PER_PAGE = 15;
+  let pickPage = 1;
+  $("#pick-search").addEventListener("input", () => { pickPage = 1; renderProducts(); });
   function renderProducts() {
     updateCounts();
     const list = $("#pick-list"); list.textContent = "";
     $("#pick-count").textContent = `${data.products.length} saved`;
-    for (const p of data.products) {
+    // On the board first (📌), then the rest; newest first within each. 15 a page, with a search.
+    const q = $("#pick-search").value.trim().toLowerCase();
+    const all = data.products.map((p, i) => ({ p, i })).sort((a, b) => (!!b.p.board - !!a.p.board) || (a.i - b.i)).map((x) => x.p);
+    const shown = q ? all.filter((p) => [p.name, p.price, p.url, ...(p.tags || [])].join(" ").toLowerCase().includes(q)) : all;
+    const pages = Math.max(1, Math.ceil(shown.length / PICKS_PER_PAGE));
+    pickPage = Math.min(Math.max(1, pickPage), pages);
+    const onBoard = all.filter((p) => p.board).length;
+    $("#pick-shown").textContent = q ? `(${shown.length} of ${all.length})` : `(${all.length} · ${onBoard} on the board)`;
+    if (!shown.length) list.appendChild(mk("p", "muted", q ? "No product matches that." : "No products yet. Paste a link above to add one."));
+    renderPager($("#pick-pager"), pages, pickPage, (n) => { pickPage = n; renderProducts(); $("#pick-shown").closest(".row").scrollIntoView({ block: "start", behavior: "smooth" }); });
+    for (const p of shown.slice((pickPage - 1) * PICKS_PER_PAGE, pickPage * PICKS_PER_PAGE)) {
       const row = document.createElement("div"); row.className = "item" + (p.active ? "" : " off");
       row.innerHTML = `<div class="ph"></div><div class="txt"><strong></strong><span></span></div><button type="button" data-edit>Edit</button><button type="button" data-toggle></button><button type="button" class="danger" data-del>Delete</button>`;
       if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = ""; row.firstChild.replaceWith(img); }
