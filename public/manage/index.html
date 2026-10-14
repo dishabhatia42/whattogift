@@ -249,7 +249,7 @@
         <button type="button" id="ret-read">Read return policies</button>
         <label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="ret-only"> Only brands to review</label>
       </div>
-      <p class="muted" style="margin:0">A brand's return label ("7-day refund", "No returns") shows on its product cards only after you approve it here.</p>
+      <p class="muted" style="margin:0">Return labels ("7-day refund", "No returns") show on product cards once approved. Clear policies are approved automatically; vague or complicated ones wait here for you, with the reason.</p>
 
       <!-- your brands -->
       <div class="row" style="justify-content:space-between;margin-top:8px">
@@ -423,12 +423,13 @@
     const source = (s) => { if (!s?.source) return null; const a = mk("a", "", "their policy ↗"); a.href = s.source; a.target = "_blank"; a.rel = "noopener noreferrer"; return a; };
     if (!p) { line.classList.add("todo"); line.append(mk("span", "tag", "Returns: not read yet"), reread("Read now")); }
     else if (p.status === "failed") { line.classList.add("bad"); line.append(mk("span", "tag", `Returns: ${p.error || "couldn't read"}`), reread("Try again"), edit); }
-    else if (p.status === "approved") { line.classList.add("ok"); line.append(mk("span", "tag", `✓ ${retText(p.approved)}`), source(p.approved) || "", edit, reread("Re-read")); }
+    else if (p.status === "approved") { line.classList.add("ok"); line.append(mk("span", "tag", `✓ ${retText(p.approved)}`), mk("span", "muted", p.auto ? "(clear policy, approved automatically)" : p.manual ? "(set by you)" : "(approved by you)"), source(p.approved) || "", edit, reread("Re-read")); }
     else {
       line.classList.add("todo");
       const approve = btn("✓ Approve", (x) => retCall({ action: "policyApprove", id: b.id }, x), "primary");
       line.append(mk("span", "tag", p.status === "changed" ? `Policy changed: now ${retText(p.latest)} (cards still show ${retText(p.approved)})` : `Returns: ${retText(p.latest)}`), source(p.latest) || "", approve, edit);
     }
+    if (p && p.status !== "approved" && p.status !== "failed" && p.review) line.appendChild(mk("span", "tag", `Needs you: ${p.review}`));
     if (p?.latest?.note && p.status !== "approved") line.appendChild(mk("span", "muted", p.latest.note));
     return line;
   }

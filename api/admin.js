@@ -133,7 +133,8 @@ export default async function handler(req, res) {
       case "policyReadAll": {
         // Brands never read (or all of them, when asked), as many as fit in ~2 minutes.
         const [{ brands }, policies] = await Promise.all([readBrands(), readPolicies()]);
-        const out = await readMany(dueForReading(brands, policies, { all: body.all === true }), 120000);
+        // Also re-reads ones still waiting, so clear ones get approved automatically.
+        const out = await readMany(dueForReading(brands, policies, { all: body.all === true, unapproved: true }), 120000);
         return res.status(200).json(out);
       }
       case "policyApprove": {
@@ -143,7 +144,7 @@ export default async function handler(req, res) {
           const cur = list[id];
           const summary = body.summary ? cleanSummary({ ...body.summary, source: cur?.latest?.source || "" }) : cur?.latest;
           if (!summary) throw new UserError("Read this brand's policy first.");
-          return { ...list, [id]: { ...(cur || {}), latest: cur?.latest || summary, approved: summary, status: "approved", readAt: cur?.readAt || Date.now(), error: "" } };
+          return { ...list, [id]: { ...(cur || {}), latest: cur?.latest || summary, approved: summary, status: "approved", readAt: cur?.readAt || Date.now(), error: "", auto: false, manual: !!body.summary, review: "" } };
         });
         return res.status(200).json(policies);
       }
