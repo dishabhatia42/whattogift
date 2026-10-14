@@ -441,7 +441,9 @@
   // Opening Manage reads, by itself, brands never read and readings from before the clarity check,
   // so labels appear without anyone having to know about this button.
   function autoReadPolicies() {
-    const stale = brandData.brands.some((b) => !policies[b.id] || /before the clarity check/.test(policies[b.id].review || ""));
+    // Never read, or not on cards and read under older reading rules (RULES in api/_lib/returns.js).
+    const RULES = 2;
+    const stale = brandData.brands.some((b) => !policies[b.id] || (policies[b.id].status !== "approved" && (policies[b.id].v || 1) !== RULES));
     if (stale) readAllPolicies(true);
   }
   async function readAllPolicies(auto = false) {
