@@ -37,28 +37,28 @@
     : r === "couple" ? only("anniversary", "wedding", "just-because")
     : r === "child" ? only("birthday", "just-because")
     : only("birthday", "anniversary", "wedding", "just-because");
-  // Ordered long + short in pairs, so on a phone two always share a line (four tidy rows, not six to eight).
-  const BASE_INTERESTS = ["Fashion & style", "Books & stories", "Home & cosy things", "Experiences", "Fitness & wellness", "All things tech", "Handmade & artsy", "Food & treats"];
+  // What the brands in the catalogue actually sell most (see api/_lib/vocabulary.js for what each
+  // one matches). Ordered long + short in pairs, so on a phone two always share a line.
+  const BASE_INTERESTS = ["Journals & stationery", "Books", "Kitchen & dining", "Jewellery", "Fashion & sarees", "Coffee & tea", "Beauty & fragrance", "Art & DIY", "Food & treats", "Home decor"];
   const SUGGESTIONS = {
     default: BASE_INTERESTS,
-    partner: [...BASE_INTERESTS, "Jewellery", "Personalised"],
-    friend: [...BASE_INTERESTS, "Skincare", "Memories"],
-    self: [...BASE_INTERESTS, "Skincare", "Little luxuries"],
-    mom: [...BASE_INTERESTS, "Ethnic wear", "Spiritual"],
-    dad: [...BASE_INTERESTS, "Watches", "Health"],
-    parents: [...BASE_INTERESTS, "Health", "Spiritual"],
-    sibling: [...BASE_INTERESTS, "Gaming", "Skincare"],
-    colleague: [...BASE_INTERESTS, "Desk & office", "Coffee & tea"],
-    couple: [...BASE_INTERESTS, "Kitchen", "Personalised"],
-    child: ["Toys & games", "Books & stories", "Art & craft", "Outdoor play", "Learning & puzzles", "Food & treats"],
+    partner: [...BASE_INTERESTS, "Bags & wallets", "Little luxuries"],
+    friend: [...BASE_INTERESTS, "Games & puzzles", "Bags & wallets"],
+    self: [...BASE_INTERESTS, "Little luxuries", "Plants"],
+    mom: [...BASE_INTERESTS, "Plants", "Spiritual"],
+    dad: [...BASE_INTERESTS, "Tech & audio", "Games & puzzles"],
+    parents: [...BASE_INTERESTS, "Plants", "Spiritual"],
+    sibling: [...BASE_INTERESTS, "Games & puzzles", "Sneakers"],
+    colleague: [...BASE_INTERESTS, "Desk & office", "Bags & wallets"],
+    couple: [...BASE_INTERESTS, "Games & puzzles", "Plants"],
+    child: ["Toys & games", "Books", "LEGO & models", "Art & DIY", "Learning & puzzles", "Food & treats"],
   };
   // Emojis are display-only; the plain words are what the search sees.
   const INTEREST_EMOJI = {
-    "Fashion & style": "👗", "All things tech": "📱", "Books & stories": "📚", "Experiences": "🎟️",
-    "Home & cosy things": "🪴", "Fitness & wellness": "🏋️", "Food & treats": "🍫", "Handmade & artsy": "🎨",
-    "Jewellery": "💍", "Personalised": "✨", "Skincare": "🧴", "Memories": "📸", "Little luxuries": "🛁", "Ethnic wear": "🥻",
-    "Spiritual": "🪔", "Watches": "⌚", "Health": "🩺", "Gaming": "🎮", "Desk & office": "🖇️",
-    "Coffee & tea": "☕", "Kitchen": "🍳", "Toys & games": "🧸", "Art & craft": "🖍️", "Outdoor play": "⚽",
+    "Journals & stationery": "📓", "Books": "📚", "Kitchen & dining": "🍳", "Jewellery": "💍", "Fashion & sarees": "👗",
+    "Coffee & tea": "☕", "Beauty & fragrance": "💄", "Art & DIY": "🎨", "Food & treats": "🍫", "Home decor": "🛋️",
+    "Bags & wallets": "👜", "Little luxuries": "🛁", "Games & puzzles": "🎲", "Plants": "🪴", "Spiritual": "🪔",
+    "Tech & audio": "🎧", "Sneakers": "👟", "Desk & office": "🖇️", "Toys & games": "🧸", "LEGO & models": "🧱",
     "Learning & puzzles": "🧩",
   };
   const BUDGETS = [
