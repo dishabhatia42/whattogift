@@ -1,7 +1,7 @@
 // Storage for the gift finder: one JSON document in Vercel Blob holding
 // the products Disha adds herself and the sponsored ad slots. Needs BLOB_READ_WRITE_TOKEN,
 // which Vercel adds automatically when a Blob store is connected to the project.
-import { head, put } from "@vercel/blob";
+import { head, put, BlobNotFoundError } from "@vercel/blob";
 import { cleanAffiliates } from "./links.js";
 
 const DATA_PATH = "gift-finder/data.json";
@@ -24,7 +24,8 @@ async function readVersion(path) {
   try {
     meta = await head(path);
   } catch (err) {
-    if (err?.name === "BlobNotFoundError" || /not.*found/i.test(String(err?.message))) return null;
+    // A file that was never saved yet. (The SDK's error is named plain "Error", so check the class and its wording.)
+    if (err instanceof BlobNotFoundError || err?.name === "BlobNotFoundError" || /does not exist|not.*found/i.test(String(err?.message))) return null;
     throw err;
   }
   const r = await fetch(`${meta.url}?v=${new Date(meta.uploadedAt).getTime()}`);
