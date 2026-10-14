@@ -52,6 +52,7 @@ const BUDGETS = {
   "1000-3000": { text: "₹1,000 – ₹3,000", min: 1000, max: 3000 },
   "3000-7000": { text: "₹3,000 – ₹7,000", min: 3000, max: 7000 },
   "7000-plus": { text: "₹7,000 and above", min: 7000, max: Infinity },
+  "no-limit": { text: "no budget limit (anything from a small treat to a big splurge; choose for fit, not price)", min: 0, max: Infinity },
 };
 
 // "web" is a plain web search, for experiences (classes, tastings, outings) that shopping sites don't sell.
@@ -195,7 +196,7 @@ export default async function handler(req, res) {
       ? "Mix: open a new world for them. About half familiar picks, a few \"new\" ones that introduce something they've never tried but connects to what they love, and one wildcard."
       : "Mix: mostly familiar picks, with at most one gentle wildcard.",
     ...tunes.map((t) => `Refinement: ${TUNES[t]}`),
-    wantsExperiences ? "Experiences: include 2 or 3 experience ideas (a class, workshop, tasting or outing they'd love), with store web." : "",
+    wantsExperiences ? "Experiences: the shopper wants experiences. First pick the real ones in the shortlist (tours, workshops, tastings, classes, courses, like a cacao mill tour); they're bookable straight from the brand. Then add experience ideas (store web) only to reach 3 experiences in total." : "",
     variant > 1 ? `Variation ${variant}: the shopper asked for different options; skip the most obvious picks and favour fresh alternatives.` : "",
     "",
     shortlist.length ? `Shortlist (${shortlist.length} products):\n${shortlist.map((s) => s.line).join("\n")}` : "Shortlist: empty (give 6 to 8 ideas instead).",
@@ -249,7 +250,7 @@ export default async function handler(req, res) {
 // The rupee window products must sit in. Slightly under the band is fine (a ₹950 gift on a
 // ₹1,000–3,000 budget); over it never is. "Cheaper" drops to the band below.
 export function priceRange(budget, cheaper) {
-  if (!budget) return { min: 0, max: cheaper ? 1500 : Infinity };
+  if (!budget || (!budget.min && budget.max === Infinity)) return { min: 0, max: cheaper ? 1500 : Infinity }; // none, or "budget no bar"
   if (cheaper) return { min: 0, max: budget.min > 0 ? budget.min : Math.round(budget.max * 0.6) };
   return { min: Math.round(budget.min * 0.85), max: budget.max };
 }

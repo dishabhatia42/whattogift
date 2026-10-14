@@ -67,6 +67,7 @@
     { id: "1000-3000", t: "₹1,000–₹3,000" },
     { id: "3000-7000", t: "₹3,000–₹7,000" },
     { id: "7000-plus", t: "₹7,000+", note: "Going all out, huh?" },
+    { id: "no-limit", t: "Budget no bar", note: "Love it. Only the best." },
   ];
   // Results-page refinements ("Not quite their vibe?"). The ids are the API's whitelist too.
   const TUNES = [
