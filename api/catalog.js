@@ -17,10 +17,10 @@ export default async function handler(req, res) {
       version: `${updatedAt || 0}-${brandsAt}`,
       ads: ads.filter((a) => a.active && (!a.endsOn || a.endsOn >= today)).map((a) => ({ ...a, url: out(a.url) })),
       board: products.filter((p) => p.active && p.board).slice(0, 10)
-        .map(({ id, name, line, url, image, cutout, price, phone }) => {
+        .map(({ id, name, line, url, image, price, phone }) => {
           const link = out(url);
           // Amazon only allows prices from its own data service, so hand-typed Amazon prices aren't shown.
-          return { id, name, line, url: link, image, cutout, price: isAmazon(link) ? "" : price, phone, affiliate: isAffiliate(link, affiliates) };
+          return { id, name, line, url: link, image, price: isAmazon(link) ? "" : price, phone, affiliate: isAffiliate(link, affiliates) };
         }),
     });
   } catch (err) {
