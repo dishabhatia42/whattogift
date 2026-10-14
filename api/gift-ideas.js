@@ -43,7 +43,7 @@ const OCCASIONS = {
   win: "celebrating a win (a promotion, a new job, a milestone, or getting through a tough stretch)",
 };
 // Shopping for yourself changes what makes a good pick and who the words speak to.
-const SELF_NOTE = "This is a treat for the shopper themselves. Favour things people want but rarely buy for themselves: the nicer version of an everyday thing, a small luxury, an experience. Skip gifts that only make sense from someone else (photo frames, \"best friend\" or \"world's best\" items, name-personalised keepsakes). Write every label and why to the shopper as \"you\" (e.g. \"For your slow-morning era\"), and the vibe about them.";
+const SELF_NOTE = "This is a treat for the shopper themselves. Favour things people want but rarely buy for themselves: the nicer version of an everyday thing, a small luxury, an experience. Skip gifts that only make sense from someone else (photo frames, \"best friend\" or \"world's best\" items, name-personalised keepsakes). Write every label and why straight to the shopper as \"you\" (e.g. \"For your slow-morning era\", \"You've earned softer mornings.\"); never describe them in the third person (no \"a reader who…\", \"someone who…\", \"they\"). The vibe can describe them.";
 
 // Label for the AI, and the rupee range products must fall in.
 const BUDGETS = {
