@@ -401,7 +401,9 @@
   }
   async function retCall(payload, btn) {
     if (btn) btn.disabled = true;
-    try { policies = await brandCall(payload); renderBrandList(); renderRetSummary(); }
+    // Not in the brand queue: return labels live in their own file, so a slow policy read must never
+    // hold up Add, Skip or Remove.
+    try { policies = await call(payload); renderBrandList(); renderRetSummary(); }
     catch (e) { toast(e.message, true); if (btn) btn.disabled = false; }
   }
   function retEditor(b, start) {
@@ -452,7 +454,7 @@
       // The server reads as many as fit in about two minutes; keep going until none are left.
       for (let round = 1; round <= 6; round++) {
         btn.textContent = `Reading return policies… (round ${round}, takes a few minutes)`;
-        const out = await brandCall({ action: "policyReadAll" });
+        const out = await call({ action: "policyReadAll" }); // runs alongside brand actions, never blocks them
         policies = out.policies || policies; renderBrandList(); renderRetSummary();
         if (!out.left || !out.done) break;
       }
