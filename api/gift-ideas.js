@@ -13,6 +13,7 @@
 // It's a GET so Vercel's CDN can cache each answer: identical searches within CACHE_SECONDS
 // are served free. Needs ANTHROPIC_API_KEY in the Vercel project's environment variables.
 import Anthropic from "@anthropic-ai/sdk";
+import { interestScorer } from "./_lib/vocabulary.js";
 import { readData } from "./_lib/store.js";
 import { readCatalog } from "./_lib/catalog.js";
 import { cleanInterests } from "./_lib/interests.js";
@@ -254,19 +255,18 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   const [own, catalog] = await Promise.all([ownPicks(recipient, occasion), readCatalog()]);
   const inRange = (price) => price >= range.min && price <= range.max;
 
+  // What the shopper's interests mean in product words (see _lib/vocabulary.js).
+  const scorer = interestScorer(tags);
+  const score = (i) => (scorer ? scorer(i) : 0);
+  // Disha's own picks join only when they fit the interests (a book isn't "Food & treats").
   const picks = own
     .map((p) => ({ ...p, priceNum: rupees(p.price) }))
     .filter((p) => p.image && (p.priceNum == null || inRange(p.priceNum)))
+    .filter((p) => !scorer || score({ title: p.name, tags: p.tags, blurb: `${p.note} ${p.line || ""}` }) >= 1)
     .slice(0, 30);
   const items = catalog.items.filter((i) => inRange(i.price));
 
   // Interest matches first, then a fair share of every brand, so a big shop can't drown the rest.
-  const words = tags.flatMap((t) => t.toLowerCase().split(/[\s,/&+-]+/)).filter((w) => w.length > 2);
-  const score = (i) => {
-    if (!words.length) return 0;
-    const hay = `${i.title} ${i.type} ${i.tags.join(" ")} ${i.blurb}`.toLowerCase();
-    return words.reduce((s, w) => s + (hay.includes(w) ? (i.title.toLowerCase().includes(w) ? 3 : 1) : 0), 0);
-  };
   const byBrand = new Map();
   for (const i of items) {
     const s = score(i) + seeded(`${i.id}:${variant}`) * 0.5; // the variant reshuffles ties, for "Show different ideas"
@@ -274,7 +274,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
     byBrand.get(i.brandId).push({ i, s });
   }
   const queues = [...byBrand.values()].map((list) => list.sort((a, b) => b.s - a.s));
-  const matched = items.length && words.length ? queues.flatMap((q) => q.filter((x) => x.s >= 1)).sort((a, b) => b.s - a.s).slice(0, 150) : [];
+  const matched = items.length && scorer ? queues.flatMap((q) => q.filter((x) => x.s >= 1)).sort((a, b) => b.s - a.s).slice(0, 150) : [];
   const chosen = new Set(matched.map((x) => x.i));
   for (let round = 0; chosen.size < SHORTLIST - picks.length && queues.some((q) => q.length > round); round++) {
     for (const q of queues) if (q[round]) chosen.add(q[round].i);
