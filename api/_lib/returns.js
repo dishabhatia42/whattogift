@@ -1,11 +1,12 @@
 // Return labels: each brand's return/refund policy, read from its own website and turned into a
-// few plain facts ("7-day refund, not on food"). A clear policy is approved automatically; a vague,
-// conditional or exception-heavy one waits for Disha in Manage, with the reason, because a wrong
-// label is worse than none.
+// few plain facts ("7-day refund, not on food"). Clear readings go on cards straight away; when the
+// AI wasn't sure, the card shows no label (a wrong one is worse than none). Disha can set or correct
+// any brand herself in Manage.
 //
 // Stored in gift-finder/policies.json as { [brandId]: { latest, approved, status, readAt } }.
-// `latest` is the newest reading; `approved` is what cards show. If a re-read finds a different
-// policy, the old approved one stays on cards until she approves the change.
+// `latest` is the newest reading; `approved` is what cards show: the latest reading when it was
+// clear, or the label Disha set herself (kept until the brand's policy changes). status: "approved"
+// (on cards), "unsure" (read, but not clear enough to show), "failed" (couldn't read).
 import Anthropic from "@anthropic-ai/sdk";
 import { head } from "@vercel/blob";
 import { readFresh, updateJson } from "./store.js";
@@ -36,7 +37,7 @@ export function cleanSummary(s) {
   const kind = KINDS.includes(s.kind) ? s.kind : "unknown";
   const days = Number.isInteger(s.days) && s.days > 0 && s.days <= 365 ? s.days : 0;
   return {
-    kind, days: kind === "none" || kind === "unknown" ? 0 : days,
+    kind, days: ["none", "unknown", "damaged"].includes(kind) ? 0 : days,
     excludes: [...new Set((Array.isArray(s.excludes) ? s.excludes : []).filter((e) => EXCLUDES.includes(e)))],
     note: shorten(typeof s.note === "string" ? s.note : "", 160),
     source: typeof s.source === "string" && /^https:\/\//.test(s.source) ? s.source.slice(0, 300) : "",
@@ -51,15 +52,18 @@ function cleanAll(raw) {
   const out = {};
   for (const [id, r] of Object.entries(raw && typeof raw === "object" ? raw : {})) {
     if (!/^[a-z0-9-]{1,60}$/.test(id) || !r || typeof r !== "object") continue;
-    const latest = cleanSummary(r.latest), approved = cleanSummary(r.approved);
+    const latest = cleanSummary(r.latest);
+    let approved = cleanSummary(r.approved), status = r.status;
+    // Readings saved before the clarity check existed weren't checked: hidden until re-read.
+    if (["pending", "changed"].includes(status)) { status = approved ? "approved" : latest ? "unsure" : "failed"; }
     out[id] = {
       latest, approved,
-      status: ["pending", "approved", "changed", "failed"].includes(r.status) ? r.status : "pending",
+      status: ["approved", "unsure", "failed"].includes(status) ? status : latest ? "unsure" : "failed",
       readAt: Number(r.readAt) || 0,
       error: typeof r.error === "string" ? r.error.slice(0, 160) : "",
       auto: r.auto === true,                                  // approved automatically (vs by Disha)
       manual: r.manual === true,                              // Disha set or edited it herself
-      review: typeof r.review === "string" ? r.review.slice(0, 120) : "", // why it needs her
+      review: typeof r.review === "string" ? r.review.slice(0, 120) : (["pending", "changed"].includes(r.status) && !r.approved ? "Read before the clarity check: click Read return policies" : ""), // why it isn't shown
     };
   }
   return out;
@@ -179,6 +183,7 @@ kind:
 - "none": no returns at all.
 - "unknown": the text isn't a return policy, or it's too unclear to say.
 If the policy offers a choice that includes money back, use "refund".
+If it says returns are generally not accepted (or not accepted for change of mind) and only damaged, defective or wrong items are taken back, use "damaged", even if a refund is then given. The days of a "report damage within 48 hours" rule are not a return window: use days 0 for "damaged".
 days: how many days after delivery the customer has to ask, 0 if not stated.
 excludes: groups the policy says can't be returned even though other things can: food (incl. tea, coffee, chocolate and anything edible), personalised (customised, engraved, made to order), sale (discounted or sale items), beauty (cosmetics, skincare, perfume, opened beauty products), jewellery (incl. earrings for hygiene), clothing, plants. Only list groups the policy actually names.
 note: one short plain sentence (under 120 characters) a shopper would want to know (e.g. "Return shipping is paid by you."), or "".
@@ -228,11 +233,10 @@ function applyReading(list, brand, r) {
   const base = { ...old, latest: r.summary, error: "", review: r.review, readAt: now };
   // Disha's own label stays as long as the policy hasn't changed since she set it.
   if (old.manual && old.approved && sameSummary(old.latest, r.summary)) return { ...list, [brand.id]: { ...base, status: "approved" } };
-  // Clear policy: approved automatically (also when it changed since last time).
-  if (!r.review) return { ...list, [brand.id]: { ...base, approved: r.summary, status: "approved", auto: true, manual: false } };
-  // Needs Disha. If cards already show an approved label, it stays until she decides.
-  const status = old.approved ? (sameSummary(old.approved, r.summary) ? "approved" : "changed") : "pending";
-  return { ...list, [brand.id]: { ...base, status } };
+  // Clear: straight onto cards. Not sure: no label on cards (Disha can set one in Manage).
+  return { ...list, [brand.id]: r.review
+    ? { ...base, approved: null, status: "unsure", auto: false, manual: false }
+    : { ...base, approved: r.summary, status: "approved", auto: true, manual: false } };
 }
 const safeRead = (brand) => readPolicy(brand).catch((err) => ({ error: String(err?.message || err).slice(0, 160) }));
 

@@ -247,9 +247,9 @@
       <div class="ret-bar" id="ret-bar">
         <span id="ret-summary">Return labels: loading…</span>
         <button type="button" id="ret-read">Read return policies</button>
-        <label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="ret-only"> Only brands to review</label>
+        <label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="ret-only"> Only ones not on cards</label>
       </div>
-      <p class="muted" style="margin:0">Return labels ("7-day refund", "No returns") show on product cards once approved. Clear policies are approved automatically; vague or complicated ones wait here for you, with the reason.</p>
+      <p class="muted" style="margin:0">Return labels ("7-day refund", "No returns") are read from each brand's own policy. Clear ones show on its product cards automatically; when the AI isn't sure, cards show no label. Use Edit to set or correct any brand yourself.</p>
 
       <!-- your brands -->
       <div class="row" style="justify-content:space-between;margin-top:8px">
@@ -390,13 +390,14 @@
     const main = { refund: d ? `${d}refund` : "Refunds accepted", exchange: d ? `${d}exchange` : "Exchange only", credit: d ? `${d}store credit` : "Store credit only", damaged: "Replaced if damaged", none: "No returns" }[s.kind];
     return s.excludes?.length && s.kind !== "none" ? `${main} · not on ${s.excludes.join(", ")}` : main;
   }
+  // Worth a look: not read yet, couldn't be read, or the AI wasn't sure (and Disha hasn't set it herself).
   const retNeedsReview = (id) => { const p = policies[id]; return !p || p.status !== "approved"; };
   function renderRetSummary() {
     const ids = brandData.brands.map((b) => b.id);
-    const approved = ids.filter((id) => policies[id]?.status === "approved").length;
-    const review = ids.filter((id) => ["pending", "changed"].includes(policies[id]?.status)).length;
+    const live = ids.filter((id) => policies[id]?.status === "approved" && policies[id].approved?.kind !== "unknown").length;
+    const unsure = ids.filter((id) => policies[id]?.status === "unsure").length;
     const unread = ids.filter((id) => !policies[id]).length, failed = ids.filter((id) => policies[id]?.status === "failed").length;
-    $("#ret-summary").textContent = `Return labels: ${approved} approved` + (review ? ` · ${review} to review` : "") + (unread ? ` · ${unread} not read yet` : "") + (failed ? ` · ${failed} couldn't be read` : "");
+    $("#ret-summary").textContent = `Return labels: ${live} showing on cards` + (unsure ? ` · ${unsure} not shown (AI wasn't sure)` : "") + (unread ? ` · ${unread} not read yet` : "") + (failed ? ` · ${failed} couldn't be read` : "");
   }
   async function retCall(payload, btn) {
     if (btn) btn.disabled = true;
@@ -408,7 +409,7 @@
     const kind = mk("select"); for (const [v, t] of RET_KINDS) { const o = mk("option", "", t); o.value = v; kind.appendChild(o); } kind.value = start?.kind || "refund";
     const days = mk("input"); days.type = "number"; days.min = "0"; days.max = "365"; days.value = start?.days || ""; days.placeholder = "days";
     const ex = RET_EXCLUDES.map((e) => { const l = mk("label"), c = mk("input"); c.type = "checkbox"; c.value = e; c.checked = !!start?.excludes?.includes(e); l.append(c, document.createTextNode(e)); return l; });
-    const save = mk("button", "primary", "Save & approve"); save.type = "button";
+    const save = mk("button", "primary", "Save"); save.type = "button";
     const cancel = mk("button", "", "Cancel"); cancel.type = "button";
     save.addEventListener("click", () => retCall({ action: "policyApprove", id: b.id, summary: { kind: kind.value, days: parseInt(days.value, 10) || 0, excludes: ex.map((l) => l.firstChild).filter((c) => c.checked).map((c) => c.value), note: "" } }, save));
     cancel.addEventListener("click", () => box.remove());
@@ -423,14 +424,16 @@
     const source = (s) => { if (!s?.source) return null; const a = mk("a", "", "their policy ↗"); a.href = s.source; a.target = "_blank"; a.rel = "noopener noreferrer"; return a; };
     if (!p) { line.classList.add("todo"); line.append(mk("span", "tag", "Returns: not read yet"), reread("Read now")); }
     else if (p.status === "failed") { line.classList.add("bad"); line.append(mk("span", "tag", `Returns: ${p.error || "couldn't read"}`), reread("Try again"), edit); }
-    else if (p.status === "approved") { line.classList.add("ok"); line.append(mk("span", "tag", `✓ ${retText(p.approved)}`), mk("span", "muted", p.auto ? "(clear policy, approved automatically)" : p.manual ? "(set by you)" : "(approved by you)"), source(p.approved) || "", edit, reread("Re-read")); }
-    else {
+    else if (p.status === "unsure") {
+      // Not on cards: the AI wasn't sure. Shows what it read, so Disha can set it with Edit if she likes.
       line.classList.add("todo");
-      const approve = btn("✓ Approve", (x) => retCall({ action: "policyApprove", id: b.id }, x), "primary");
-      line.append(mk("span", "tag", p.status === "changed" ? `Policy changed: now ${retText(p.latest)} (cards still show ${retText(p.approved)})` : `Returns: ${retText(p.latest)}`), source(p.latest) || "", approve, edit);
+      line.append(mk("span", "tag", `Not on cards: AI wasn't sure (${p.review || "unclear policy"})`), mk("span", "muted", p.latest ? `It read: ${retText(p.latest)}` : ""), source(p.latest) || "", edit, reread("Re-read"));
+      if (p.latest?.note) line.appendChild(mk("span", "muted", p.latest.note));
     }
-    if (p && p.status !== "approved" && p.status !== "failed" && p.review) line.appendChild(mk("span", "tag", `Needs you: ${p.review}`));
-    if (p?.latest?.note && p.status !== "approved") line.appendChild(mk("span", "muted", p.latest.note));
+    else {
+      line.classList.add("ok");
+      line.append(mk("span", "tag", `${p.approved?.kind === "unknown" ? "No label" : "On cards"}: ${retText(p.approved)}`), mk("span", "muted", p.manual ? "(set by you)" : ""), source(p.approved || p.latest) || "", edit, reread("Re-read"));
+    }
     return line;
   }
   $("#ret-only").addEventListener("change", () => { brandPage = 1; renderBrandList(); });
