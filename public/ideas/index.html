@@ -90,11 +90,14 @@
   const who = resultsTitle(state).replace(/^.*? (?:ideas )?for /, "").replace(/, just because$/, "");
   const plural = state.recipient === "parents" || state.recipient === "couple";
   // "The couple are/is…" reads awkwardly either way, so a couple gets "These two are going to love it!"
-  const finalTitle = state.recipient === "couple" ? "These two are going to love it!"
+  const self = state.recipient === "self"; // shopping for themselves: the page talks to "you"
+  const finalTitle = self ? "Go on, you deserve this!"
+    : state.recipient === "couple" ? "These two are going to love it!"
     : `${who.charAt(0).toUpperCase()}${who.slice(1)} ${plural ? "are" : "is"} going to love it!`;
   document.title = `${resultsTitle(state)} · Serial Gifter`;
   $("edit").href = "/?" + key;
   $("kicker").textContent = `The gift edit / ${who}`;
+  if (self) { $("again").textContent = "Not quite your vibe? Refine ↓"; $("refine-h").textContent = "Not quite your vibe?"; }
 
   // What they picked, as one quiet line that takes them back to change it:
   // "Anniversary · ₹1,000–₹3,000 · Food & treats +2"
@@ -168,7 +171,8 @@
       a.textContent = "Find it ↗";
       track(a, "Idea search click", { store: idea.store || "amazon", idea: idea.name, position: n + 1 });
     }
-    const hint = track(el("button", "hint-btn", "Drop a hint ↗"), "Drop a hint", { product: idea.name }); hint.type = "button";
+    // Treating yourself? The hint is the point: send it to whoever might buy it for you.
+    const hint = track(el("button", "hint-btn" + (self ? " loud" : ""), self ? "Drop a hint 👀" : "Drop a hint ↗"), "Drop a hint", { product: idea.name, self }); hint.type = "button";
     // Shares a Serial Gifter page for this gift (rich WhatsApp preview), so the friend who gets it meets us too.
     hint.addEventListener("click", () => share(idea, idea.pid ? `${location.origin}/h/${encodeURIComponent(idea.pid)}` : a.href, hint));
     const acts = el("div", "acts"); acts.append(a, hint);
@@ -198,7 +202,7 @@
   function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2200); }
   const isPhone = matchMedia("(hover: none) and (pointer: coarse)").matches;
   async function share(idea, url, btn) {
-    const text = `Not saying anything… but ${idea.name} would make a very good gift 👀`;
+    const text = `Not saying anything… but ${idea.name} would make a very good gift${self ? " for me" : ""} 👀`;
     if (isPhone && navigator.share) {
       try { await navigator.share({ title: idea.name, text, url }); }
       catch (e) { if (e && e.name !== "AbortError") copyHint(text, url); }
@@ -267,7 +271,7 @@
       loading(false);
       list.textContent = "";
       data.ideas.forEach((idea, i) => list.appendChild(card(idea, i)));
-      $("count").textContent = `${data.ideas.length} little ways to make their day`; $("count").hidden = false;
+      $("count").textContent = `${data.ideas.length} little ways to ${self ? "treat yourself" : "make their day"}`; $("count").hidden = false;
       $("title").textContent = finalTitle;
       if (data.vibe) { $("vibe").textContent = data.vibe; $("vibe").hidden = false; }
       $("again").hidden = false; $("more").hidden = false;

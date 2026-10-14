@@ -19,6 +19,7 @@
     { id: "colleague", e: "💻", t: "Work bestie", ask: true },
     { id: "couple", e: "🥂", t: "A couple" },
     { id: "child", e: "🧸", t: "Little human", ask: true },
+    { id: "self", e: "✨", t: "Me, myself", ask: true },
   ];
   const GENDERS = [{ id: "him", t: "Him" }, { id: "her", t: "Her" }, { id: "any", t: "Either" }];
   const OCCASIONS = [
@@ -26,18 +27,23 @@
     { id: "anniversary", t: "Anniversary" },
     { id: "wedding", t: "Wedding" },
     { id: "just-because", t: "Just because" },
+    { id: "win", t: "A win to celebrate" },
   ];
-  // A couple doesn't share a birthday; a child has no anniversary or wedding.
+  // A couple doesn't share a birthday; a child has no anniversary or wedding. A treat for yourself
+  // is a birthday, a win or just because (and "a win" is only offered there, for now).
+  const only = (...ids) => ids.map((id) => OCCASIONS.find((o) => o.id === id));
   const occasionsFor = (r) =>
-    r === "couple" ? OCCASIONS.filter((o) => o.id !== "birthday")
-    : r === "child" ? OCCASIONS.filter((o) => o.id === "birthday" || o.id === "just-because")
-    : OCCASIONS;
+    r === "self" ? only("birthday", "win", "just-because")
+    : r === "couple" ? only("anniversary", "wedding", "just-because")
+    : r === "child" ? only("birthday", "just-because")
+    : only("birthday", "anniversary", "wedding", "just-because");
   // Ordered long + short in pairs, so on a phone two always share a line (four tidy rows, not six to eight).
   const BASE_INTERESTS = ["Fashion & style", "Books & stories", "Home & cosy things", "Experiences", "Fitness & wellness", "All things tech", "Handmade & artsy", "Food & treats"];
   const SUGGESTIONS = {
     default: BASE_INTERESTS,
     partner: [...BASE_INTERESTS, "Jewellery", "Personalised"],
     friend: [...BASE_INTERESTS, "Skincare", "Memories"],
+    self: [...BASE_INTERESTS, "Skincare", "Little luxuries"],
     mom: [...BASE_INTERESTS, "Ethnic wear", "Spiritual"],
     dad: [...BASE_INTERESTS, "Watches", "Health"],
     parents: [...BASE_INTERESTS, "Health", "Spiritual"],
@@ -50,7 +56,7 @@
   const INTEREST_EMOJI = {
     "Fashion & style": "👗", "All things tech": "📱", "Books & stories": "📚", "Experiences": "🎟️",
     "Home & cosy things": "🪴", "Fitness & wellness": "🏋️", "Food & treats": "🍫", "Handmade & artsy": "🎨",
-    "Jewellery": "💍", "Personalised": "✨", "Skincare": "🧴", "Memories": "📸", "Ethnic wear": "🥻",
+    "Jewellery": "💍", "Personalised": "✨", "Skincare": "🧴", "Memories": "📸", "Little luxuries": "🛁", "Ethnic wear": "🥻",
     "Spiritual": "🪔", "Watches": "⌚", "Health": "🩺", "Gaming": "🎮", "Desk & office": "🖇️",
     "Coffee & tea": "☕", "Kitchen": "🍳", "Toys & games": "🧸", "Art & craft": "🖍️", "Outdoor play": "⚽",
     "Learning & puzzles": "🧩",
@@ -132,8 +138,9 @@
       sibling: g === "him" ? "your brother" : g === "her" ? "your sister" : "your sibling",
       colleague: "your work bestie", couple: "the couple",
       child: g === "him" ? "a little boy" : g === "her" ? "a little girl" : "a little human",
+      self: "you",
     }[s.recipient];
-    const why = { birthday: "Birthday", anniversary: "Anniversary", wedding: "Wedding", "just-because": "" }[s.occasion];
+    const why = { birthday: "Birthday", anniversary: "Anniversary", wedding: "Wedding", win: "Celebration", "just-because": "" }[s.occasion];
     return why ? `${why} ideas for ${who}` : `Ideas for ${who}, just because`;
   }
 

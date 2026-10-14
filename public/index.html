@@ -57,7 +57,7 @@
       <h2 id="s1">Who's the lucky human?</h2>
       <div class="suggest" id="recipients" role="group" aria-labelledby="s1"></div>
       <div class="gender" id="gender-row" hidden>
-        <span>Are they…</span>
+        <span id="gender-q">Are they…</span>
         <div class="suggest" id="genders" role="group" aria-label="Him, her or either"></div>
       </div>
     </section>
@@ -68,14 +68,14 @@
     </section>
 
     <section class="step rise" style="--i:3" aria-labelledby="s2">
-      <div class="step-head"><h2 id="s2">What makes them tick?</h2><p class="sub">Tell us what they're into. We'll do the digging.</p></div>
+      <div class="step-head"><h2 id="s2">What makes them tick?</h2><p class="sub" id="s2-sub">Tell us what they're into. We'll do the digging.</p></div>
       <div class="suggest" id="suggest" aria-label="Suggested keywords"></div>
       <div class="tagbox" id="tagbox">
         <input id="taginput" type="text" maxlength="30" placeholder="+ Oddly specific? Pottery, F1, frogs…" aria-label="Add something they're into" enterkeyhint="done">
       </div>
       <button class="discover" id="discover" type="button" aria-pressed="false">
         <span class="sw" aria-hidden="true"></span>
-        <span class="txt"><strong>✨ Open a new world</strong><small>Introduce them to something they've never tried.</small></span>
+        <span class="txt"><strong>✨ Open a new world</strong><small id="discover-sub">Introduce them to something they've never tried.</small></span>
       </button>
       <p class="fine">Optional. The little details make the best gifts.</p>
     </section>
@@ -87,7 +87,7 @@
     </section>
 
     <div class="cta-wrap rise" style="--i:5" id="cta">
-      <button class="go waiting" id="go" type="button" aria-disabled="true">Find gifts they'll actually love <span class="arr" aria-hidden="true">→</span></button>
+      <button class="go waiting" id="go" type="button" aria-disabled="true"><span id="go-txt">Find gifts they'll actually love</span> <span class="arr" aria-hidden="true">→</span></button>
       <p class="note" id="mug" hidden>Because another generic coffee mug isn't the answer.</p>
     </div>
     <div id="cta-end" aria-hidden="true" style="margin-top:-36px;height:1px"></div>
@@ -170,7 +170,13 @@
     else if (!visible) el.hidden = true;
   }
 
+  // Shopping for yourself: the questions talk to "you" instead of "them".
+  const VOICE = {
+    them: { "gender-q": "Are they…", s2: "What makes them tick?", "s2-sub": "Tell us what they're into. We'll do the digging.", "discover-sub": "Introduce them to something they've never tried.", s3: "How much are we spoiling them?", "go-txt": "Find gifts they'll actually love" },
+    you: { "gender-q": "Are you…", s2: "What makes you tick?", "s2-sub": "Tell us what you're into. We'll do the digging.", "discover-sub": "Discover something you've never tried.", s3: "How much are we spoiling you?", "go-txt": "Find something you'll actually love" },
+  };
   function render() {
+    for (const [id, t] of Object.entries(VOICE[state.recipient === "self" ? "you" : "them"])) $(id).textContent = t;
     for (const b of $("recipients").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.recipient));
     const occBox = $("occasions"); occBox.textContent = "";
     pills(occBox, occasionsFor(state.recipient), (id) => { state.occasion = id; render(); });
