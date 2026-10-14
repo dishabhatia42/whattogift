@@ -54,7 +54,8 @@ const BUDGETS = {
   "7000-plus": { text: "₹7,000 and above", min: 7000, max: Infinity },
 };
 
-const STORES = ["amazon", "myntra", "nykaa", "flipkart"];
+// "web" is a plain web search, for experiences (classes, tastings, outings) that shopping sites don't sell.
+const STORES = ["amazon", "myntra", "nykaa", "flipkart", "web"];
 // Refinements from the results page ("Not quite their vibe?"), one instruction each.
 const TUNES = {
   unusual: "Go less obvious: skip the gifts everyone thinks of first.",
@@ -141,7 +142,7 @@ You get a person to shop for and a shortlist of real, in-stock products (one per
 Return:
 - vibe: one short, warm line summing up the person, like "Bookish, cosy, and a little sentimental." 8 words max.
 - picks: the 10 shortlist products this person would love most, best first. Use each product's exact ref. Choose for suitability, not popularity: a gift must suit who they are, the occasion and their interests, and you must be able to say exactly why. Prefer giftable things (lovely to unwrap, a treat, beautifully made) over everyday basics. Spread across different kinds of gifts and brands; no near-duplicates (e.g. two similar coffees). Leave out anything you can't defend. ★ products are good bets when they genuinely fit.
-- ideas: gift ideas for gaps the shortlist can't fill (e.g. an interest no product covers, or experiences), 0 to 3 of them. Each must be a concrete thing to buy online in India, never "something nice". These are shown as labelled ideas with a store search, so give name, a realistic rupee price_range within budget, a short search_query and the best store: amazon (default), myntra (fashion), nykaa (beauty), flipkart.
+- ideas: gift ideas for gaps the shortlist can't fill (e.g. an interest no product covers, or experiences), 0 to 3 of them. Each must be a concrete thing to buy or book in India, never "something nice". These are shown as labelled ideas with a search link, so give name, a realistic rupee price_range within budget, a short search_query and the best store: amazon (default), myntra (fashion), nykaa (beauty), flipkart, or web for experiences (a class, workshop, tasting or outing; its search_query names the experience, e.g. "pottery workshop for beginners").
 
 For every pick and idea:
 - label: a playful personality label for who it's for, 2 to 5 words, like "For their bookish era", "The sentimental pick". Each one different.
@@ -182,6 +183,8 @@ export default async function handler(req, res) {
     buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags, range, variant }),
     readData().then((d) => d.affiliates, () => undefined),
   ]);
+  // Picked "Experiences" or asked for more of them: room on the page for experience ideas.
+  const wantsExperiences = tunes.includes("experiences") || tags.some((t) => t.toLowerCase() === "experiences");
   const prompt = [
     `Gift for: ${recipient}${GENDERS[q.gender] ? ` (${GENDERS[q.gender]})` : ""}`,
     `Occasion: ${occasion}`,
@@ -192,6 +195,7 @@ export default async function handler(req, res) {
       ? "Mix: open a new world for them. About half familiar picks, a few \"new\" ones that introduce something they've never tried but connects to what they love, and one wildcard."
       : "Mix: mostly familiar picks, with at most one gentle wildcard.",
     ...tunes.map((t) => `Refinement: ${TUNES[t]}`),
+    wantsExperiences ? "Experiences: include 2 or 3 experience ideas (a class, workshop, tasting or outing they'd love), with store web." : "",
     variant > 1 ? `Variation ${variant}: the shopper asked for different options; skip the most obvious picks and favour fresh alternatives.` : "",
     "",
     shortlist.length ? `Shortlist (${shortlist.length} products):\n${shortlist.map((s) => s.line).join("\n")}` : "Shortlist: empty (give 6 to 8 ideas instead).",
@@ -218,7 +222,7 @@ export default async function handler(req, res) {
     }
 
     // Every link out carries the affiliate ID or UTM tags (see _lib/links.js).
-    const ideas = assemble(data, shortlist, { roomForIdeas: tunes.includes("experiences") ? 3 : 0 })
+    const ideas = assemble(data, shortlist, { roomForIdeas: wantsExperiences ? 3 : 0 })
       .map((i) => {
         const url = outbound(i.url, affiliates);
         const out = { ...i, url, affiliate: isAffiliate(url, affiliates || undefined) };
@@ -365,6 +369,7 @@ function storeUrl(store, query) {
     case "myntra": return `https://www.myntra.com/${encodeURIComponent(query.trim().toLowerCase().replace(/\s+/g, "-"))}?rawQuery=${q}`;
     case "nykaa": return `https://www.nykaa.com/search/result/?q=${q}`;
     case "flipkart": return `https://www.flipkart.com/search?q=${q}`;
+    case "web": return `https://www.google.com/search?q=${q}`;
     default: return `https://www.amazon.in/s?k=${q}`;
   }
 }

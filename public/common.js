@@ -39,7 +39,8 @@
     : only("birthday", "anniversary", "wedding", "just-because");
   // What the brands in the catalogue actually sell most (see api/_lib/vocabulary.js for what each
   // one matches). Ordered long + short in pairs, so on a phone two always share a line.
-  const BASE_INTERESTS = ["Journals & stationery", "Books", "Kitchen & dining", "Jewellery", "Fashion & sarees", "Coffee & tea", "Beauty & fragrance", "Art & DIY", "Food & treats", "Home decor"];
+  // "Experiences" mostly brings experience ideas (classes, tastings, outings) that link to a web search.
+  const BASE_INTERESTS = ["Journals & stationery", "Books", "Kitchen & dining", "Jewellery", "Fashion & sarees", "Coffee & tea", "Beauty & fragrance", "Art & DIY", "Food & treats", "Home decor", "Experiences"];
   const SUGGESTIONS = {
     default: BASE_INTERESTS,
     partner: [...BASE_INTERESTS, "Bags & wallets", "Little luxuries"],
@@ -59,7 +60,7 @@
     "Coffee & tea": "☕", "Beauty & fragrance": "💄", "Art & DIY": "🎨", "Food & treats": "🍫", "Home decor": "🛋️",
     "Bags & wallets": "👜", "Little luxuries": "🛁", "Games & puzzles": "🎲", "Plants": "🪴", "Spiritual": "🪔",
     "Tech & audio": "🎧", "Sneakers": "👟", "Desk & office": "🖇️", "Toys & games": "🧸", "LEGO & models": "🧱",
-    "Learning & puzzles": "🧩",
+    "Learning & puzzles": "🧩", "Experiences": "🎟️",
   };
   const BUDGETS = [
     { id: "under-1000", t: "Under ₹1,000" },
@@ -76,7 +77,7 @@
     { id: "experiences", t: "More experiences" },
     { id: "noclutter", t: "No clutter" },
   ];
-  const STORE_NAMES = { amazon: "Amazon", myntra: "Myntra", nykaa: "Nykaa", flipkart: "Flipkart" };
+  const STORE_NAMES = { amazon: "Amazon", myntra: "Myntra", nykaa: "Nykaa", flipkart: "Flipkart", web: "Google" };
   const asksGender = (r) => !!RECIPIENTS.find((x) => x.id === r)?.ask;
   const safeHref = (u) => /^https:\/\//.test(u || "") ? u : null;
 

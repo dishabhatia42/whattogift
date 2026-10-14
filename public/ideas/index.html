@@ -167,7 +167,7 @@
       track(a, "Shop click", { brand: idea.brand || new URL(idea.url).hostname.replace(/^www\./, ""), product: idea.name, price: idea.price || idea.price_range, kind: idea.own ? "our pick" : "brand", position: n + 1, recipient: state.recipient, occasion: state.occasion });
     }
     else {
-      a.href = /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com)\//.test(idea.url) ? idea.url : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
+      a.href = /^https:\/\/www\.(amazon\.in|myntra\.com|nykaa\.com|flipkart\.com|google\.com)\//.test(idea.url) ? idea.url : "https://www.amazon.in/s?k=" + encodeURIComponent(idea.name);
       a.textContent = "Find it ↗";
       track(a, "Idea search click", { store: idea.store || "amazon", idea: idea.name, position: n + 1 });
     }

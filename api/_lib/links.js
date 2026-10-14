@@ -8,7 +8,7 @@ export const DEFAULT_AFFILIATES = [{ domain: "amazon.in", param: "tag", value: "
 
 const UTM = { utm_source: "serialgifter", utm_medium: "referral", utm_campaign: "gift_finder" };
 // Big marketplaces ignore UTM tags (and Amazon's rules frown on extra parameters), so they only get affiliate IDs.
-const MARKETPLACES = /(^|\.)(amazon\.in|amazon\.com|flipkart\.com|myntra\.com|nykaa\.com|ajio\.com|meesho\.com|tatacliq\.com)$/;
+const MARKETPLACES = /(^|\.)(amazon\.in|amazon\.com|flipkart\.com|myntra\.com|nykaa\.com|ajio\.com|meesho\.com|tatacliq\.com|google\.com)$/; // big sites (and web searches) ignore UTM tags
 const JUNK = /^(srsltid|fbclid|gclid|gbraid|wbraid|igshid|mc_cid|mc_eid|_pos|_sid|_ss|_psq|_v|ref_?|pf_rd_\w+|pd_rd_\w+|content-id|crid|dib|dib_tag|qid|sprefix|sr|th|psc|social_share|linkCode|linkId|language)$/i;
 
 export function outbound(url, affiliates = DEFAULT_AFFILIATES, { utm = true } = {}) {
