@@ -91,6 +91,8 @@
     if (s.budget) p.set("budget", s.budget);
     const tags = [...new Set(s.tags.map((t) => t.toLowerCase()))].sort();
     if (tags.length) p.set("tags", tags.join(","));
+    const about = cleanAbout(s.about);
+    if (about) p.set("about", about);
     if (s.discover) p.set("new", "1");
     const tune = TUNES.filter((t) => (s.tune || []).includes(t.id)).map((t) => t.id);
     if (tune.length) p.set("tune", tune.join(","));
@@ -122,6 +124,17 @@
       .slice(0, 8);
   }
 
+  // "Tell us about them": free text, no visible limit. It travels in the link too, so it's kept to
+  // one tidy line, a quiet ceiling stops a link getting too long to work (about 300 words of
+  // English; less in scripts that take more room in a link), and rude words never show.
+  // The server tidies it again (api/_lib/about.js).
+  function cleanAbout(text) {
+    let t = typeof text === "string" ? text.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 1500) : "";
+    while (t && encodeURIComponent(t).length > 6000) t = t.slice(0, Math.floor(t.length * 0.9));
+    // Rude words are taken out (not the whole note: "she'd kill for good coffee" is fine).
+    return t.replace(new RegExp(BLOCKED.source, "gi"), "").replace(/\s+/g, " ").trim();
+  }
+
   // Reads answers from a URL, dropping anything that isn't a known option.
   function fromParams(p) {
     const recipient = RECIPIENTS.some((r) => r.id === p.get("recipient")) ? p.get("recipient") : null;
@@ -131,7 +144,8 @@
     const tags = cleanInterests((p.get("tags") || "").split(","));
     const discover = p.get("new") === "1";
     const tune = (p.get("tune") || "").split(",").filter((t) => TUNES.some((x) => x.id === t));
-    return { recipient, gender, occasion, budget, tags, discover, tune };
+    const about = cleanAbout(p.get("about") || "");
+    return { recipient, gender, occasion, budget, tags, about, discover, tune };
   }
 
   function resultsTitle(s) {
@@ -482,7 +496,7 @@
 
   window.WTG = {
     RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES, TUNES,
-    asksGender, safeHref, toParams, fromParams, resultsTitle, cleanInterests,
+    asksGender, safeHref, toParams, fromParams, resultsTitle, cleanInterests, cleanAbout,
     catalog, catalogReady, pickAds, mountFeatured, mountBoard, adMedia, track, SITE,
   };
 })();

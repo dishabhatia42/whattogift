@@ -39,6 +39,7 @@
     <p class="kicker" id="kicker">The gift edit</p>
     <h1 id="title">Putting our gifting brain to work…</h1>
     <p class="edit-vibe" id="vibe" hidden></p>
+    <p class="edit-heard" id="heard" hidden></p>
     <a class="edit-summary" id="chips" href="/" aria-label="Change your answers"></a>
   </header>
 
@@ -113,6 +114,7 @@
     // Who it's for is already in the line above ("The gift edit / your mom"), so it's left out here.
     const bits = [occ && occ.t, BUDGETS.find((b) => b.id === state.budget)?.t,
       tags.length ? tags[0] + (tags.length > 1 ? ` +${tags.length - 1}` : "") : "",
+      state.about && "✍️ Your note",
       state.discover && "✨ New world", tuned ? `${tuned} tweak${tuned > 1 ? "s" : ""}` : ""].filter(Boolean);
     const box = $("chips"); box.textContent = ""; box.href = "/?" + key;
     // Plain summary; "← Edit my picks" in the header is the way to change it (the line also links there).
@@ -270,15 +272,15 @@
   async function load() {
     if (busy) return;
     busy = true; $("shuffle").disabled = $("again").disabled = $("again2").disabled = $("refine").disabled = true; $("error").hidden = true;
-    $("count").hidden = true; $("vibe").hidden = true; $("more").hidden = true;
+    $("count").hidden = true; $("vibe").hidden = true; $("heard").hidden = true; $("more").hidden = true;
     variant = (variant % 3) + 1; // "Try again" cycles three cached answers
     const list = $("ideas"); list.textContent = "";
     for (let i = 0; i < 9; i++) list.appendChild(el("div", "card skeleton"));
     loading(true);
     try {
-      // The catalog version busts cached searches whenever products or ads change; p=14 is the answer format (14: one, two or multiple cities).
+      // The catalog version busts cached searches whenever products or ads change; p=15 is the answer format (15: reads the "about them" note).
       await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
-      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=14${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=15${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
       const data = await r.json().catch(() => ({}));
       if (r.status === 429) throw new Error(data.error || "busy");
       if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");
@@ -288,6 +290,8 @@
       $("count").textContent = `${data.ideas.length} little ways to ${self ? "treat yourself" : "make their day"}`; $("count").hidden = false;
       $("title").textContent = finalTitle;
       if (data.vibe) { $("vibe").textContent = data.vibe; $("vibe").hidden = false; }
+      // What we picked out of their note, so they can see it was read.
+      if (Array.isArray(data.heard) && data.heard.length) { $("heard").textContent = `Picked up on: ${data.heard.join(" · ")}`; $("heard").hidden = false; }
       $("bar-acts").hidden = false; $("more").hidden = false;
       const ads = pickAds(state).filter(Boolean);
       $("ads").textContent = ""; ads.forEach((ad, i) => $("ads").appendChild(adCard(ad, i)));
