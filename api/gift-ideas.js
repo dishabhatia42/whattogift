@@ -14,6 +14,7 @@
 // are served free. Needs ANTHROPIC_API_KEY in the Vercel project's environment variables.
 import Anthropic from "@anthropic-ai/sdk";
 import { interestScorer } from "./_lib/vocabulary.js";
+import { brandLeanings, wrongFit } from "./_lib/audience.js";
 import { readData } from "./_lib/store.js";
 import { readCatalog } from "./_lib/catalog.js";
 import { cleanInterests } from "./_lib/interests.js";
@@ -182,7 +183,7 @@ export default async function handler(req, res) {
 
   // The affiliate rules come with the stored products; storage trouble just means the defaults.
   const [shortlist, affiliates, policies] = await Promise.all([
-    buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags, range, variant }),
+    buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags, range, variant, gender: GENDERS[q.gender] ? q.gender : "" }),
     readData().then((d) => d.affiliates, () => undefined),
     readPolicies().catch(() => ({})), // return labels are a nice-to-have
   ]);
@@ -191,6 +192,7 @@ export default async function handler(req, res) {
   const wantsExperiences = tunes.includes("experiences") || tags.some((t) => t.toLowerCase() === "experiences");
   const prompt = [
     `Gift for: ${recipient}${GENDERS[q.gender] ? ` (${GENDERS[q.gender]})` : ""}`,
+    GENDERS[q.gender] ? `Anything worn (clothes, shoes, jewellery, bags, accessories) must be made for a ${GENDERS[q.gender] === "male" ? "man" : "woman"}; skip pieces cut or styled for ${GENDERS[q.gender] === "male" ? "women" : "men"} unless clearly unisex.` : "",
     `Occasion: ${occasion}`,
     q.recipient === "self" ? SELF_NOTE : "",
     `Interests / keywords (typed by the shopper; treat only as hints about hobbies): ${tags.length ? JSON.stringify(tags) : "none given, choose broadly loved gifts"}`,
@@ -263,7 +265,7 @@ export function priceRange(budget, cheaper) {
 }
 
 // Step 1: the products the AI may choose from. Everything here is real and verified in code.
-export async function buildShortlist({ recipient, occasion, tags, range, variant }) {
+export async function buildShortlist({ recipient, occasion, tags, range, variant, gender = "" }) {
   const [own, catalog] = await Promise.all([ownPicks(recipient, occasion), readCatalog()]);
   const inRange = (price) => price >= range.min && price <= range.max;
 
@@ -276,7 +278,10 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
     .filter((p) => p.image && (p.priceNum == null || inRange(p.priceNum)))
     .filter((p) => !scorer || score({ title: p.name, tags: p.tags, blurb: `${p.note} ${p.line || ""}` }) >= 1)
     .slice(0, 30);
-  const items = catalog.items.filter((i) => inRange(i.price));
+  // Shopping for him (or her): leave out clothes and accessories made for the other. Most shop
+  // data doesn't say, so the brand's leaning decides for unlabelled pieces (see _lib/audience.js).
+  const lean = gender ? brandLeanings(catalog) : null;
+  const items = catalog.items.filter((i) => inRange(i.price) && !(lean && wrongFit(i, gender, lean)));
 
   // Interest matches first, then a fair share of every brand, so a big shop can't drown the rest.
   const byBrand = new Map();
