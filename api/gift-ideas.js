@@ -70,7 +70,7 @@ const TUNES = {
 // URL, so a product, ad or nightly brand-catalogue change still refreshes everything at once.
 const CACHE_SECONDS = 7 * 24 * 60 * 60;
 
-const RESULTS = 8;          // cards on the page
+const RESULTS = 9;          // cards on the page (three full rows on a laptop)
 const PER_BRAND = 2;        // diversity: never more than this many from one brand
 const MAX_OWN = 3;          // Disha's own picks, at most this many per answer
 const SHORTLIST = 450;      // products the AI reads per search (~15k tokens, a fraction of a rupee)

@@ -45,7 +45,11 @@
   <section class="edit-collection" aria-live="polite">
     <div class="edit-bar">
       <h2 class="sec" id="count" hidden></h2>
-      <button class="link-btn" id="again" type="button" hidden>Not quite their vibe? Refine ↓</button>
+      <!-- Shuffle is the most-used button, so it sits up here, not only at the bottom. -->
+      <div class="bar-acts" id="bar-acts" hidden>
+        <button class="shuffle-btn" id="shuffle" type="button" data-umami-event="Shuffle" data-umami-event-where="top">↻ Shuffle</button>
+        <button class="link-btn" id="again" type="button">Not quite their vibe? Refine ↓</button>
+      </div>
     </div>
     <div class="cards" id="ideas"></div>
     <p class="error" id="error" role="alert" hidden></p>
@@ -62,7 +66,7 @@
     <div class="suggest" id="tunes" role="group" aria-labelledby="refine-h"></div>
     <div class="refine-acts">
       <button class="go small" id="refine" type="button" data-umami-event="Refine">Refine my picks <span class="arr" aria-hidden="true">→</span></button>
-      <button class="link-btn" id="again2" type="button" data-umami-event="Shuffle">Or just shuffle ↻</button>
+      <button class="link-btn" id="again2" type="button" data-umami-event="Shuffle" data-umami-event-where="bottom">Or just shuffle ↻</button>
       <a class="quiet-link" href="/">Shopping for someone else? →</a>
     </div>
   </section>
@@ -255,16 +259,16 @@
 
   async function load() {
     if (busy) return;
-    busy = true; $("again").disabled = $("again2").disabled = $("refine").disabled = true; $("error").hidden = true;
+    busy = true; $("shuffle").disabled = $("again").disabled = $("again2").disabled = $("refine").disabled = true; $("error").hidden = true;
     $("count").hidden = true; $("vibe").hidden = true; $("more").hidden = true;
     variant = (variant % 3) + 1; // "Try again" cycles three cached answers
     const list = $("ideas"); list.textContent = "";
-    for (let i = 0; i < 6; i++) list.appendChild(el("div", "card skeleton"));
+    for (let i = 0; i < 9; i++) list.appendChild(el("div", "card skeleton"));
     loading(true);
     try {
-      // The catalog version busts cached searches whenever products or ads change; p=8 is the answer format (8: real experiences, budget no bar).
+      // The catalog version busts cached searches whenever products or ads change; p=9 is the answer format (9: nine cards).
       await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
-      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=8${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=9${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
       const data = await r.json().catch(() => ({}));
       if (r.status === 429) throw new Error(data.error || "busy");
       if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");
@@ -274,7 +278,7 @@
       $("count").textContent = `${data.ideas.length} little ways to ${self ? "treat yourself" : "make their day"}`; $("count").hidden = false;
       $("title").textContent = finalTitle;
       if (data.vibe) { $("vibe").textContent = data.vibe; $("vibe").hidden = false; }
-      $("again").hidden = false; $("more").hidden = false;
+      $("bar-acts").hidden = false; $("more").hidden = false;
       const ads = pickAds(state).filter(Boolean);
       $("ads").textContent = ""; ads.forEach((ad, i) => $("ads").appendChild(adCard(ad, i)));
       $("sponsored").hidden = !ads.length;
@@ -289,13 +293,14 @@
       $("error").appendChild(retry);
       $("error").hidden = false;
     } finally {
-      busy = false; $("again").disabled = $("again2").disabled = $("refine").disabled = false;
+      busy = false; $("shuffle").disabled = $("again").disabled = $("again2").disabled = $("refine").disabled = false;
     }
   }
 
   const again = () => { load(); window.scrollTo({ top: 0, behavior: "smooth" }); };
   $("again").addEventListener("click", () => $("more").scrollIntoView({ behavior: "smooth", block: "center" }));
   $("again2").addEventListener("click", again);
+  $("shuffle").addEventListener("click", again);
   // Refine: new answers with these tweaks, and the URL remembers them.
   $("refine").addEventListener("click", () => {
     state.tune = [...$("tunes").children].filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.id);
