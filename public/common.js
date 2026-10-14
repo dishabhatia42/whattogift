@@ -36,6 +36,8 @@
     r === "self" ? only("birthday", "win", "just-because")
     : r === "couple" ? only("anniversary", "wedding", "just-because")
     : r === "child" ? only("birthday", "just-because")
+    // You don't buy your parents a wedding gift; their anniversary is the one that matters.
+    : ["mom", "dad", "parents"].includes(r) ? only("birthday", "anniversary", "just-because")
     : only("birthday", "anniversary", "wedding", "just-because");
   // What the brands in the catalogue actually sell most (see api/_lib/vocabulary.js for what each
   // one matches). Ordered long + short in pairs, so on a phone two always share a line.
