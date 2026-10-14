@@ -88,7 +88,6 @@
 
     <div class="cta-wrap rise" style="--i:5" id="cta">
       <button class="go waiting" id="go" type="button" aria-disabled="true"><span id="go-txt">Find gifts they'll actually love</span> <span class="arr" aria-hidden="true">→</span></button>
-      <p class="note" id="mug" hidden>Because another generic coffee mug isn't the answer.</p>
     </div>
     <div id="cta-end" aria-hidden="true" style="margin-top:-36px;height:1px"></div>
   </div>
@@ -212,7 +211,6 @@
     $("go").classList.toggle("waiting", !ready);
     $("go").setAttribute("aria-disabled", String(!ready));
     $("cta").classList.toggle("ready", ready);
-    $("mug").hidden = !ready;
     const note = BUDGETS.find((b) => b.id === state.budget)?.note;
     $("budget-note").textContent = note || "";
     $("budget-note").hidden = !note;
