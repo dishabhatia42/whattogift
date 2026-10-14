@@ -339,7 +339,7 @@ export function assemble(data, shortlist, { roomForIdeas = 0, discover = false }
     const p = s.product;
     out.push(s.own
       ? { ...words, kind: "product", own: true, pid: `o-${p.id}`, name: p.name, brand: "", url: p.url, image: p.image, price_range: p.price || "" }
-      : { ...words, kind: "product", pid: p.id, name: p.title, brand: p.brand, url: p.url, image: p.image, price: p.price, was: p.was || 0, from: !!p.options, price_range: `${p.options ? "From " : ""}₹${p.price.toLocaleString("en-IN")}` });
+      : { ...words, kind: "product", pid: p.id, name: p.title, brand: p.brand, url: p.url, image: p.image, price: Math.round(p.price), was: Math.round(p.was || 0), from: !!p.options, price_range: `${p.options ? "From " : ""}₹${Math.round(p.price).toLocaleString("en-IN")}` }); // whole rupees (some shops list paise)
   }
   for (const idea of data.ideas || []) {
     if (out.length >= RESULTS) break;
