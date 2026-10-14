@@ -6,7 +6,7 @@
 import { head } from "@vercel/blob";
 import { readFresh, updateJson } from "./store.js";
 import { readBrands, NOT_GIFTS } from "./brands.js";
-import { isExperience, whereIs } from "./places.js";
+import { isExperience, placesIn } from "./places.js";
 
 const CATALOG_PATH = "gift-finder/catalog.json";
 const PER_BRAND = 400;     // plenty for gifting; stops one huge shop crowding out the rest
@@ -181,8 +181,8 @@ export function wooItem(brand, p) {
 // which is longer than the blurb we keep. Stored only when found.
 function withPlace(item, fullText) {
   if (!isExperience(item)) return item;
-  const where = whereIs(`${item.title} ${fullText} ${item.url} ${item.image}`);
-  return where ? { ...item, where } : item;
+  const places = placesIn(`${item.title} ${fullText} ${item.url} ${item.image}`);
+  return places.length ? { ...item, places: places.slice(0, 12) } : item;
 }
 
 // One Shopify product -> one compact catalogue item, or null if it can't be shown honestly:

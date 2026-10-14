@@ -15,7 +15,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { interestScorer } from "./_lib/vocabulary.js";
 import { brandLeanings, wrongFit } from "./_lib/audience.js";
-import { placeOf } from "./_lib/places.js";
+import { placeOf, placesOf } from "./_lib/places.js";
 import { readData } from "./_lib/store.js";
 import { readCatalog } from "./_lib/catalog.js";
 import { cleanInterests } from "./_lib/interests.js";
@@ -312,7 +312,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
       ref: `p${++n}`,
       product: i,
       brand: i.brandId,
-      line: `p${n} | ${i.brand} | ${i.title} | ${i.type} | ₹${i.price.toLocaleString("en-IN")}${i.options ? "+" : ""} | ${[placeOf(i) && `in ${placeOf(i)}`, i.tags.join(", "), i.blurb].filter(Boolean).join(" — ")}`,
+      line: `p${n} | ${i.brand} | ${i.title} | ${i.type} | ₹${i.price.toLocaleString("en-IN")}${i.options ? "+" : ""} | ${[placesOf(i).length && `in ${placesOf(i).join(", ")}`, i.tags.join(", "), i.blurb].filter(Boolean).join(" — ")}`,
     });
   }
   return list;
@@ -340,7 +340,7 @@ export function assemble(data, shortlist, { roomForIdeas = 0, discover = false }
     const p = s.product;
     out.push(s.own
       ? { ...words, kind: "product", own: true, pid: `o-${p.id}`, name: p.name, brand: "", url: p.url, image: p.image, price_range: p.price || "" }
-      : { ...words, kind: "product", pid: p.id, name: p.title, brand: p.brand, url: p.url, image: p.image, price: Math.round(p.price), was: Math.round(p.was || 0), from: !!p.options, price_range: `${p.options ? "From " : ""}₹${Math.round(p.price).toLocaleString("en-IN")}`, ...(placeOf(p) ? { where: placeOf(p) } : {}) }); // whole rupees (some shops list paise); where = an experience's city
+      : { ...words, kind: "product", pid: p.id, name: p.title, brand: p.brand, url: p.url, image: p.image, price: Math.round(p.price), was: Math.round(p.was || 0), from: !!p.options, price_range: `${p.options ? "From " : ""}₹${Math.round(p.price).toLocaleString("en-IN")}`, ...(placeOf(p) ? { where: placeOf(p), places: placesOf(p) } : {}) }); // whole rupees (some shops list paise); where = an experience's city
   }
   for (const idea of data.ideas || []) {
     if (out.length >= RESULTS) break;

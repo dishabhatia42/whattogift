@@ -166,7 +166,12 @@
     meta.appendChild(price);
     body.append(meta);
     // Where an experience happens, so nobody gifts a Mumbai tour to someone in Delhi.
-    if (exact && idea.where) body.appendChild(el("p", "where", idea.where === "Online" ? "💻 Online" : `📍 ${idea.where}`));
+    // One place by name, two joined, three or more as "Multiple cities" (the full list on hover).
+    if (exact && idea.where) {
+      const w = el("p", "where", idea.where === "Online" ? "💻 Online" : `📍 ${idea.where}`);
+      if (Array.isArray(idea.places) && idea.places.length > 2) w.title = idea.places.join(", ");
+      body.appendChild(w);
+    }
     // The brand's return policy in two or three words (only ones the AI was sure about).
     if (exact && idea.returns) body.appendChild(el("p", "returns" + (idea.returns === "No returns" ? " none" : ""), (idea.returns === "No returns" ? "" : "↩ ") + idea.returns));
     body.append(el("p", "why", idea.why));
@@ -271,9 +276,9 @@
     for (let i = 0; i < 9; i++) list.appendChild(el("div", "card skeleton"));
     loading(true);
     try {
-      // The catalog version busts cached searches whenever products or ads change; p=13 is the answer format (13: city on experiences).
+      // The catalog version busts cached searches whenever products or ads change; p=14 is the answer format (14: one, two or multiple cities).
       await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
-      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=13${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=14${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
       const data = await r.json().catch(() => ({}));
       if (r.status === 429) throw new Error(data.error || "busy");
       if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");

@@ -24,28 +24,38 @@ const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "[\\
 const word = (list) => new RegExp(`(?:^|[^a-z])(?:${list.map(esc).join("|")})(?![a-z])`, "i");
 const PATTERNS = CITIES.map(([city, names]) => [city, word(names), NEAR[city] ? word(NEAR[city]) : null]);
 
-// "Mumbai", "Near Mumbai", "Online" or "".
-export function whereIs(text) {
+// Every place named, in the order they appear: ["Mumbai", "Near Pune", "Online"], or [].
+export function placesIn(text) {
   const t = String(text || "").replace(/[_/.]+/g, " "); // photo names: "chocolate-tour-wada-palghar-mumbai.jpg"
-  if (ONLINE.test(t)) return "Online";
-  let best = "", at = Infinity;
+  const found = [];
   for (const [city, re, nearRe] of PATTERNS) {
     const m = t.search(re), n = nearRe ? t.search(nearRe) : -1;
-    const near = n >= 0 || new RegExp(`near${"[\\s-]+"}(?:${CITIES.find((c) => c[0] === city)[1].map(esc).join("|")})`, "i").test(t);
-    const pos = Math.min(...[m, n].filter((x) => x >= 0));
-    if (pos < at) { at = pos; best = near ? `Near ${city}` : city; }
+    if (m < 0 && n < 0) continue;
+    const near = n >= 0 || new RegExp(`near[\\s-]+(?:${CITIES.find((c) => c[0] === city)[1].map(esc).join("|")})`, "i").test(t);
+    found.push([Math.min(...[m, n].filter((x) => x >= 0)), near ? `Near ${city}` : city]);
   }
-  return best;
+  const places = found.sort((a, b) => a[0] - b[0]).map(([, p]) => p);
+  if (ONLINE.test(t)) places.push("Online");
+  return places;
 }
+// What the card says: one place by name, two joined ("Mumbai & Bengaluru"), more as "Multiple cities".
+export function placeLabel(places) {
+  if (!places.length) return "";
+  if (places.length === 1) return places[0];
+  if (places.length === 2) return `${places[0]} & ${places[1]}`;
+  return "Multiple cities";
+}
+export const whereIs = (text) => placeLabel(placesIn(text));
 
 // Only experiences get a place: a mug "made in Jaipur" doesn't need one.
 const experience = interestScorer(["experiences"]);
 export const isExperience = (i) => experience({ title: i.title || "", type: i.type || "", tags: i.tags || [], blurb: "" }) >= 2;
 
-// The place for a catalogue item: worked out when the catalogue is read (`where`, from its full
+// The place for a catalogue item: worked out when the catalogue is read (`places`, from its full
 // description), or from its name, short description and photo name if it hasn't been yet.
-export function placeOf(i) {
-  if (!isExperience(i)) return "";
-  if (typeof i.where === "string") return i.where;
-  return whereIs(`${i.title} ${i.blurb || ""} ${i.url || ""} ${i.image || ""}`);
+export function placesOf(i) {
+  if (!isExperience(i)) return [];
+  if (Array.isArray(i.places)) return i.places;
+  return placesIn(`${i.title} ${i.blurb || ""} ${i.url || ""} ${i.image || ""}`);
 }
+export const placeOf = (i) => placeLabel(placesOf(i));
