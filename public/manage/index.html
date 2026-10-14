@@ -315,7 +315,7 @@
       showTab(tabFromUrl());
       renderProducts(); renderAds(); renderAffiliates();
       Promise.all([call({ action: "brandsLoad" }), call({ action: "catalogStatus" }), call({ action: "policiesLoad" }).catch(() => ({}))])
-        .then(([b, c, p]) => { brandData = b; report = c; policies = p || {}; renderBrands(); }, () => { $("#cat-status").textContent = "Couldn't load your brands."; });
+        .then(([b, c, p]) => { brandData = b; report = c; policies = p || {}; renderBrands(); autoReadPolicies(); }, () => { $("#cat-status").textContent = "Couldn't load your brands."; });
     } catch (e) { toast(e.message, true); }
   }
 
@@ -437,20 +437,27 @@
     return line;
   }
   $("#ret-only").addEventListener("change", () => { brandPage = 1; renderBrandList(); });
-  $("#ret-read").addEventListener("click", async (e) => {
-    const btn = e.currentTarget; btn.disabled = true;
+  $("#ret-read").addEventListener("click", () => readAllPolicies());
+  // Opening Manage reads, by itself, brands never read and readings from before the clarity check,
+  // so labels appear without anyone having to know about this button.
+  function autoReadPolicies() {
+    const stale = brandData.brands.some((b) => !policies[b.id] || /before the clarity check/.test(policies[b.id].review || ""));
+    if (stale) readAllPolicies(true);
+  }
+  async function readAllPolicies(auto = false) {
+    const btn = $("#ret-read"); if (btn.disabled) return; btn.disabled = true;
     try {
       // The server reads as many as fit in about two minutes; keep going until none are left.
       for (let round = 1; round <= 6; round++) {
-        btn.textContent = `Reading policies… (round ${round})`;
+        btn.textContent = `Reading return policies… (round ${round}, takes a few minutes)`;
         const out = await brandCall({ action: "policyReadAll" });
         policies = out.policies || policies; renderBrandList(); renderRetSummary();
         if (!out.left || !out.done) break;
       }
-      toast("Return policies read. Review and approve them below.");
-    } catch (err) { toast(err.message, true); }
+      toast(auto ? "Return labels updated." : "Return policies read. Clear ones are on cards now.");
+    } catch (err) { if (!auto) toast(err.message, true); }
     finally { btn.disabled = false; btn.textContent = "Read return policies"; }
-  });
+  }
 
   // Your brands, A to Z, 15 per page, with how many products each gave on the last read.
   const PER_PAGE = 15;
