@@ -40,7 +40,7 @@
   // What the brands in the catalogue actually sell most (see api/_lib/vocabulary.js for what each
   // one matches). Ordered long + short in pairs, so on a phone two always share a line.
   // "Experiences" mostly brings experience ideas (classes, tastings, outings) that link to a web search.
-  const BASE_INTERESTS = ["Journals & stationery", "Books", "Kitchen & dining", "Jewellery", "Fashion & sarees", "Coffee & tea", "Beauty & fragrance", "Art & DIY", "Food & treats", "Home decor", "Experiences"];
+  const BASE_INTERESTS = ["Journals & stationery", "Books", "Kitchen & dining", "Jewellery", "Fashion & style", "Coffee & tea", "Beauty & fragrance", "Art & DIY", "Food & treats", "Home decor", "Experiences"];
   const SUGGESTIONS = {
     default: BASE_INTERESTS,
     partner: [...BASE_INTERESTS, "Bags & wallets", "Little luxuries"],
@@ -56,7 +56,7 @@
   };
   // Emojis are display-only; the plain words are what the search sees.
   const INTEREST_EMOJI = {
-    "Journals & stationery": "📓", "Books": "📚", "Kitchen & dining": "🍳", "Jewellery": "💍", "Fashion & sarees": "👗",
+    "Journals & stationery": "📓", "Books": "📚", "Kitchen & dining": "🍳", "Jewellery": "💍", "Fashion & style": "🧥",
     "Coffee & tea": "☕", "Beauty & fragrance": "💄", "Art & DIY": "🎨", "Food & treats": "🍫", "Home decor": "🛋️",
     "Bags & wallets": "👜", "Little luxuries": "🛁", "Games & puzzles": "🎲", "Plants": "🪴", "Spiritual": "🪔",
     "Tech & audio": "🎧", "Sneakers": "👟", "Desk & office": "🖇️", "Toys & games": "🧸", "LEGO & models": "🧱",
