@@ -165,7 +165,9 @@
     if (exact && !idea.price_range && /(^|\.)amazon\.in$/.test(new URL(idea.url).hostname)) { price.textContent = "Price on Amazon"; price.classList.add("muted-price"); }
     meta.appendChild(price);
     body.append(meta);
-    // The brand's return policy in two or three words (only ones Disha has checked).
+    // Where an experience happens, so nobody gifts a Mumbai tour to someone in Delhi.
+    if (exact && idea.where) body.appendChild(el("p", "where", idea.where === "Online" ? "💻 Online" : `📍 ${idea.where}`));
+    // The brand's return policy in two or three words (only ones the AI was sure about).
     if (exact && idea.returns) body.appendChild(el("p", "returns" + (idea.returns === "No returns" ? " none" : ""), (idea.returns === "No returns" ? "" : "↩ ") + idea.returns));
     body.append(el("p", "why", idea.why));
     const a = el("a", "shop"); a.target = "_blank"; a.rel = "noopener noreferrer";
@@ -269,9 +271,9 @@
     for (let i = 0; i < 9; i++) list.appendChild(el("div", "card skeleton"));
     loading(true);
     try {
-      // The catalog version busts cached searches whenever products or ads change; p=12 is the answer format (12: him/her clothing filter).
+      // The catalog version busts cached searches whenever products or ads change; p=13 is the answer format (13: city on experiences).
       await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
-      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=12${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=13${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
       const data = await r.json().catch(() => ({}));
       if (r.status === 429) throw new Error(data.error || "busy");
       if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");

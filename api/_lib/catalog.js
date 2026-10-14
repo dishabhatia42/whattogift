@@ -6,6 +6,7 @@
 import { head } from "@vercel/blob";
 import { readFresh, updateJson } from "./store.js";
 import { readBrands, NOT_GIFTS } from "./brands.js";
+import { isExperience, whereIs } from "./places.js";
 
 const CATALOG_PATH = "gift-finder/catalog.json";
 const PER_BRAND = 400;     // plenty for gifting; stops one huge shop crowding out the rest
@@ -160,7 +161,7 @@ export function wooItem(brand, p) {
   if (!url) return null;
   const cats = (p.categories || []).map((c) => text(stripHtml(c.name), 24)).filter(Boolean);
   if (NOT_GIFTS.test(`${cats.join(" ")} ${p.name}`)) return null;
-  return {
+  return withPlace({
     id: `${brand.id}-${p.id}`,
     brandId: brand.id,
     brand: brand.name,
@@ -173,7 +174,15 @@ export function wooItem(brand, p) {
     options: p.type === "variable",
     url,
     image,
-  };
+  }, stripHtml(`${p.short_description || ""} ${p.description || ""}`));
+}
+
+// Experiences (tours, workshops, classes) get where they happen, read from the full description,
+// which is longer than the blurb we keep. Stored only when found.
+function withPlace(item, fullText) {
+  if (!isExperience(item)) return item;
+  const where = whereIs(`${item.title} ${fullText} ${item.url} ${item.image}`);
+  return where ? { ...item, where } : item;
 }
 
 // One Shopify product -> one compact catalogue item, or null if it can't be shown honestly:
@@ -192,7 +201,7 @@ export function toItem(brand, p) {
   const price = Math.min(...prices);
   const cheapest = variants.find((v) => Number(v.price) === price);
   const was = Number(cheapest?.compare_at_price);
-  return {
+  return withPlace({
     id: `${brand.id}-${p.id}`,
     brandId: brand.id,
     brand: brand.name,
@@ -206,7 +215,7 @@ export function toItem(brand, p) {
     options: variants.length > 1,
     url: `https://${brand.domain}${brand.path?.startsWith("/collections") ? "" : brand.path || ""}/products/${encodeURIComponent(p.handle)}`,
     image: sized(image, 600),
-  };
+  }, stripHtml(p.body_html));
 }
 
 // Shopify's image CDN resizes on the fly; 600px is sharp on a card and far lighter than the original.
