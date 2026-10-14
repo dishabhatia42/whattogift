@@ -223,7 +223,7 @@ export default async function handler(req, res) {
     }
 
     // Every link out carries the affiliate ID or UTM tags (see _lib/links.js).
-    const ideas = assemble(data, shortlist, { roomForIdeas: wantsExperiences ? 3 : 0 })
+    const ideas = assemble(data, shortlist, { roomForIdeas: wantsExperiences ? 3 : 0, discover })
       .map((i) => {
         const url = outbound(i.url, affiliates);
         const out = { ...i, url, affiliate: isAffiliate(url, affiliates || undefined) };
@@ -308,7 +308,9 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
 // Step 3: turn the AI's answer into cards, trusting only what the shortlist says about a product.
 // Labelled ideas only fill the gaps, except when the shopper asked for experiences
 // (which the catalogue mostly can't sell), when up to 3 places are kept for them.
-export function assemble(data, shortlist, { roomForIdeas = 0 } = {}) {
+export function assemble(data, shortlist, { roomForIdeas = 0, discover = false } = {}) {
+  // "New world" is only a label when the shopper switched on "Open a new world"; otherwise those picks are just picks.
+  const fitOf = (f) => { const fit = fitOfRaw(f); return fit === "new" && !discover ? "familiar" : fit; };
   const byRef = new Map(shortlist.map((s) => [s.ref, s]));
   const used = new Set(), perBrand = new Map();
   let ownCount = 0;
@@ -375,7 +377,7 @@ function storeUrl(store, query) {
   }
 }
 
-function fitOf(f) { return ["familiar", "new", "wildcard"].includes(f) ? f : "familiar"; }
+function fitOfRaw(f) { return ["familiar", "new", "wildcard"].includes(f) ? f : "familiar"; }
 function clip(v, max) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : ""; }
 // A stable 0..1 number per string, so the same search always builds the same shortlist (and caches well).
 function seeded(s) {
