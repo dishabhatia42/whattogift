@@ -351,6 +351,8 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .card .merchant { font-size: 13px; font-weight: 600; color: var(--muted); min-width: 0; }
 .card .why { margin-top: 2px; }
 /* Bottom row: a real button to shop, and a quiet "Drop a hint" */
+.card .returns { margin: 2px 0 0; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: .01em; }
+.card .returns:not(.none) { color: var(--accent-text); }
 .card .acts { margin-top: auto; padding-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .card .shop {
   display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border-radius: 999px; text-decoration: none;

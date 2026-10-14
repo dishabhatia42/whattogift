@@ -164,7 +164,10 @@
     if (!exact && idea.price_range) price.textContent = `About ${idea.price_range}`;
     if (exact && !idea.price_range && /(^|\.)amazon\.in$/.test(new URL(idea.url).hostname)) { price.textContent = "Price on Amazon"; price.classList.add("muted-price"); }
     meta.appendChild(price);
-    body.append(meta, el("p", "why", idea.why));
+    body.append(meta);
+    // The brand's return policy in two or three words (only ones Disha has checked).
+    if (exact && idea.returns) body.appendChild(el("p", "returns" + (idea.returns === "No returns" ? " none" : ""), (idea.returns === "No returns" ? "" : "↩ ") + idea.returns));
+    body.append(el("p", "why", idea.why));
     const a = el("a", "shop"); a.target = "_blank"; a.rel = "noopener noreferrer";
     if (exact) {
       a.href = idea.url; a.textContent = "Shop now ↗";

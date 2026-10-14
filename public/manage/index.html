@@ -119,6 +119,18 @@
   .brand-row .n { font-size: 13px; color: var(--muted); }
   .brand-row .n.bad { color: var(--err); }
   .brand-row.attention { background: color-mix(in srgb, var(--err) 7%, transparent); border-radius: 10px; padding: 8px 10px; margin: 2px 0; border-bottom: 0; }
+  .ret { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 4px; font-size: 13px; color: var(--body); }
+  .ret .tag { font-weight: 600; }
+  .ret.ok .tag { color: var(--ok); }
+  .ret.todo .tag { color: var(--petal); }
+  .ret.bad .tag { color: var(--err); }
+  .ret button { padding: 3px 10px; font-size: 12.5px; }
+  .ret a { font-size: 12.5px; }
+  .ret-edit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; }
+  .ret-edit select, .ret-edit input[type=number] { font: inherit; padding: 4px 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+  .ret-edit input[type=number] { width: 64px; }
+  .ret-edit label { display: inline-flex; gap: 4px; align-items: center; }
+  .ret-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; font-size: 14px; }
   .added-log { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 14px; color: var(--fg); }
   .added-log p { margin: 2px 0; }
   .added-log .bad { color: var(--err); }
@@ -231,6 +243,14 @@
       </form>
       <div id="sugs" class="sugs"></div>
 
+      <!-- return labels -->
+      <div class="ret-bar" id="ret-bar">
+        <span id="ret-summary">Return labels: loading…</span>
+        <button type="button" id="ret-read">Read return policies</button>
+        <label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="ret-only"> Only brands to review</label>
+      </div>
+      <p class="muted" style="margin:0">A brand's return label ("7-day refund", "No returns") shows on its product cards only after you approve it here.</p>
+
       <!-- your brands -->
       <div class="row" style="justify-content:space-between;margin-top:8px">
         <h3 class="sub-h">Your brands <span class="muted" id="brand-count"></span></h3>
@@ -294,8 +314,8 @@
       $("#login").hidden = true; $("#app").hidden = false; $("#logout").hidden = false;
       showTab(tabFromUrl());
       renderProducts(); renderAds(); renderAffiliates();
-      Promise.all([call({ action: "brandsLoad" }), call({ action: "catalogStatus" })])
-        .then(([b, c]) => { brandData = b; report = c; renderBrands(); }, () => { $("#cat-status").textContent = "Couldn't load your brands."; });
+      Promise.all([call({ action: "brandsLoad" }), call({ action: "catalogStatus" }), call({ action: "policiesLoad" }).catch(() => ({}))])
+        .then(([b, c, p]) => { brandData = b; report = c; policies = p || {}; renderBrands(); }, () => { $("#cat-status").textContent = "Couldn't load your brands."; });
     } catch (e) { toast(e.message, true); }
   }
 
@@ -356,8 +376,77 @@
       : "Based on the brands you've picked.";
 
     renderBrandList();
+    renderRetSummary();
     updateCounts();
   }
+
+  // ---- Return labels (see api/_lib/returns.js): read from each brand's policy page, shown on cards once approved.
+  let policies = {};
+  const RET_KINDS = [["refund", "Refund"], ["exchange", "Exchange only"], ["credit", "Store credit"], ["damaged", "Only if damaged"], ["none", "No returns"], ["unknown", "Don't show a label"]];
+  const RET_EXCLUDES = ["food", "personalised", "sale", "beauty", "jewellery", "clothing", "plants"];
+  function retText(s) {
+    if (!s || s.kind === "unknown") return "no label";
+    const d = s.days ? `${s.days}-day ` : "";
+    const main = { refund: d ? `${d}refund` : "Refunds accepted", exchange: d ? `${d}exchange` : "Exchange only", credit: d ? `${d}store credit` : "Store credit only", damaged: "Replaced if damaged", none: "No returns" }[s.kind];
+    return s.excludes?.length && s.kind !== "none" ? `${main} · not on ${s.excludes.join(", ")}` : main;
+  }
+  const retNeedsReview = (id) => { const p = policies[id]; return !p || p.status !== "approved"; };
+  function renderRetSummary() {
+    const ids = brandData.brands.map((b) => b.id);
+    const approved = ids.filter((id) => policies[id]?.status === "approved").length;
+    const review = ids.filter((id) => ["pending", "changed"].includes(policies[id]?.status)).length;
+    const unread = ids.filter((id) => !policies[id]).length, failed = ids.filter((id) => policies[id]?.status === "failed").length;
+    $("#ret-summary").textContent = `Return labels: ${approved} approved` + (review ? ` · ${review} to review` : "") + (unread ? ` · ${unread} not read yet` : "") + (failed ? ` · ${failed} couldn't be read` : "");
+  }
+  async function retCall(payload, btn) {
+    if (btn) btn.disabled = true;
+    try { policies = await brandCall(payload); renderBrandList(); renderRetSummary(); }
+    catch (e) { toast(e.message, true); if (btn) btn.disabled = false; }
+  }
+  function retEditor(b, start) {
+    const box = mk("div", "ret-edit");
+    const kind = mk("select"); for (const [v, t] of RET_KINDS) { const o = mk("option", "", t); o.value = v; kind.appendChild(o); } kind.value = start?.kind || "refund";
+    const days = mk("input"); days.type = "number"; days.min = "0"; days.max = "365"; days.value = start?.days || ""; days.placeholder = "days";
+    const ex = RET_EXCLUDES.map((e) => { const l = mk("label"), c = mk("input"); c.type = "checkbox"; c.value = e; c.checked = !!start?.excludes?.includes(e); l.append(c, document.createTextNode(e)); return l; });
+    const save = mk("button", "primary", "Save & approve"); save.type = "button";
+    const cancel = mk("button", "", "Cancel"); cancel.type = "button";
+    save.addEventListener("click", () => retCall({ action: "policyApprove", id: b.id, summary: { kind: kind.value, days: parseInt(days.value, 10) || 0, excludes: ex.map((l) => l.firstChild).filter((c) => c.checked).map((c) => c.value), note: "" } }, save));
+    cancel.addEventListener("click", () => box.remove());
+    box.append(kind, days, mk("span", "muted", "Not on:"), ...ex, save, cancel);
+    return box;
+  }
+  function retLine(b) {
+    const p = policies[b.id];
+    const line = mk("div", "ret"), btn = (t, fn, cls = "") => { const x = mk("button", cls, t); x.type = "button"; x.addEventListener("click", () => fn(x)); return x; };
+    const edit = btn("Edit", () => { line.parentElement.querySelector(".ret-edit")?.remove(); line.after(retEditor(b, p?.approved || p?.latest)); });
+    const reread = (t) => btn(t, (x) => { x.textContent = "Reading…"; retCall({ action: "policyRead", id: b.id }, x); });
+    const source = (s) => { if (!s?.source) return null; const a = mk("a", "", "their policy ↗"); a.href = s.source; a.target = "_blank"; a.rel = "noopener noreferrer"; return a; };
+    if (!p) { line.classList.add("todo"); line.append(mk("span", "tag", "Returns: not read yet"), reread("Read now")); }
+    else if (p.status === "failed") { line.classList.add("bad"); line.append(mk("span", "tag", `Returns: ${p.error || "couldn't read"}`), reread("Try again"), edit); }
+    else if (p.status === "approved") { line.classList.add("ok"); line.append(mk("span", "tag", `✓ ${retText(p.approved)}`), source(p.approved) || "", edit, reread("Re-read")); }
+    else {
+      line.classList.add("todo");
+      const approve = btn("✓ Approve", (x) => retCall({ action: "policyApprove", id: b.id }, x), "primary");
+      line.append(mk("span", "tag", p.status === "changed" ? `Policy changed: now ${retText(p.latest)} (cards still show ${retText(p.approved)})` : `Returns: ${retText(p.latest)}`), source(p.latest) || "", approve, edit);
+    }
+    if (p?.latest?.note && p.status !== "approved") line.appendChild(mk("span", "muted", p.latest.note));
+    return line;
+  }
+  $("#ret-only").addEventListener("change", () => { brandPage = 1; renderBrandList(); });
+  $("#ret-read").addEventListener("click", async (e) => {
+    const btn = e.currentTarget; btn.disabled = true;
+    try {
+      // The server reads as many as fit in about two minutes; keep going until none are left.
+      for (let round = 1; round <= 6; round++) {
+        btn.textContent = `Reading policies… (round ${round})`;
+        const out = await brandCall({ action: "policyReadAll" });
+        policies = out.policies || policies; renderBrandList(); renderRetSummary();
+        if (!out.left || !out.done) break;
+      }
+      toast("Return policies read. Review and approve them below.");
+    } catch (err) { toast(err.message, true); }
+    finally { btn.disabled = false; btn.textContent = "Read return policies"; }
+  });
 
   // Your brands, A to Z, 15 per page, with how many products each gave on the last read.
   const PER_PAGE = 15;
@@ -368,7 +457,8 @@
     const byId = new Map((report.brands || []).map((r) => [r.id, r]));
     const empty = (b) => { const r = byId.get(b.id); return !!r && !r.count && !r.kept; };
     const all = [...brandData.brands].sort((x, y) => (empty(y) - empty(x)) || x.name.localeCompare(y.name));
-    const shown = q ? all.filter((b) => b.name.toLowerCase().includes(q) || b.domain.includes(q)) : all;
+    const only = $("#ret-only").checked;
+    const shown = all.filter((b) => (!q || b.name.toLowerCase().includes(q) || b.domain.includes(q)) && (!only || retNeedsReview(b.id)));
     const pages = Math.max(1, Math.ceil(shown.length / PER_PAGE));
     brandPage = Math.min(Math.max(1, brandPage), pages);
     const stuck = all.filter(empty).length;
@@ -384,7 +474,7 @@
         !r ? "Not read yet"
         : empty(b) ? (r.ok ? "0 products: nothing in stock with a photo and a gift price. Not in any search." : `0 products: its website didn't answer (${r.error || "error"}). Not in any search.`)
         : r.ok ? `${r.count} products` : `Couldn't read last time (${r.error || "error"}), showing ${r.kept} from before`);
-      txt.appendChild(n);
+      txt.append(n, retLine(b));
       const rm = mk("button", "danger", "Remove"); rm.type = "button";
       rm.addEventListener("click", async () => {
         if (!confirm(`Remove ${b.name}? Its products leave the gift finder straight away.`)) return;
@@ -435,7 +525,7 @@
     toast(`Adding ${shop.name || shop.domain} and reading its products…`);
     try {
       const out = await brandCall({ action: "brandAdd", domain: shop.domain, name: shop.name });
-      brandData = out; report = out.catalog; renderBrands();
+      brandData = out; report = out.catalog; if (out.policy) policies = { ...policies, [out.added.id]: out.policy }; renderBrands();
       $("#brand-preview").hidden = true; $("#brand-link").value = "";
       const got = (out.catalog.brands || []).find((r) => r.id === out.added.id);
       const n = got ? got.count || got.kept : 0;

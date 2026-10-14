@@ -7,6 +7,7 @@ import { readCatalog, refreshCatalog, refreshBrand, dropBrand } from "./_lib/cat
 import { readBrands, updateBrands, sameShop, slug, cleanDomain } from "./_lib/brands.js";
 import { checkShop, suggestBrands, ScoutError } from "./_lib/scout.js";
 import { isShortLink, expandShortLink } from "./_lib/links.js";
+import { readPolicies, updatePolicies, refreshPolicy, readMany, dueForReading, cleanSummary } from "./_lib/returns.js";
 
 // Finding brand suggestions searches the web, which can take a minute or two.
 export const config = { maxDuration: 180 };
@@ -115,7 +116,36 @@ export default async function handler(req, res) {
             ? `${brand.name} wasn't added: none of its products are in stock with a photo and a gift-friendly price right now.`
             : `${brand.name} wasn't added: its website didn't answer when we read its products (${line.error || "error"}). Try again in a bit.`);
         }
-        return res.status(200).json({ ...saved, added: brand, catalog });
+        // Its return policy is read straight away too (for Disha to approve); a failure here is fine.
+        let policy = null;
+        try { policy = await refreshPolicy(brand); } catch (err) { console.warn("Couldn't read return policy", brand.domain, err?.message); }
+        return res.status(200).json({ ...saved, added: brand, catalog, policy });
+      }
+      // ---- Return labels: read from each brand's policy page, approved by Disha before they show
+      case "policiesLoad":
+        return res.status(200).json(await readPolicies());
+      case "policyRead": {
+        const brand = (await readBrands()).brands.find((b) => b.id === body.id);
+        if (!brand) throw new UserError("That brand isn't in your list.");
+        await refreshPolicy(brand);
+        return res.status(200).json(await readPolicies());
+      }
+      case "policyReadAll": {
+        // Brands never read (or all of them, when asked), as many as fit in ~2 minutes.
+        const [{ brands }, policies] = await Promise.all([readBrands(), readPolicies()]);
+        const out = await readMany(dueForReading(brands, policies, { all: body.all === true }), 120000);
+        return res.status(200).json(out);
+      }
+      case "policyApprove": {
+        // Approve the latest reading as is, or Disha's corrected version of it.
+        const id = String(body.id || "");
+        const policies = await updatePolicies((list) => {
+          const cur = list[id];
+          const summary = body.summary ? cleanSummary({ ...body.summary, source: cur?.latest?.source || "" }) : cur?.latest;
+          if (!summary) throw new UserError("Read this brand's policy first.");
+          return { ...list, [id]: { ...(cur || {}), latest: cur?.latest || summary, approved: summary, status: "approved", readAt: cur?.readAt || Date.now(), error: "" } };
+        });
+        return res.status(200).json(policies);
       }
       case "brandRemove": {
         let gone;

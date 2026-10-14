@@ -18,6 +18,7 @@ import { readData } from "./_lib/store.js";
 import { readCatalog } from "./_lib/catalog.js";
 import { cleanInterests } from "./_lib/interests.js";
 import { outbound, isAffiliate, isAmazon } from "./_lib/links.js";
+import { readPolicies, returnsLabel } from "./_lib/returns.js";
 
 const client = new Anthropic();
 
@@ -180,10 +181,12 @@ export default async function handler(req, res) {
   }
 
   // The affiliate rules come with the stored products; storage trouble just means the defaults.
-  const [shortlist, affiliates] = await Promise.all([
+  const [shortlist, affiliates, policies] = await Promise.all([
     buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags, range, variant }),
     readData().then((d) => d.affiliates, () => undefined),
+    readPolicies().catch(() => ({})), // return labels are a nice-to-have
   ]);
+  const byPid = new Map(shortlist.filter((s) => !s.own).map((s) => [s.product.id, s.product]));
   // Picked "Experiences" or asked for more of them: room on the page for experience ideas.
   const wantsExperiences = tunes.includes("experiences") || tags.some((t) => t.toLowerCase() === "experiences");
   const prompt = [
@@ -229,6 +232,10 @@ export default async function handler(req, res) {
         const out = { ...i, url, affiliate: isAffiliate(url, affiliates || undefined) };
         // Amazon only allows prices from its own data service, so hand-typed Amazon prices aren't shown.
         if (i.kind === "product" && isAmazon(url)) { out.price_range = ""; delete out.price; delete out.was; }
+        // "7-day refund" / "No returns": only from a policy Disha approved.
+        const product = i.kind === "product" && !i.own ? byPid.get(i.pid) : null;
+        const label = product ? returnsLabel(policies[product.brandId]?.approved, product) : "";
+        if (label) out.returns = label;
         return out;
       });
     if (!ideas.length) return res.status(502).json({ error: "Got a garbled answer. Please try again." });
