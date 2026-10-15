@@ -70,7 +70,9 @@
     <section class="step rise" style="--i:3" aria-labelledby="s2">
       <div class="step-head"><h2 id="s2">What makes them tick?</h2><p class="sub" id="s2-sub">Tell us what they're into. We'll do the digging.</p></div>
       <div class="suggest" id="suggest" aria-label="Suggested keywords"></div>
-      <div class="tagbox" id="tagbox" hidden></div>
+      <div class="tagbox" id="tagbox">
+        <input id="taginput" type="text" maxlength="30" placeholder="+ Oddly specific? Pottery, F1, frogs…" aria-label="Add something they're into" enterkeyhint="done">
+      </div>
       <button class="discover" id="discover" type="button" aria-pressed="false">
         <span class="sw" aria-hidden="true"></span>
         <span class="txt"><strong>✨ Open a new world</strong><small id="discover-sub">Introduce them to something they've never tried.</small></span>
@@ -140,12 +142,26 @@
   pills($("budgets"), BUDGETS, (id) => { state.budget = state.budget === id ? null : id; render(); });
   $("discover").addEventListener("click", () => { state.discover = !state.discover; render(); });
 
-  // ---- interests: tap the suggestions
-  function addTag(t) {
-    if (state.tags.length >= 8 || state.tags.some((x) => x.toLowerCase() === t.toLowerCase())) return;
+  // ---- interests
+  function addTag(raw) {
+    const t = raw.trim().replace(/\s+/g, " ").slice(0, 30);
+    if (!t || state.tags.length >= 8) return;
+    // Not a genuine interest (rude, or an instruction): don't add it, just give the box a little shake.
+    if (!WTG.cleanInterests([t]).length) { const box = $("tagbox"); box.classList.remove("nudge"); void box.offsetWidth; box.classList.add("nudge"); return; }
+    if (state.tags.some((x) => x.toLowerCase() === t.toLowerCase())) return;
     state.tags.push(t); render();
   }
   function removeTag(t) { state.tags = state.tags.filter((x) => x !== t); render(); }
+  $("taginput").addEventListener("keydown", (e) => {
+    const input = e.currentTarget;
+    if ((e.key === "Enter" || e.key === ",") && input.value.trim()) {
+      e.preventDefault(); addTag(input.value); input.value = "";
+    } else if (e.key === "Backspace" && !input.value && state.tags.length) {
+      removeTag(state.tags[state.tags.length - 1]);
+    }
+  });
+  $("taginput").addEventListener("blur", (e) => { if (e.target.value.trim()) { addTag(e.target.value); e.target.value = ""; } });
+  $("tagbox").addEventListener("click", (e) => { if (e.target.id === "tagbox") $("taginput").focus(); });
 
   // Slide a row open the moment it appears.
   function show(el, visible) {
@@ -171,9 +187,9 @@
     for (const b of $("budgets").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.budget));
     $("discover").setAttribute("aria-pressed", String(!!state.discover));
 
-    const box = $("tagbox"); box.textContent = "";
-    // Suggested interests show as highlighted pills; only ones typed into an older link appear
-    // here, so they can still be removed.
+    const box = $("tagbox"), input = $("taginput");
+    box.querySelectorAll(".tag").forEach((n) => n.remove());
+    // Suggested interests show as highlighted pills; only typed-in ones appear here.
     const suggestions = SUGGESTIONS[state.recipient] || SUGGESTIONS.default;
     const suggested = suggestions.map((x) => x.toLowerCase());
     for (const t of state.tags.filter((x) => !suggested.includes(x.toLowerCase()))) {
@@ -181,9 +197,8 @@
       const label = document.createElement("span"); label.textContent = t;
       const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", `Remove ${t}`);
       x.addEventListener("click", () => removeTag(t));
-      s.append(label, x); box.appendChild(s);
+      s.append(label, x); box.insertBefore(s, input);
     }
-    box.hidden = !box.children.length;
     const sug = $("suggest"); sug.textContent = "";
     for (const t of suggestions) {
       const on = state.tags.some((x) => x.toLowerCase() === t.toLowerCase());

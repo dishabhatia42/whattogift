@@ -165,8 +165,10 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .gender { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 15px; color: var(--muted); }
 .gender .pill { min-height: 38px; padding: 0 16px; font-size: 14px; }
 
-.tagbox { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.tagbox[hidden] { display: none; }
+.tagbox { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-bottom: 1.5px solid var(--line); padding-bottom: 6px; transition: border-color .18s; }
+.tagbox:focus-within { border-color: var(--accent); }
+.tagbox input { flex: 1 1 160px; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; color: var(--fg); padding: 8px 0; }
+.tagbox input::placeholder { color: var(--muted); }
 /* "Tell us about them": a roomy note that grows as they write */
 .about { display: block; width: 100%; box-sizing: border-box; min-height: 96px; resize: none; overflow: hidden; border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--fg); font: inherit; font-size: 16px; line-height: 1.5; padding: 12px 14px; outline: 0; transition: border-color .18s, box-shadow .18s; }
 .about::placeholder { color: var(--muted); }
