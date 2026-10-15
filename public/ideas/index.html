@@ -66,6 +66,7 @@
     <p class="sub">Tell us what to change. We'll find something better.</p>
     <div class="suggest" id="tunes" role="group" aria-labelledby="refine-h"></div>
     <div class="refine-acts">
+      <p class="refine-hint" id="refine-hint">Pick what to change above, then refine.</p>
       <button class="go small" id="refine" type="button" data-umami-event="Refine">Refine my picks <span class="arr" aria-hidden="true">→</span></button>
       <button class="link-btn" id="again2" type="button" data-umami-event="Shuffle" data-umami-event-where="bottom">Or just shuffle ↻</button>
       <a class="quiet-link" href="/">Shopping for someone else? →</a>
@@ -127,8 +128,17 @@
     const b = document.createElement("button");
     b.type = "button"; b.className = "pill"; b.dataset.id = t.id; b.textContent = t.t;
     b.setAttribute("aria-pressed", String(state.tune.includes(t.id)));
-    b.addEventListener("click", () => b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")));
+    b.addEventListener("click", () => { b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")); updateRefine(); });
     $("tunes").appendChild(b);
+  }
+  // "Refine my picks" only works once they've changed a chip: with nothing new to ask for, a tap
+  // would just reload the same page and jump them back to the top. "Or just shuffle" is there for that.
+  const picked = () => [...$("tunes").children].filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.id);
+  function updateRefine() {
+    const changed = picked().sort().join() !== [...state.tune].sort().join();
+    $("refine").disabled = busy || !changed;
+    $("refine").classList.toggle("waiting", !changed);
+    $("refine-hint").hidden = changed;
   }
 
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -307,7 +317,7 @@
       $("error").appendChild(retry);
       $("error").hidden = false;
     } finally {
-      busy = false; $("shuffle").disabled = $("again").disabled = $("again2").disabled = $("refine").disabled = false;
+      busy = false; $("shuffle").disabled = $("again").disabled = $("again2").disabled = false; updateRefine();
     }
   }
 
@@ -317,7 +327,8 @@
   $("shuffle").addEventListener("click", again);
   // Refine: new answers with these tweaks, and the URL remembers them.
   $("refine").addEventListener("click", () => {
-    state.tune = [...$("tunes").children].filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.id);
+    if ($("refine").disabled) return;
+    state.tune = picked();
     key = toParams(state).toString();
     history.replaceState(null, "", "/ideas?" + key);
     $("edit").href = "/?" + key;

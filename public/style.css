@@ -320,6 +320,9 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .refine .suggest .pill { min-height: 40px; font-size: 14px; }
 .refine-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; margin-top: 4px; }
 .go.small { width: auto; min-height: 48px; padding: 0 22px; font-size: 16px; }
+.go.small.waiting:disabled { cursor: not-allowed; }
+.refine-hint { flex-basis: 100%; margin: 0; font-size: 14px; color: var(--muted); }
+.refine-hint[hidden] { display: none; }
 .edit-more { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
 
 .cards { display: grid; grid-template-columns: 1fr; gap: 18px; }
