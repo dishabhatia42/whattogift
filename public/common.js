@@ -91,8 +91,9 @@
     if (s.budget) p.set("budget", s.budget);
     const tags = [...new Set(s.tags.map((t) => t.toLowerCase()))].sort();
     if (tags.length) p.set("tags", tags.join(","));
-    const about = cleanAbout(s.about);
-    if (about) p.set("about", about);
+    // The "Tell us about them" note is paused (the box is off the home page), so an old link's
+    // note isn't carried forward where it can't be seen or removed. To bring it back:
+    // const about = cleanAbout(s.about); if (about) p.set("about", about);
     if (s.discover) p.set("new", "1");
     const tune = TUNES.filter((t) => (s.tune || []).includes(t.id)).map((t) => t.id);
     if (tune.length) p.set("tune", tune.join(","));

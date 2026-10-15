@@ -115,7 +115,6 @@
     // Who it's for is already in the line above ("The gift edit / your mom"), so it's left out here.
     const bits = [occ && occ.t, BUDGETS.find((b) => b.id === state.budget)?.t,
       tags.length ? tags[0] + (tags.length > 1 ? ` +${tags.length - 1}` : "") : "",
-      state.about && "✍️ Your note",
       state.discover && "✨ New world", tuned ? `${tuned} tweak${tuned > 1 ? "s" : ""}` : ""].filter(Boolean);
     const box = $("chips"); box.textContent = ""; box.href = "/?" + key;
     // Plain summary; "← Edit my picks" in the header is the way to change it (the line also links there).

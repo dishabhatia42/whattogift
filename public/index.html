@@ -71,7 +71,6 @@
       <div class="step-head"><h2 id="s2">What makes them tick?</h2><p class="sub" id="s2-sub">Tell us what they're into. We'll do the digging.</p></div>
       <div class="suggest" id="suggest" aria-label="Suggested keywords"></div>
       <div class="tagbox" id="tagbox" hidden></div>
-      <textarea class="about" id="about" rows="3" aria-label="Tell us about them in your own words"></textarea>
       <button class="discover" id="discover" type="button" aria-pressed="false">
         <span class="sw" aria-hidden="true"></span>
         <span class="txt"><strong>✨ Open a new world</strong><small id="discover-sub">Introduce them to something they've never tried.</small></span>
@@ -141,18 +140,12 @@
   pills($("budgets"), BUDGETS, (id) => { state.budget = state.budget === id ? null : id; render(); });
   $("discover").addEventListener("click", () => { state.discover = !state.discover; render(); });
 
-  // ---- interests: tap the suggestions, and/or write about them freely (the AI picks out the keywords)
+  // ---- interests: tap the suggestions
   function addTag(t) {
     if (state.tags.length >= 8 || state.tags.some((x) => x.toLowerCase() === t.toLowerCase())) return;
     state.tags.push(t); render();
   }
   function removeTag(t) { state.tags = state.tags.filter((x) => x !== t); render(); }
-  // The note grows with what's written, so nothing ever feels cut off.
-  const about = $("about");
-  const grow = () => { about.style.height = "auto"; about.style.height = about.scrollHeight + 2 + "px"; };
-  about.value = state.about || "";
-  about.addEventListener("input", () => { state.about = about.value; grow(); });
-  requestAnimationFrame(grow);
 
   // Slide a row open the moment it appears.
   function show(el, visible) {
@@ -162,18 +155,12 @@
 
   // Shopping for yourself: the questions talk to "you" instead of "them".
   const VOICE = {
-    them: { "gender-q": "Are they…", s2: "What makes them tick?", "s2-sub": "Tap a few, or tell us about them in your own words. We'll pick out what matters.", "discover-sub": "Introduce them to something they've never tried.", s3: "How much are we spoiling them?", "go-txt": "Find gifts they'll actually love" },
-    you: { "gender-q": "Are you…", s2: "What makes you tick?", "s2-sub": "Tap a few, or tell us about yourself in your own words. We'll pick out what matters.", "discover-sub": "Discover something you've never tried.", s3: "How much are we spoiling you?", "go-txt": "Find something you'll actually love" },
-  };
-  const NOTE = {
-    them: "Tell us about them… What they love, what they've been into lately, little quirks. Like: “She just got into pottery, lives on filter coffee and talks to her cat more than to us.”",
-    you: "Tell us about you… What you love, what you've been into lately, little quirks. Like: “Just got into pottery, live on filter coffee, and my cat is my whole personality.”",
+    them: { "gender-q": "Are they…", s2: "What makes them tick?", "s2-sub": "Tell us what they're into. We'll do the digging.", "discover-sub": "Introduce them to something they've never tried.", s3: "How much are we spoiling them?", "go-txt": "Find gifts they'll actually love" },
+    you: { "gender-q": "Are you…", s2: "What makes you tick?", "s2-sub": "Tell us what you're into. We'll do the digging.", "discover-sub": "Discover something you've never tried.", s3: "How much are we spoiling you?", "go-txt": "Find something you'll actually love" },
   };
   function render() {
     const voice = state.recipient === "self" ? "you" : "them";
     for (const [id, t] of Object.entries(VOICE[voice])) $(id).textContent = t;
-    about.placeholder = NOTE[voice];
-    about.setAttribute("aria-label", voice === "you" ? "Tell us about yourself in your own words" : "Tell us about them in your own words");
     for (const b of $("recipients").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.recipient));
     const occBox = $("occasions"); occBox.textContent = "";
     pills(occBox, occasionsFor(state.recipient), (id) => { state.occasion = id; render(); });
@@ -185,8 +172,8 @@
     $("discover").setAttribute("aria-pressed", String(!!state.discover));
 
     const box = $("tagbox"); box.textContent = "";
-    // Suggested interests show as highlighted pills; only ones from an older link (typed before
-    // the free-text note existed) appear here, so they can still be removed.
+    // Suggested interests show as highlighted pills; only ones typed into an older link appear
+    // here, so they can still be removed.
     const suggestions = SUGGESTIONS[state.recipient] || SUGGESTIONS.default;
     const suggested = suggestions.map((x) => x.toLowerCase());
     for (const t of state.tags.filter((x) => !suggested.includes(x.toLowerCase()))) {
