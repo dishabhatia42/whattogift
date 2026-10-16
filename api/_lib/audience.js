@@ -8,7 +8,7 @@ const WORN = /\b(shirt|top|tee|t-shirt|tank|pants|trousers|jeans|shorts|dress|sk
 // only stays if its listing clearly says men's (or unisex). Most shoppers buying for a man are
 // women shopping for a brother, partner or dad: a wrong-gender piece costs their trust, a missing
 // one costs nothing. Cufflinks, tie pins and lapel pins are men's by nature.
-const JEWELLERY = /\b(ring|earring|ear cuff|cuff|necklace|neckpiece|chain|pendant|locket|bracelet|bangle|kada|choker|anklet|jhumka|brooch|huggie|stud|hoop|charm|nose ?pin|armlet|bajuband|maang ?tikka|payal|toe ?ring|hath ?phool|jewell?ery)(?:s|es)?\b/i;
+const JEWELLERY = /\b(ring|earring|ear cuff|cuff|necklace|neckpiece|chain|pendant|locket|bracelet|wrist ?band|bangle|kada|choker|anklet|jhumka|brooch|huggie|stud|hoop|charm|nose ?pin|armlet|bajuband|maang ?tikka|payal|toe ?ring|hath ?phool|jewell?ery)(?:s|es)?\b/i;
 // Things to keep jewellery in, not to wear.
 const KEEPER = /\b(box|tray|organi[sz]er|stand|holder|case|pouch|dish|storage)(?:s|es)?\b/i;
 const NOT_JEWELLERY = /\b(key ?rings?|napkin rings?|ring light|bag charms?|phone charms?|key ?chains?)\b/i;
