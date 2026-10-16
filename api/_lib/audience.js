@@ -11,7 +11,7 @@ const WORN = /\b(shirt|top|tee|t-shirt|tank|pants|trousers|jeans|shorts|dress|sk
 const JEWELLERY = /\b(ring|earring|ear cuff|cuff|necklace|neckpiece|chain|pendant|locket|bracelet|wrist ?band|bangle|kada|choker|anklet|jhumka|brooch|huggie|stud|hoop|charm|nose ?pin|armlet|bajuband|maang ?tikka|payal|toe ?ring|hath ?phool|jewell?ery)(?:s|es)?\b/i;
 // Things to keep jewellery in, not to wear.
 const KEEPER = /\b(box|tray|organi[sz]er|stand|holder|case|pouch|dish|storage)(?:s|es)?\b/i;
-const NOT_JEWELLERY = /\b(key ?rings?|napkin rings?|ring light|bag charms?|phone charms?|key ?chains?)\b/i;
+const NOT_JEWELLERY = /\b(key ?rings?|napkin rings?|ring light|bag charms?|phone charms?|key ?chains?|belts?)\b/i;
 const MENS_JEWELLERY = /\b(cufflinks?|tie (?:pin|clip|bar)|lapel pin)\b/i;
 // Said outright about the product.
 const FOR_HER = /\b(women|womens|woman|ladies|lady|female|girls?|her)\b|women's|\b(saree|sari|blouse|kurti|lehenga|dupatta|dress|skirt|kaftan|anarkali|salwar|palazzo|bralette|bra|lingerie|earring|jhumka|choker|necklace|bangle|nose ?pin|armlet|bajuband|maang ?tikka|payal|toe ?ring|hath ?phool|handbag|clutch|scrunchie|hair ?clip|hair ?pin|hair accessor(?:y|ie))(?:s|es)?\b/i;
@@ -83,4 +83,16 @@ export function wrongFit(item, gender, lean) {
 export function ideaWrongFit(idea, gender) {
   const item = { title: `${idea.name || ""} ${idea.search_query || ""}`, tags: [] };
   return wrongFit(item, gender, new Map());
+}
+
+// How many pieces of jewellery in the catalogue are clearly for men. Below MIN_MENS_JEWELLERY the
+// "Jewellery" interest isn't offered for him (a brother would only get jewellery boxes).
+export const MIN_MENS_JEWELLERY = 6;
+let menMemo = { at: -1, n: 0 };
+export function mensJewelleryCount(catalog) {
+  if (menMemo.at === catalog.updatedAt) return menMemo.n;
+  const lean = brandLeanings(catalog);
+  const n = (catalog.items || []).filter((i) => isJewellery(i) && !wrongFit(i, "him", lean)).length;
+  menMemo = { at: catalog.updatedAt, n };
+  return n;
 }

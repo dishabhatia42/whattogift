@@ -336,10 +336,10 @@
   // One round of ideas. Round 1 is the same for everyone with these answers, so it's cached;
   // later rounds list what's already on the page so the server skips it.
   async function fetchIdeas(round = batch) {
-    // The catalog version busts cached searches whenever products or ads change; p=22 is the answer format (22: wristbands count as jewellery).
+    // The catalog version busts cached searches whenever products or ads change; p=23 is the answer format (23: Dad is a him, Mom a her; no Jewellery for him without men's stock).
     await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
     const seen = round > 1 ? `&x=${encodeURIComponent(shownIds.join(","))}&xi=${encodeURIComponent(shownIdeas.join("|"))}` : "";
-    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=22${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=23${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
     const data = await r.json().catch(() => ({}));
     if (r.status === 429) throw new Error(data.error || "busy");
     if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");

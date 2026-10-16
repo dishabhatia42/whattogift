@@ -190,7 +190,12 @@
     const box = $("tagbox"), input = $("taginput");
     box.querySelectorAll(".tag").forEach((n) => n.remove());
     // Suggested interests show as highlighted pills; only typed-in ones appear here.
-    const suggestions = SUGGESTIONS[state.recipient] || SUGGESTIONS.default;
+    // "Jewellery" for a him (or Dad) only when we have enough jewellery that clearly says men's;
+    // otherwise he'd only get jewellery boxes. Until the count arrives, it's left out for him.
+    const forHim = state.gender === "him" || state.recipient === "dad";
+    const noMensJewellery = forHim && WTG.catalog.mensJewellery < 6;
+    const suggestions = (SUGGESTIONS[state.recipient] || SUGGESTIONS.default).filter((t) => !(noMensJewellery && t === "Jewellery"));
+    if (noMensJewellery) state.tags = state.tags.filter((t) => t.toLowerCase() !== "jewellery");
     const suggested = suggestions.map((x) => x.toLowerCase());
     for (const t of state.tags.filter((x) => !suggested.includes(x.toLowerCase()))) {
       const s = document.createElement("span"); s.className = "tag";
@@ -241,6 +246,7 @@
   const headerCta = () => $("header-cta").classList.toggle("away", $("s1").getBoundingClientRect().top < innerHeight * 0.8);
   addEventListener("scroll", headerCta, { passive: true }); addEventListener("resize", headerCta); headerCta();
   render();
+  WTG.catalogReady.then(render); // brings back "Jewellery" for him once we know there's enough men's jewellery
 })();
 </script>
 </body>

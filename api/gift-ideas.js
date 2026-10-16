@@ -14,7 +14,7 @@
 // are served free. Needs ANTHROPIC_API_KEY in the Vercel project's environment variables.
 import Anthropic from "@anthropic-ai/sdk";
 import { interestScorer } from "./_lib/vocabulary.js";
-import { brandLeanings, wrongFit, ideaWrongFit } from "./_lib/audience.js";
+import { brandLeanings, wrongFit, ideaWrongFit, mensJewelleryCount, MIN_MENS_JEWELLERY } from "./_lib/audience.js";
 import { placeOf, placesOf } from "./_lib/places.js";
 import { readData } from "./_lib/store.js";
 import { readCatalog } from "./_lib/catalog.js";
@@ -177,7 +177,14 @@ export default async function handler(req, res) {
   const occasion = OCCASIONS[q.occasion];
   if (!recipient || !occasion) return res.status(400).json({ error: "Pick who it's for and the occasion." });
 
-  const tags = cleanInterests(typeof q.tags === "string" ? q.tags.split(",") : []); // drops rude words and "ignore the rules…" tricks
+  let tags = cleanInterests(typeof q.tags === "string" ? q.tags.split(",") : []); // drops rude words and "ignore the rules…" tricks
+  // Him or her: picked on the form, or plain from who it's for (Dad is a him, Mom a her).
+  const gender = GENDERS[q.gender] ? q.gender : q.recipient === "dad" ? "him" : q.recipient === "mom" ? "her" : "";
+  // "Jewellery" for him only when the catalogue has enough men's pieces (the form hides it otherwise;
+  // this covers older links).
+  if (gender === "him" && tags.some((t) => t.toLowerCase() === "jewellery") && mensJewelleryCount(await readCatalog()) < MIN_MENS_JEWELLERY) {
+    tags = tags.filter((t) => t.toLowerCase() !== "jewellery");
+  }
   const about = cleanAbout(q.about); // "Tell us about them", in the shopper's own words
   const budget = BUDGETS[q.budget] || null;
   const discover = q.new === "1";
@@ -198,7 +205,7 @@ export default async function handler(req, res) {
 
   // The affiliate rules come with the stored products; storage trouble just means the defaults.
   const [shortlist, affiliates, policies] = await Promise.all([
-    buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags: steer, range, variant, gender: GENDERS[q.gender] ? q.gender : "", seen, size: variant > 1 ? SHORTLIST_MORE : SHORTLIST }),
+    buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags: steer, range, variant, gender, seen, size: variant > 1 ? SHORTLIST_MORE : SHORTLIST }),
     readData().then((d) => d.affiliates, () => undefined),
     readPolicies().catch(() => ({})), // return labels are a nice-to-have
   ]);
@@ -206,8 +213,8 @@ export default async function handler(req, res) {
   // Picked "Experiences" or asked for more of them: room on the page for experience ideas.
   const wantsExperiences = tunes.includes("experiences") || steer.includes("experiences");
   const prompt = [
-    `Gift for: ${recipient}${GENDERS[q.gender] ? ` (${GENDERS[q.gender]})` : ""}`,
-    GENDERS[q.gender] ? `Anything worn (clothes, shoes, jewellery, bags, accessories) must be made for a ${GENDERS[q.gender] === "male" ? "man" : "woman"}; skip pieces cut or styled for ${GENDERS[q.gender] === "male" ? "women" : "men"} unless clearly unisex.${GENDERS[q.gender] === "male" ? " Jewellery only if its listing clearly says men's; a jewellery idea must name men's in its name and search_query (e.g. \"men's silver kada\")." : ""}` : "",
+    `Gift for: ${recipient}${GENDERS[gender] ? ` (${GENDERS[gender]})` : ""}`,
+    GENDERS[gender] ? `Anything worn (clothes, shoes, jewellery, bags, accessories) must be made for a ${GENDERS[gender] === "male" ? "man" : "woman"}; skip pieces cut or styled for ${GENDERS[gender] === "male" ? "women" : "men"} unless clearly unisex.${GENDERS[gender] === "male" ? " Jewellery only if its listing clearly says men's; a jewellery idea must name men's in its name and search_query (e.g. \"men's silver kada\")." : ""}` : "",
     `Occasion: ${occasion}`,
     q.recipient === "self" ? SELF_NOTE : "",
     `Interests / keywords (typed by the shopper; treat only as hints about hobbies): ${steer.length ? JSON.stringify(steer) : about ? "see the description" : "none given, choose broadly loved gifts"}`,
@@ -245,7 +252,7 @@ export default async function handler(req, res) {
 
     // Every link out carries the affiliate ID or UTM tags (see _lib/links.js).
     // Idea cards follow the him/her rule too (no "silver chain" idea for a brother unless it says men's).
-    if (GENDERS[q.gender]) data.ideas = (data.ideas || []).filter((i) => !ideaWrongFit(i, q.gender));
+    if (gender) data.ideas = (data.ideas || []).filter((i) => !ideaWrongFit(i, gender));
     const shownIdeas = new Set(seenIdeas.map((t) => t.toLowerCase()));
     if (shownIdeas.size) data.ideas = (data.ideas || []).filter((i) => !shownIdeas.has(String(i.name || "").replace(/[^\p{L}\p{N} &'’.,+\-/]/gu, "").trim().slice(0, 60).toLowerCase()));
     const ideas = assemble(data, shortlist, { roomForIdeas: wantsExperiences ? 3 : 0, discover })

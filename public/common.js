@@ -164,11 +164,12 @@
   }
 
   // ---- ads (and the version stamp that refreshes cached searches after admin changes)
-  const catalog = { ads: [], board: [], version: "" };
+  const catalog = { ads: [], board: [], version: "", mensJewellery: 0 };
   const catalogReady = fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((d) => {
     if (d && Array.isArray(d.ads)) catalog.ads = d.ads;
     if (d && Array.isArray(d.board)) catalog.board = d.board;
     if (d && d.version) catalog.version = d.version;
+    if (d && Number.isFinite(d.mensJewellery)) catalog.mensJewellery = d.mensJewellery;
   }).catch(() => {});
 
   // An ad with nothing ticked for a field matches everything for that field.
