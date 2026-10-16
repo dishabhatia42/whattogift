@@ -295,6 +295,8 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
     .map((p) => ({ ...p, priceNum: rupees(p.price) }))
     .filter((p) => p.image && (p.priceNum == null || inRange(p.priceNum)) && !seen.has(`o-${p.id}`))
     .filter((p) => !scorer || score({ title: p.name, tags: p.tags, blurb: `${p.note} ${p.line || ""}` }) >= 1)
+    // Your own picks follow the same him/her rule as brand products (a ring for "him" is left out).
+    .filter((p) => !gender || !wrongFit({ title: p.name, tags: p.tags || [] }, gender, new Map()))
     .slice(0, 30);
   // Shopping for him (or her): leave out clothes and accessories made for the other. Most shop
   // data doesn't say, so the brand's leaning decides for unlabelled pieces (see _lib/audience.js).

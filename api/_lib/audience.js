@@ -3,7 +3,12 @@
 // and dresses is a women's label, even when a given "Embroidered Cotton Shirt" doesn't say so.
 // Used only for things people wear; a candle or a notebook from a women's label suits anyone.
 
-const WORN = /\b(shirt|top|tee|t-shirt|tank|pants|trousers|jeans|shorts|dress|skirt|kurta|kurti|saree|sari|blouse|dupatta|stole|scarf|kaftan|lehenga|jumpsuit|co-ord|jacket|blazer|hoodie|sweater|cardigan|shrug|loungewear|pyjama|pajama|nightwear|sneaker|shoe|sandal|slide|loafer|heel|cap|hat|earring|necklace|bracelet|bangle|choker|ring|pendant|anklet|jhumka|brooch|handbag|clutch|tote|sling|belt|watch)(?:s|es)?\b/i;
+const WORN = /\b(shirt|top|tee|t-shirt|tank|pants|trousers|jeans|shorts|dress|skirt|kurta|kurti|saree|sari|blouse|dupatta|stole|scarf|kaftan|lehenga|jumpsuit|co-ord|jacket|blazer|hoodie|sweater|cardigan|shrug|loungewear|pyjama|pajama|nightwear|sneaker|shoe|sandal|slide|loafer|heel|cap|hat|earring|necklace|neckpiece|chain|bracelet|bangle|choker|ring|pendant|anklet|jhumka|brooch|ear cuff|cuff|huggie|stud|hoop|charm|handbag|clutch|tote|sling|belt|watch)(?:s|es)?\b/i;
+// Jewellery. In Indian shops it's made for women unless it says otherwise, so for "him" a piece
+// only stays if it says men's/unisex, or is a classic men's piece (a kada, cufflinks, a signet ring).
+const JEWELLERY = /\b(ring|earring|ear cuff|cuff|necklace|neckpiece|chain|pendant|bracelet|bangle|kada|choker|anklet|jhumka|brooch|huggie|stud|hoop|charm|nose ?pin|jewell?ery)(?:s|es)?\b/i;
+const NOT_JEWELLERY = /\b(key ?rings?|napkin rings?|ring light|bag charms?|phone charms?|keychains?)\b/i;
+const MENS_JEWELLERY = /\b(kada|cufflinks?|tie (?:pin|clip|bar)|lapel pin|signet)\b/i;
 // Said outright about the product.
 const FOR_HER = /\b(women|womens|woman|ladies|lady|female|girls?|her)\b|women's|\b(saree|sari|blouse|kurti|lehenga|dupatta|dress|skirt|kaftan|anarkali|salwar|palazzo|bralette|bra|lingerie|earring|jhumka|choker|necklace|bangle|nose ?pin|handbag|clutch)(?:s|es)?\b/i;
 const FOR_HIM = /\b(men|mens|man|male|boys?|him|beard|boxers?|briefs)\b|men's/i;
@@ -47,6 +52,7 @@ export function wrongFit(item, gender, lean) {
   const s = said(item);
   if (s === "any" || s === gender) return false;
   if (s) return true;                                   // explicitly for the other
+  if (gender === "him" && JEWELLERY.test(text(item)) && !MENS_JEWELLERY.test(text(item)) && !NOT_JEWELLERY.test(text(item))) return true; // unlabelled jewellery
   const other = gender === "him" ? "her" : "him";
   return lean.get(item.brandId) === other;              // unlabelled piece from the other's label
 }
