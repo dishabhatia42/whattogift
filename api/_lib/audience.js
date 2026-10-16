@@ -11,7 +11,7 @@ const WORN = /\b(shirt|top|tee|t-shirt|tank|pants|trousers|jeans|shorts|dress|sk
 const JEWELLERY = /\b(ring|earring|ear cuff|cuff|necklace|neckpiece|chain|pendant|locket|bracelet|wrist ?band|bangle|kada|choker|anklet|jhumka|brooch|huggie|stud|hoop|charm|nose ?pin|armlet|bajuband|maang ?tikka|payal|toe ?ring|hath ?phool|jewell?ery)(?:s|es)?\b/i;
 // Things to keep jewellery in, not to wear.
 const KEEPER = /\b(box|tray|organi[sz]er|stand|holder|case|pouch|dish|storage)(?:s|es)?\b/i;
-const NOT_JEWELLERY = /\b(key ?rings?|napkin rings?|ring light|bag charms?|phone charms?|key ?chains?|belts?)\b/i;
+const NOT_JEWELLERY = /\b(key ?rings?|napkin rings?|ring light|bag charms?|phone charms?|key ?chains?)\b/i;
 const MENS_JEWELLERY = /\b(cufflinks?|tie (?:pin|clip|bar)|lapel pin)\b/i;
 // Said outright about the product.
 const FOR_HER = /\b(women|womens|woman|ladies|lady|female|girls?|her)\b|women's|\b(saree|sari|blouse|kurti|lehenga|dupatta|dress|skirt|kaftan|anarkali|salwar|palazzo|bralette|bra|lingerie|earring|jhumka|choker|necklace|bangle|nose ?pin|armlet|bajuband|maang ?tikka|payal|toe ?ring|hath ?phool|handbag|clutch|scrunchie|hair ?clip|hair ?pin|hair accessor(?:y|ie))(?:s|es)?\b/i;
@@ -23,7 +23,7 @@ const slug = (u) => String(u || "").split("?")[0].split("/products/")[1]?.replac
 const text = (i) => `${i.title || i.name || ""} ${i.type || ""} ${(i.tags || []).join(" ")} ${slug(i.url)}`;
 export const isWorn = (i) => WORN.test(text(i)) || FOR_HER.test(text(i)) || (JEWELLERY.test(text(i)) && !NOT_JEWELLERY.test(text(i)) && !KEEPER.test(text(i)));
 // Is this a piece of jewellery to wear (not a box for it, not a keyring)?
-export const isJewellery = (i) => JEWELLERY.test(text(i)) && !NOT_JEWELLERY.test(text(i)) && !KEEPER.test(text(i));
+export const isJewellery = (i) => JEWELLERY.test(text(i)) && !NOT_JEWELLERY.test(text(i)) && !KEEPER.test(text(i)) && !/\bbelts?\b/i.test(i.title || i.name || "");
 function said(i) {
   const t = text(i);
   if (UNISEX.test(t)) return "any";
