@@ -63,6 +63,9 @@ const STARTER = [
   ["toffeecoffee", "Toffee Coffee Roasters", "toffeecoffeeroasters.com"],
   ["bluetokai", "Blue Tokai", "bluetokaicoffee.com"],
   ["faebeauty", "Fae Beauty", "faebeauty.in"],
+  // Added here rather than from Manage: they join the saved list on its next read (unless removed or skipped).
+  ["urbanmonkey", "Urban Monkey", "www.urbanmonkey.com"],
+  ["johnjacobs", "John Jacobs", "www.johnjacobseyewear.com"], // lost to the stale-copy save bug (fixed in store.js)
 ].map(([id, name, domain, platform]) => ({ id, name, domain, platform: platform || "shopify" }));
 
 export async function readBrands() {
