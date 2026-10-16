@@ -5,12 +5,14 @@
 
 const WORN = /\b(shirt|top|tee|t-shirt|tank|pants|trousers|jeans|shorts|dress|skirt|kurta|kurti|saree|sari|blouse|dupatta|stole|scarf|kaftan|lehenga|jumpsuit|co-ord|jacket|blazer|hoodie|sweater|cardigan|shrug|loungewear|pyjama|pajama|nightwear|sneaker|shoe|sandal|slide|loafer|heel|cap|hat|earring|necklace|neckpiece|chain|bracelet|bangle|choker|ring|pendant|anklet|jhumka|brooch|ear cuff|cuff|huggie|stud|hoop|charm|handbag|clutch|tote|sling|belt|watch)(?:s|es)?\b/i;
 // Jewellery. In Indian shops it's made for women unless it says otherwise, so for "him" a piece
-// only stays if it says men's/unisex, or is a classic men's piece (a kada, cufflinks, a signet ring).
+// only stays if its listing clearly says men's (or unisex). Most shoppers buying for a man are
+// women shopping for a brother, partner or dad: a wrong-gender piece costs their trust, a missing
+// one costs nothing. Cufflinks, tie pins and lapel pins are men's by nature.
 const JEWELLERY = /\b(ring|earring|ear cuff|cuff|necklace|neckpiece|chain|pendant|locket|bracelet|bangle|kada|choker|anklet|jhumka|brooch|huggie|stud|hoop|charm|nose ?pin|armlet|bajuband|maang ?tikka|payal|toe ?ring|hath ?phool|jewell?ery)(?:s|es)?\b/i;
 // Things to keep jewellery in, not to wear.
 const KEEPER = /\b(box|tray|organi[sz]er|stand|holder|case|pouch|dish|storage)(?:s|es)?\b/i;
-const NOT_JEWELLERY = /\b(key ?rings?|napkin rings?|ring light|bag charms?|phone charms?|keychains?)\b/i;
-const MENS_JEWELLERY = /\b(kada|cufflinks?|tie (?:pin|clip|bar)|lapel pin|signet)\b/i;
+const NOT_JEWELLERY = /\b(key ?rings?|napkin rings?|ring light|bag charms?|phone charms?|key ?chains?)\b/i;
+const MENS_JEWELLERY = /\b(cufflinks?|tie (?:pin|clip|bar)|lapel pin)\b/i;
 // Said outright about the product.
 const FOR_HER = /\b(women|womens|woman|ladies|lady|female|girls?|her)\b|women's|\b(saree|sari|blouse|kurti|lehenga|dupatta|dress|skirt|kaftan|anarkali|salwar|palazzo|bralette|bra|lingerie|earring|jhumka|choker|necklace|bangle|nose ?pin|armlet|bajuband|maang ?tikka|payal|toe ?ring|hath ?phool|handbag|clutch|scrunchie|hair ?clip|hair ?pin|hair accessor(?:y|ie))(?:s|es)?\b/i;
 const FOR_HIM = /\b(men|mens|man|male|boys?|him|beard|boxers?|briefs)\b|men's/i;
@@ -19,7 +21,9 @@ const UNISEX = /\bunisex\b|\bfor (all|everyone)\b/i;
 // The product's page name counts too: "Earth Blue Spirit Echo- Trois" is at /products/earth-blue-spirit-echo-necklace.
 const slug = (u) => String(u || "").split("?")[0].split("/products/")[1]?.replace(/[-_/]+/g, " ") || "";
 const text = (i) => `${i.title || i.name || ""} ${i.type || ""} ${(i.tags || []).join(" ")} ${slug(i.url)}`;
-export const isWorn = (i) => WORN.test(text(i)) || FOR_HER.test(text(i));
+export const isWorn = (i) => WORN.test(text(i)) || FOR_HER.test(text(i)) || (JEWELLERY.test(text(i)) && !NOT_JEWELLERY.test(text(i)) && !KEEPER.test(text(i)));
+// Is this a piece of jewellery to wear (not a box for it, not a keyring)?
+export const isJewellery = (i) => JEWELLERY.test(text(i)) && !NOT_JEWELLERY.test(text(i)) && !KEEPER.test(text(i));
 function said(i) {
   const t = text(i);
   if (UNISEX.test(t)) return "any";
@@ -72,4 +76,11 @@ export function wrongFit(item, gender, lean) {
   const other = gender === "him" ? "her" : "him";
   const l = lean.get(item.brandId) === "her-jewellery" ? "her" : lean.get(item.brandId);
   return l === other;                                   // unlabelled piece from the other's label
+}
+
+// The same rule for the AI's "gift idea" cards (a store search, e.g. "silver chain"): for "him",
+// jewellery ideas must name men's or unisex; for "her", nothing named men's.
+export function ideaWrongFit(idea, gender) {
+  const item = { title: `${idea.name || ""} ${idea.search_query || ""}`, tags: [] };
+  return wrongFit(item, gender, new Map());
 }
