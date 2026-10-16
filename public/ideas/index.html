@@ -58,7 +58,8 @@
     <div class="more-wrap" id="more-wrap" hidden>
       <button class="go small" id="more-btn" type="button" data-umami-event="Show more" data-umami-event-where="bottom">Show more ideas <span class="arr" aria-hidden="true">↓</span></button>
       <div class="more-end" id="more-end" hidden>
-        <p>🍓 Fun fact: in a famous study, shoppers who saw 24 jams bought less than those who saw 6. You've just seen 36 gifts, so trust the one that made you smile.</p>
+        <p id="more-jam">🍓 Fun fact: in a famous study, shoppers who saw 24 jams bought less than those who saw 6. You've just seen 36 gifts, so trust the one that made you smile.</p>
+        <p id="more-out" hidden>That's everything our brands have for these picks.</p>
         <p class="more-end-alt">Want a different direction? <button class="link-btn" id="to-refine" type="button">Refine ↓</button></p>
       </div>
     </div>
@@ -103,7 +104,7 @@
   let batch = 0, shownIds = [], shownIdeas = [], total = 0;
   // The next round is fetched quietly as they near the end of the cards, so "Show more ideas"
   // is usually instant. ahead = { batch, promise }; generation drops answers for an older search.
-  let ahead = null, generation = 0;
+  let ahead = null, generation = 0, outOfGifts = false;
   const MORE_LINES = [
     ["Digging a little deeper…", "Checking the back shelves…"],
     ["Going off the beaten path…", "Asking our most opinionated friend…"],
@@ -301,7 +302,7 @@
     if (busy) return;
     busy = true; setButtons(); $("error").hidden = true;
     $("count").hidden = true; $("vibe").hidden = true; $("heard").hidden = true; $("more").hidden = true; $("more-wrap").hidden = true;
-    batch = 1; shownIds = []; shownIdeas = []; total = 0; ahead = null; generation++;
+    batch = 1; shownIds = []; shownIdeas = []; total = 0; ahead = null; generation++; outOfGifts = false;
     const list = $("ideas"); list.textContent = "";
     for (let i = 0; i < 9; i++) list.appendChild(el("div", "card skeleton"));
     loading(true);
@@ -323,7 +324,7 @@
       $("title").textContent = finalTitle; $("count").textContent = "";
       list.textContent = "";
       // A busy message from the server (too many searches) is shown as is; anything else gets the usual line.
-      $("error").textContent = /roll|breather/.test(err.message) ? err.message + " " : "Even we couldn't crack this one. Let's try again? ";
+      $("error").textContent = err.nothing || /roll|breather/.test(err.message) ? err.message + " " : "Even we couldn't crack this one. Let's try again? ";
       const retry = el("button", "secondary", "Try again"); retry.type = "button"; retry.style.marginTop = "12px";
       retry.addEventListener("click", () => load());
       $("error").appendChild(retry);
@@ -336,12 +337,13 @@
   // One round of ideas. Round 1 is the same for everyone with these answers, so it's cached;
   // later rounds list what's already on the page so the server skips it.
   async function fetchIdeas(round = batch) {
-    // The catalog version busts cached searches whenever products or ads change; p=23 is the answer format (23: Dad is a him, Mom a her; no Jewellery for him without men's stock).
+    // The catalog version busts cached searches whenever products or ads change; p=24 is the answer format (24: real products only, no store-search idea cards).
     await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
     const seen = round > 1 ? `&x=${encodeURIComponent(shownIds.join(","))}&xi=${encodeURIComponent(shownIdeas.join("|"))}` : "";
-    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=23${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=24${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
     const data = await r.json().catch(() => ({}));
     if (r.status === 429) throw new Error(data.error || "busy");
+    if (r.status === 422 && data.error) throw Object.assign(new Error(data.error), { nothing: true }); // nothing from our brands fits
     if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");
     return data;
   }
@@ -359,7 +361,8 @@
     return n;
   }
   function setButtons() {
-    const done = batch >= BATCHES && !busy; // only once the last round's cards are actually on the page
+    const done = (batch >= BATCHES || outOfGifts) && !busy; // only once the last round's cards are actually on the page
+    $("more-jam").hidden = outOfGifts; $("more-out").hidden = !outOfGifts;
     $("more-top").hidden = $("more-btn").hidden = done;
     $("more-end").hidden = !done;
     $("more-top").disabled = $("more-btn").disabled = $("again").disabled = busy;
@@ -406,7 +409,8 @@
       list.children[first]?.scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "start" });
     } catch (err) {
       placeholders.forEach((p) => p.remove()); batch--;
-      toast(/roll|breather/.test(err.message) ? err.message : "Couldn't find more just now. Try again in a moment?");
+      if (err.nothing) { outOfGifts = true; } // every fitting product has been shown: end here
+      else toast(/roll|breather/.test(err.message) ? err.message : "Couldn't find more just now. Try again in a moment?");
     } finally {
       if (gen === generation) { busy = false; setButtons(); if (nearEnd()) fetchAhead(); }
     }
