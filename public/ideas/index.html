@@ -98,6 +98,9 @@
   // "Show more ideas": the first 9, then up to three more rounds (36 gifts), never repeating one.
   const BATCHES = 4;
   let batch = 0, shownIds = [], shownIdeas = [], total = 0;
+  // The next round is fetched quietly as they near the end of the cards, so "Show more ideas"
+  // is usually instant. ahead = { batch, promise }; generation drops answers for an older search.
+  let ahead = null, generation = 0;
 
   // "your bestie" -> "Your bestie is going to love it!"
   const who = resultsTitle(state).replace(/^.*? (?:ideas )?for /, "").replace(/, just because$/, "");
@@ -289,7 +292,7 @@
     if (busy) return;
     busy = true; setButtons(); $("error").hidden = true;
     $("count").hidden = true; $("vibe").hidden = true; $("heard").hidden = true; $("more").hidden = true; $("more-wrap").hidden = true;
-    batch = 1; shownIds = []; shownIdeas = []; total = 0;
+    batch = 1; shownIds = []; shownIdeas = []; total = 0; ahead = null; generation++;
     const list = $("ideas"); list.textContent = "";
     for (let i = 0; i < 9; i++) list.appendChild(el("div", "card skeleton"));
     loading(true);
@@ -323,11 +326,11 @@
 
   // One round of ideas. Round 1 is the same for everyone with these answers, so it's cached;
   // later rounds list what's already on the page so the server skips it.
-  async function fetchIdeas() {
+  async function fetchIdeas(round = batch) {
     // The catalog version busts cached searches whenever products or ads change; p=17 is the answer format (17: "Show more ideas" rounds).
     await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
-    const seen = batch > 1 ? `&x=${encodeURIComponent(shownIds.join(","))}&xi=${encodeURIComponent(shownIdeas.join("|"))}` : "";
-    const r = await fetch(`/api/gift-ideas?${key}&b=${batch}${seen}&p=17${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+    const seen = round > 1 ? `&x=${encodeURIComponent(shownIds.join(","))}&xi=${encodeURIComponent(shownIdeas.join("|"))}` : "";
+    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=17${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
     const data = await r.json().catch(() => ({}));
     if (r.status === 429) throw new Error(data.error || "busy");
     if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");
@@ -347,7 +350,7 @@
     return n;
   }
   function setButtons() {
-    const done = batch >= BATCHES;
+    const done = batch >= BATCHES && !busy; // only once the last round's cards are actually on the page
     $("more-top").hidden = $("more-btn").hidden = done;
     $("more-end").hidden = !done;
     $("more-top").disabled = $("more-btn").disabled = $("again").disabled = busy;
@@ -355,26 +358,40 @@
     updateRefine();
   }
 
+  // Start fetching the next round early. A failed early fetch is simply tried again on the tap.
+  function fetchAhead() {
+    if (busy || batch >= BATCHES || (ahead && ahead.batch === batch + 1)) return;
+    const promise = fetchIdeas(batch + 1);
+    promise.catch(() => {});
+    ahead = { batch: batch + 1, promise };
+  }
   async function loadMore(scrollToNew) {
     if (busy || batch >= BATCHES) return;
+    const gen = generation;
     busy = true; batch++; setButtons();
     const list = $("ideas");
-    // A divider, then shimmering cards where the new ones will appear.
-    const divider = el("p", "more-divider", `More ideas for ${self ? "you" : who} ✨`);
+    // Shimmering cards where the new ones will appear (only seen if the early fetch isn't back yet).
     const placeholders = [...Array(6)].map(() => el("div", "card skeleton"));
-    list.append(divider, ...placeholders);
-    if (scrollToNew) divider.scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "start" });
+    list.append(...placeholders);
+    if (scrollToNew) placeholders[0].scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "start" });
+    const early = ahead && ahead.batch === batch ? ahead.promise : null;
+    ahead = null;
     try {
-      const data = await fetchIdeas();
+      const data = await (early ? early.catch(() => fetchIdeas()) : fetchIdeas());
+      if (gen !== generation) return; // they refined meanwhile
       placeholders.forEach((p) => p.remove());
       if (!show(data.ideas, list)) throw new Error("no new ideas");
     } catch (err) {
-      placeholders.forEach((p) => p.remove()); divider.remove(); batch--;
+      placeholders.forEach((p) => p.remove()); batch--;
       toast(/roll|breather/.test(err.message) ? err.message : "Couldn't find more just now. Try again in a moment?");
     } finally {
-      busy = false; setButtons();
+      if (gen === generation) { busy = false; setButtons(); if (nearEnd()) fetchAhead(); }
     }
   }
+  // Nearing the bottom button (they've looked through the cards): get the next round ready.
+  new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) fetchAhead(); }, { rootMargin: "0px 0px 900px 0px" }).observe($("more-btn"));
+  // (The observer only speaks up when that changes, so after each round it's checked directly too.)
+  const nearEnd = () => { const b = $("more-btn"); return !b.hidden && b.getBoundingClientRect().top < innerHeight + 900; };
   const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
   $("more-top").addEventListener("click", () => loadMore(true));
   $("more-btn").addEventListener("click", () => loadMore(false));

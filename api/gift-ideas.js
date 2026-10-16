@@ -78,6 +78,7 @@ const RESULTS = 9;          // cards on the page (three full rows on a laptop)
 const PER_BRAND = 2;        // diversity: never more than this many from one brand
 const MAX_OWN = 3;          // Disha's own picks, at most this many per answer
 const SHORTLIST = 450;      // products the AI reads per search (~15k tokens, a fraction of a rupee)
+const SHORTLIST_MORE = 300; // for "Show more ideas" rounds: a shorter read, so they come back faster
 
 // Per-visitor limit on NEW searches (cached ones never reach this code). Kept in this server
 // instance's memory, so it's a soft guard against bots looping through combinations; the hard
@@ -197,7 +198,7 @@ export default async function handler(req, res) {
 
   // The affiliate rules come with the stored products; storage trouble just means the defaults.
   const [shortlist, affiliates, policies] = await Promise.all([
-    buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags: steer, range, variant, gender: GENDERS[q.gender] ? q.gender : "", seen }),
+    buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags: steer, range, variant, gender: GENDERS[q.gender] ? q.gender : "", seen, size: variant > 1 ? SHORTLIST_MORE : SHORTLIST }),
     readData().then((d) => d.affiliates, () => undefined),
     readPolicies().catch(() => ({})), // return labels are a nice-to-have
   ]);
@@ -282,7 +283,7 @@ export function priceRange(budget, cheaper) {
 }
 
 // Step 1: the products the AI may choose from. Everything here is real and verified in code.
-export async function buildShortlist({ recipient, occasion, tags, range, variant, gender = "", seen = new Set() }) {
+export async function buildShortlist({ recipient, occasion, tags, range, variant, gender = "", seen = new Set(), size = SHORTLIST }) {
   const [own, catalog] = await Promise.all([ownPicks(recipient, occasion), readCatalog()]);
   const inRange = (price) => price >= range.min && price <= range.max;
 
@@ -310,7 +311,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   const queues = [...byBrand.values()].map((list) => list.sort((a, b) => b.s - a.s));
   const matched = items.length && scorer ? queues.flatMap((q) => q.filter((x) => x.s >= 1)).sort((a, b) => b.s - a.s).slice(0, 150) : [];
   const chosen = new Set(matched.map((x) => x.i));
-  for (let round = 0; chosen.size < SHORTLIST - picks.length && queues.some((q) => q.length > round); round++) {
+  for (let round = 0; chosen.size < size - picks.length && queues.some((q) => q.length > round); round++) {
     for (const q of queues) if (q[round]) chosen.add(q[round].i);
   }
 
@@ -323,7 +324,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
     line: `d${n} | ★ | ${clip(p.name, 90)} | ${p.tags.slice(0, 3).join(", ")} | ${p.price || "price on site"} | ${clip(p.note, 110)}`,
   }));
   n = 0;
-  for (const i of [...chosen].slice(0, SHORTLIST - list.length)) {
+  for (const i of [...chosen].slice(0, size - list.length)) {
     list.push({
       ref: `p${++n}`,
       product: i,
