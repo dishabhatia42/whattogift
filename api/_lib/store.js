@@ -29,22 +29,24 @@ async function readVersion(path) {
     throw err;
   }
   // The download can briefly lag behind a save that just happened (an older copy served from a
-  // cache). So the version that's kept is the one actually downloaded (its ETag), and a copy that
-  // doesn't match the latest save is fetched again. Before this, an add could build on the older
-  // copy yet save with the newer ETag, quietly wiping out a brand added a moment before.
-  const want = bareTag(meta.etag);
-  let got;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const r = await fetch(`${meta.url}?v=${new Date(meta.uploadedAt).getTime()}-${attempt}`, { cache: "no-store" });
+  // cache). A copy older than the latest save is fetched again, so a change builds on the latest.
+  // (Before this, an add could build on the older copy yet save as the newest, quietly wiping
+  // out a brand added a moment before.) Compared by the copy's Last-Modified time, to the second.
+  const savedAt = Math.floor(new Date(meta.uploadedAt).getTime() / 1000) * 1000;
+  let text = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const r = await fetch(`${meta.url}?v=${savedAt}-${attempt}`, { cache: "no-store" });
     if (r.status === 404) return null;
     if (!r.ok) throw new Error(`Storage read failed (${r.status})`);
-    got = { text: await r.text(), etag: r.headers.get("etag") || meta.etag };
-    if (!want || bareTag(got.etag) === want) return got;
-    await new Promise((ok) => setTimeout(ok, 250 * (attempt + 1)));
+    text = await r.text();
+    const copyAt = Date.parse(r.headers.get("last-modified") || "");
+    if (!copyAt || copyAt >= savedAt) return { text, etag: meta.etag };
+    await new Promise((ok) => setTimeout(ok, 200 * (attempt + 1)));
   }
-  return got; // still behind: its own (older) ETag makes a save from it fail and start over, never overwrite
+  // Still behind after ~2s: carry on as before rather than block every save (and note it).
+  console.warn("Storage copy still older than its last save", path);
+  return { text, etag: meta.etag };
 }
-const bareTag = (t) => String(t || "").replace(/^W\//, "").replace(/"/g, "");
 
 // Read, change, save, without losing someone else's save in between. Two actions at once
 // (adding two brands in quick succession, or an add during the nightly refresh) would each

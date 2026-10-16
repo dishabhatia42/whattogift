@@ -189,6 +189,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: err.message });
     }
     console.error(err);
+    if (/Lots of changes/.test(String(err?.message))) return res.status(409).json({ error: err.message });
     // Name the real problem: an AI error, or storage.
     if (err?.status && err?.headers) return res.status(502).json({ error: aiTrouble(err) });
     return res.status(500).json({ error: "Couldn't reach storage. Is a Blob store connected to this project?" });
