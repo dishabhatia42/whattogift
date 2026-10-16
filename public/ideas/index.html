@@ -57,7 +57,10 @@
     <!-- "Show more ideas": adds 9 more below (nothing on the page is replaced), three times at most. -->
     <div class="more-wrap" id="more-wrap" hidden>
       <button class="go small" id="more-btn" type="button" data-umami-event="Show more" data-umami-event-where="bottom">Show more ideas <span class="arr" aria-hidden="true">↓</span></button>
-      <p class="more-end" id="more-end" hidden>That's our best for these picks. Want a different direction? <button class="link-btn" id="to-refine" type="button">Refine ↓</button></p>
+      <div class="more-end" id="more-end" hidden>
+        <p>🍓 Fun fact: in a famous study, shoppers who saw 24 jams bought less than those who saw 6. You've just seen 36 gifts, so trust the one that made you smile.</p>
+        <p class="more-end-alt">Want a different direction? <button class="link-btn" id="to-refine" type="button">Refine ↓</button></p>
+      </div>
     </div>
   </section>
 
@@ -101,6 +104,12 @@
   // The next round is fetched quietly as they near the end of the cards, so "Show more ideas"
   // is usually instant. ahead = { batch, promise }; generation drops answers for an older search.
   let ahead = null, generation = 0;
+  const MORE_LINES = [
+    ["Digging a little deeper…", "Checking the back shelves…"],
+    ["Going off the beaten path…", "Asking our most opinionated friend…"],
+    ["One last lap around the shops…", "Saving something good for last…"],
+  ];
+  let moreTimer;
 
   // "your bestie" -> "Your bestie is going to love it!"
   const who = resultsTitle(state).replace(/^.*? (?:ideas )?for /, "").replace(/, just because$/, "");
@@ -354,7 +363,16 @@
     $("more-top").hidden = $("more-btn").hidden = done;
     $("more-end").hidden = !done;
     $("more-top").disabled = $("more-btn").disabled = $("again").disabled = busy;
-    $("more-btn").firstChild.textContent = busy && batch > 1 ? "Finding more ideas… " : "Show more ideas ";
+    $("more-btn").firstChild.textContent = "Show more ideas ";
+    $("more-btn").lastElementChild.hidden = false;
+    clearInterval(moreTimer);
+    // While a round loads, the button tells a little story, different for each tap.
+    if (busy && batch > 1) {
+      const lines = MORE_LINES[batch - 2] || MORE_LINES[0];
+      let i = 0;
+      const say = () => { $("more-btn").firstChild.textContent = lines[i++ % lines.length]; $("more-btn").lastElementChild.hidden = true; };
+      say(); moreTimer = setInterval(say, 2000);
+    }
     updateRefine();
   }
 
@@ -380,7 +398,12 @@
       const data = await (early ? early.catch(() => fetchIdeas()) : fetchIdeas());
       if (gen !== generation) return; // they refined meanwhile
       placeholders.forEach((p) => p.remove());
+      const first = list.children.length;
       if (!show(data.ideas, list)) throw new Error("no new ideas");
+      // The browser keeps the button where it was on screen, so new cards would land above,
+      // out of sight (and the last round's "36 gifts" line would show before the gifts).
+      // Glide to the first new card instead.
+      list.children[first]?.scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "start" });
     } catch (err) {
       placeholders.forEach((p) => p.remove()); batch--;
       toast(/roll|breather/.test(err.message) ? err.message : "Couldn't find more just now. Try again in a moment?");

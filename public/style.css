@@ -321,7 +321,9 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 /* "Show more ideas": the button under the cards */
 .more-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 28px 0 8px; text-align: center; }
 .more-wrap[hidden], .more-wrap [hidden] { display: none; }
-.more-end { margin: 0; font-size: 15px; color: var(--muted); }
+.more-end { max-width: 560px; font-size: 16px; line-height: 1.5; color: var(--body); }
+.more-end p { margin: 0; }
+.more-end .more-end-alt { margin-top: 8px; font-size: 15px; color: var(--muted); }
 .refine { display: flex; flex-direction: column; gap: 12px; background: var(--surface); border-radius: 18px; padding: 22px; box-shadow: var(--shadow-sm); }
 .refine .suggest .pill { min-height: 40px; font-size: 14px; }
 .refine-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; margin-top: 4px; }
@@ -331,6 +333,7 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .refine-hint[hidden] { display: none; }
 .edit-more { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
 
+.cards .card { scroll-margin-top: 96px; } /* clears the sticky header when a new round scrolls into view */
 .cards { display: grid; grid-template-columns: 1fr; gap: 18px; }
 @media (min-width: 640px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1000px) { .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
