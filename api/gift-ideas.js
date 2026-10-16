@@ -82,7 +82,7 @@ const SHORTLIST = 450;      // products the AI reads per search (~15k tokens, a 
 // Per-visitor limit on NEW searches (cached ones never reach this code). Kept in this server
 // instance's memory, so it's a soft guard against bots looping through combinations; the hard
 // ceiling is the monthly spend limit set in the Anthropic Console.
-const SEARCHES_PER_HOUR = 20;
+const SEARCHES_PER_HOUR = 40; // a search plus its three "Show more ideas" rounds is 4
 const recent = new Map(); // ip -> timestamps of recent searches (in memory only, never stored)
 let lastSweep = 0;
 function overLimit(ip) {
@@ -97,7 +97,7 @@ function overLimit(ip) {
   }
   return false;
 }
-const VARIANTS = 3; // "Show different ideas" cycles through this many cached answers
+const BATCHES = 4; // the first 9, then "Show more ideas" three times: 36 gifts at most
 
 const SCHEMA = {
   type: "object",
@@ -168,7 +168,10 @@ export default async function handler(req, res) {
   }
 
   const q = req.query || {};
-  const variant = Math.min(Math.max(parseInt(q.v, 10) || 1, 1), VARIANTS);
+  // "Show more ideas": which round this is, and everything already on their page, so nothing repeats.
+  const variant = Math.min(Math.max(parseInt(q.b, 10) || 1, 1), BATCHES);
+  const seen = new Set((typeof q.x === "string" ? q.x.split(",") : []).filter((id) => /^[\w.-]{1,90}$/.test(id)).slice(0, 40));
+  const seenIdeas = (typeof q.xi === "string" ? q.xi.split("|") : []).map((t) => t.replace(/[^\p{L}\p{N} &'’.,+\-/]/gu, "").trim().slice(0, 60)).filter(Boolean).slice(0, 12);
   const recipient = RECIPIENTS[q.recipient];
   const occasion = OCCASIONS[q.occasion];
   if (!recipient || !occasion) return res.status(400).json({ error: "Pick who it's for and the occasion." });
@@ -194,7 +197,7 @@ export default async function handler(req, res) {
 
   // The affiliate rules come with the stored products; storage trouble just means the defaults.
   const [shortlist, affiliates, policies] = await Promise.all([
-    buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags: steer, range, variant, gender: GENDERS[q.gender] ? q.gender : "" }),
+    buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags: steer, range, variant, gender: GENDERS[q.gender] ? q.gender : "", seen }),
     readData().then((d) => d.affiliates, () => undefined),
     readPolicies().catch(() => ({})), // return labels are a nice-to-have
   ]);
@@ -214,7 +217,7 @@ export default async function handler(req, res) {
       : "Mix: mostly familiar picks, with at most one gentle wildcard.",
     ...tunes.map((t) => `Refinement: ${TUNES[t]}`),
     wantsExperiences ? "Experiences: the shopper wants experiences. First pick the real ones in the shortlist (tours, workshops, tastings, classes, courses, like a cacao mill tour); they're bookable straight from the brand. Then add experience ideas (store web) only to reach 3 experiences in total." : "",
-    variant > 1 ? `Variation ${variant}: the shopper asked for different options; skip the most obvious picks and favour fresh alternatives.` : "",
+    variant > 1 ? `More ideas (round ${variant} of ${BATCHES}): the shopper has already seen ${(variant - 1) * RESULTS} gifts and wants more, different options. The shortlist leaves out what they've seen.${seenIdeas.length ? ` Don't repeat these gift ideas: ${JSON.stringify(seenIdeas)}.` : ""}` : "",
     "",
     shortlist.length ? `Shortlist (${shortlist.length} products):\n${shortlist.map((s) => s.line).join("\n")}` : "Shortlist: empty (give 6 to 8 ideas instead).",
   ].filter((l) => l !== "").join("\n");
@@ -240,6 +243,8 @@ export default async function handler(req, res) {
     }
 
     // Every link out carries the affiliate ID or UTM tags (see _lib/links.js).
+    const shownIdeas = new Set(seenIdeas.map((t) => t.toLowerCase()));
+    if (shownIdeas.size) data.ideas = (data.ideas || []).filter((i) => !shownIdeas.has(String(i.name || "").replace(/[^\p{L}\p{N} &'’.,+\-/]/gu, "").trim().slice(0, 60).toLowerCase()));
     const ideas = assemble(data, shortlist, { roomForIdeas: wantsExperiences ? 3 : 0, discover })
       .map((i) => {
         const url = outbound(i.url, affiliates);
@@ -277,7 +282,7 @@ export function priceRange(budget, cheaper) {
 }
 
 // Step 1: the products the AI may choose from. Everything here is real and verified in code.
-export async function buildShortlist({ recipient, occasion, tags, range, variant, gender = "" }) {
+export async function buildShortlist({ recipient, occasion, tags, range, variant, gender = "", seen = new Set() }) {
   const [own, catalog] = await Promise.all([ownPicks(recipient, occasion), readCatalog()]);
   const inRange = (price) => price >= range.min && price <= range.max;
 
@@ -287,13 +292,13 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   // Disha's own picks join only when they fit the interests (a book isn't "Food & treats").
   const picks = own
     .map((p) => ({ ...p, priceNum: rupees(p.price) }))
-    .filter((p) => p.image && (p.priceNum == null || inRange(p.priceNum)))
+    .filter((p) => p.image && (p.priceNum == null || inRange(p.priceNum)) && !seen.has(`o-${p.id}`))
     .filter((p) => !scorer || score({ title: p.name, tags: p.tags, blurb: `${p.note} ${p.line || ""}` }) >= 1)
     .slice(0, 30);
   // Shopping for him (or her): leave out clothes and accessories made for the other. Most shop
   // data doesn't say, so the brand's leaning decides for unlabelled pieces (see _lib/audience.js).
   const lean = gender ? brandLeanings(catalog) : null;
-  const items = catalog.items.filter((i) => inRange(i.price) && !(lean && wrongFit(i, gender, lean)));
+  const items = catalog.items.filter((i) => inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)));
 
   // Interest matches first, then a fair share of every brand, so a big shop can't drown the rest.
   const byBrand = new Map();

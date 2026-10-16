@@ -318,6 +318,11 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .shuffle-btn:hover { background: var(--primary); color: #fff; }
 .shuffle-btn:active { transform: scale(.97); }
 .shuffle-btn:disabled { opacity: .5; cursor: progress; }
+/* "Show more ideas": a divider between rounds, and the button under the cards */
+.more-divider { grid-column: 1 / -1; margin: 18px 0 0; padding-top: 22px; border-top: 1.5px dashed var(--line); font-size: 18px; font-weight: 700; color: var(--fg); scroll-margin-top: 110px; }
+.more-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 28px 0 8px; text-align: center; }
+.more-wrap[hidden], .more-wrap [hidden] { display: none; }
+.more-end { margin: 0; font-size: 15px; color: var(--muted); }
 .refine { display: flex; flex-direction: column; gap: 12px; background: var(--surface); border-radius: 18px; padding: 22px; box-shadow: var(--shadow-sm); }
 .refine .suggest .pill { min-height: 40px; font-size: 14px; }
 .refine-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; margin-top: 4px; }

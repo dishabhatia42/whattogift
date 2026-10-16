@@ -46,14 +46,19 @@
   <section class="edit-collection" aria-live="polite">
     <div class="edit-bar">
       <h2 class="sec" id="count" hidden></h2>
-      <!-- Shuffle is the most-used button, so it sits up here, not only at the bottom. -->
+      <!-- More ideas is the most-used button, so it sits up here, not only under the cards. -->
       <div class="bar-acts" id="bar-acts" hidden>
-        <button class="shuffle-btn" id="shuffle" type="button" data-umami-event="Shuffle" data-umami-event-where="top">↻ Shuffle</button>
+        <button class="shuffle-btn" id="more-top" type="button" data-umami-event="Show more" data-umami-event-where="top">＋ More ideas</button>
         <button class="link-btn" id="again" type="button">Not quite their vibe? Refine ↓</button>
       </div>
     </div>
     <div class="cards" id="ideas"></div>
     <p class="error" id="error" role="alert" hidden></p>
+    <!-- "Show more ideas": adds 9 more below (nothing on the page is replaced), three times at most. -->
+    <div class="more-wrap" id="more-wrap" hidden>
+      <button class="go small" id="more-btn" type="button" data-umami-event="Show more" data-umami-event-where="bottom">Show more ideas <span class="arr" aria-hidden="true">↓</span></button>
+      <p class="more-end" id="more-end" hidden>That's our best for these picks. Want a different direction? <button class="link-btn" id="to-refine" type="button">Refine ↓</button></p>
+    </div>
   </section>
 
   <section class="edit-collection" id="sponsored" hidden aria-label="Sponsored picks">
@@ -68,7 +73,6 @@
     <div class="refine-acts">
       <p class="refine-hint" id="refine-hint">Pick what to change above, then refine.</p>
       <button class="go small" id="refine" type="button" data-umami-event="Refine">Refine my picks <span class="arr" aria-hidden="true">→</span></button>
-      <button class="link-btn" id="again2" type="button" data-umami-event="Shuffle" data-umami-event-where="bottom">Or just shuffle ↻</button>
       <a class="quiet-link" href="/">Shopping for someone else? →</a>
     </div>
   </section>
@@ -90,7 +94,10 @@
   const state = fromParams(new URLSearchParams(location.search));
   if (!state.recipient || !state.occasion) { location.replace("/"); return; }
   let key = toParams(state).toString();
-  let variant = 0, busy = false;
+  let busy = false;
+  // "Show more ideas": the first 9, then up to three more rounds (36 gifts), never repeating one.
+  const BATCHES = 4;
+  let batch = 0, shownIds = [], shownIdeas = [], total = 0;
 
   // "your bestie" -> "Your bestie is going to love it!"
   const who = resultsTitle(state).replace(/^.*? (?:ideas )?for /, "").replace(/, just because$/, "");
@@ -131,7 +138,7 @@
     $("tunes").appendChild(b);
   }
   // "Refine my picks" only works once they've changed a chip: with nothing new to ask for, a tap
-  // would just reload the same page and jump them back to the top. "Or just shuffle" is there for that.
+  // would just reload the same page and jump them back to the top. "Show more ideas" is there for that.
   const picked = () => [...$("tunes").children].filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.id);
   function updateRefine() {
     const changed = picked().sort().join() !== [...state.tune].sort().join();
@@ -280,28 +287,22 @@
 
   async function load() {
     if (busy) return;
-    busy = true; $("shuffle").disabled = $("again").disabled = $("again2").disabled = $("refine").disabled = true; $("error").hidden = true;
-    $("count").hidden = true; $("vibe").hidden = true; $("heard").hidden = true; $("more").hidden = true;
-    variant = (variant % 3) + 1; // "Try again" cycles three cached answers
+    busy = true; setButtons(); $("error").hidden = true;
+    $("count").hidden = true; $("vibe").hidden = true; $("heard").hidden = true; $("more").hidden = true; $("more-wrap").hidden = true;
+    batch = 1; shownIds = []; shownIdeas = []; total = 0;
     const list = $("ideas"); list.textContent = "";
     for (let i = 0; i < 9; i++) list.appendChild(el("div", "card skeleton"));
     loading(true);
     try {
-      // The catalog version busts cached searches whenever products or ads change; p=16 is the answer format (16: each pick checked against the product name).
-      await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
-      const r = await fetch(`/api/gift-ideas?${key}&v=${variant}&p=16${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
-      const data = await r.json().catch(() => ({}));
-      if (r.status === 429) throw new Error(data.error || "busy");
-      if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");
+      const data = await fetchIdeas();
       loading(false);
       list.textContent = "";
-      data.ideas.forEach((idea, i) => list.appendChild(card(idea, i)));
-      $("count").textContent = `${data.ideas.length} little ways to ${self ? "treat yourself" : "make their day"}`; $("count").hidden = false;
+      show(data.ideas, list);
       $("title").textContent = finalTitle;
       if (data.vibe) { $("vibe").textContent = data.vibe; $("vibe").hidden = false; }
       // What we picked out of their note, so they can see it was read.
       if (Array.isArray(data.heard) && data.heard.length) { $("heard").textContent = `Picked up on: ${data.heard.join(" · ")}`; $("heard").hidden = false; }
-      $("bar-acts").hidden = false; $("more").hidden = false;
+      $("bar-acts").hidden = false; $("more").hidden = false; $("more-wrap").hidden = false;
       const ads = pickAds(state).filter(Boolean);
       $("ads").textContent = ""; ads.forEach((ad, i) => $("ads").appendChild(adCard(ad, i)));
       $("sponsored").hidden = !ads.length;
@@ -312,18 +313,73 @@
       // A busy message from the server (too many searches) is shown as is; anything else gets the usual line.
       $("error").textContent = /roll|breather/.test(err.message) ? err.message + " " : "Even we couldn't crack this one. Let's try again? ";
       const retry = el("button", "secondary", "Try again"); retry.type = "button"; retry.style.marginTop = "12px";
-      retry.addEventListener("click", () => { variant -= 1; load(); }); // retry the same answer
+      retry.addEventListener("click", () => load());
       $("error").appendChild(retry);
       $("error").hidden = false;
     } finally {
-      busy = false; $("shuffle").disabled = $("again").disabled = $("again2").disabled = false; updateRefine();
+      busy = false; setButtons();
     }
   }
 
-  const again = () => { load(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  // One round of ideas. Round 1 is the same for everyone with these answers, so it's cached;
+  // later rounds list what's already on the page so the server skips it.
+  async function fetchIdeas() {
+    // The catalog version busts cached searches whenever products or ads change; p=17 is the answer format (17: "Show more ideas" rounds).
+    await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
+    const seen = batch > 1 ? `&x=${encodeURIComponent(shownIds.join(","))}&xi=${encodeURIComponent(shownIdeas.join("|"))}` : "";
+    const r = await fetch(`/api/gift-ideas?${key}&b=${batch}${seen}&p=17${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+    const data = await r.json().catch(() => ({}));
+    if (r.status === 429) throw new Error(data.error || "busy");
+    if (!r.ok || !Array.isArray(data.ideas) || !data.ideas.length) throw new Error("no ideas");
+    return data;
+  }
+  // Add a round's cards (skipping anything already shown) and remember them.
+  function show(ideas, into) {
+    let n = 0;
+    for (const idea of ideas) {
+      if (idea.pid && shownIds.includes(idea.pid)) continue;
+      if (idea.kind === "idea" && shownIdeas.some((t) => t.toLowerCase() === String(idea.name).toLowerCase())) continue;
+      if (idea.pid) shownIds.push(idea.pid); else shownIdeas.push(String(idea.name).slice(0, 60));
+      into.appendChild(card(idea, n++));
+    }
+    total += n;
+    $("count").textContent = `${total} little ways to ${self ? "treat yourself" : "make their day"}`; $("count").hidden = false;
+    return n;
+  }
+  function setButtons() {
+    const done = batch >= BATCHES;
+    $("more-top").hidden = $("more-btn").hidden = done;
+    $("more-end").hidden = !done;
+    $("more-top").disabled = $("more-btn").disabled = $("again").disabled = busy;
+    $("more-btn").firstChild.textContent = busy && batch > 1 ? "Finding more ideas… " : "Show more ideas ";
+    updateRefine();
+  }
+
+  async function loadMore(scrollToNew) {
+    if (busy || batch >= BATCHES) return;
+    busy = true; batch++; setButtons();
+    const list = $("ideas");
+    // A divider, then shimmering cards where the new ones will appear.
+    const divider = el("p", "more-divider", `More ideas for ${self ? "you" : who} ✨`);
+    const placeholders = [...Array(6)].map(() => el("div", "card skeleton"));
+    list.append(divider, ...placeholders);
+    if (scrollToNew) divider.scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "start" });
+    try {
+      const data = await fetchIdeas();
+      placeholders.forEach((p) => p.remove());
+      if (!show(data.ideas, list)) throw new Error("no new ideas");
+    } catch (err) {
+      placeholders.forEach((p) => p.remove()); divider.remove(); batch--;
+      toast(/roll|breather/.test(err.message) ? err.message : "Couldn't find more just now. Try again in a moment?");
+    } finally {
+      busy = false; setButtons();
+    }
+  }
+  const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  $("more-top").addEventListener("click", () => loadMore(true));
+  $("more-btn").addEventListener("click", () => loadMore(false));
   $("again").addEventListener("click", () => $("more").scrollIntoView({ behavior: "smooth", block: "center" }));
-  $("again2").addEventListener("click", again);
-  $("shuffle").addEventListener("click", again);
+  $("to-refine").addEventListener("click", () => $("more").scrollIntoView({ behavior: "smooth", block: "center" }));
   // Refine: new answers with these tweaks, and the URL remembers them.
   $("refine").addEventListener("click", () => {
     if ($("refine").disabled) return;
@@ -331,7 +387,7 @@
     key = toParams(state).toString();
     history.replaceState(null, "", "/ideas?" + key);
     $("edit").href = "/?" + key;
-    summary(); variant = 0; again();
+    summary(); load(); window.scrollTo({ top: 0, behavior: "smooth" });
   });
   load();
 })();
