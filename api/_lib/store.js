@@ -28,11 +28,23 @@ async function readVersion(path) {
     if (err instanceof BlobNotFoundError || err?.name === "BlobNotFoundError" || /does not exist|not.*found/i.test(String(err?.message))) return null;
     throw err;
   }
-  const r = await fetch(`${meta.url}?v=${new Date(meta.uploadedAt).getTime()}`);
-  if (r.status === 404) return null;
-  if (!r.ok) throw new Error(`Storage read failed (${r.status})`);
-  return { text: await r.text(), etag: meta.etag };
+  // The download can briefly lag behind a save that just happened (an older copy served from a
+  // cache). So the version that's kept is the one actually downloaded (its ETag), and a copy that
+  // doesn't match the latest save is fetched again. Before this, an add could build on the older
+  // copy yet save with the newer ETag, quietly wiping out a brand added a moment before.
+  const want = bareTag(meta.etag);
+  let got;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const r = await fetch(`${meta.url}?v=${new Date(meta.uploadedAt).getTime()}-${attempt}`, { cache: "no-store" });
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error(`Storage read failed (${r.status})`);
+    got = { text: await r.text(), etag: r.headers.get("etag") || meta.etag };
+    if (!want || bareTag(got.etag) === want) return got;
+    await new Promise((ok) => setTimeout(ok, 250 * (attempt + 1)));
+  }
+  return got; // still behind: its own (older) ETag makes a save from it fail and start over, never overwrite
 }
+const bareTag = (t) => String(t || "").replace(/^W\//, "").replace(/"/g, "");
 
 // Read, change, save, without losing someone else's save in between. Two actions at once
 // (adding two brands in quick succession, or an add during the nightly refresh) would each
