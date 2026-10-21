@@ -337,10 +337,10 @@
   // One round of ideas. Round 1 is the same for everyone with these answers, so it's cached;
   // later rounds list what's already on the page so the server skips it.
   async function fetchIdeas(round = batch) {
-    // The catalog version busts cached searches whenever products or ads change; p=24 is the answer format (24: real products only, no store-search idea cards).
+    // The catalog version busts cached searches whenever products or ads change; p=25 is the answer format (25: "for him"/"for her" wording and Him only/Her only picks).
     await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
     const seen = round > 1 ? `&x=${encodeURIComponent(shownIds.join(","))}&xi=${encodeURIComponent(shownIdeas.join("|"))}` : "";
-    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=24${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=25${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
     const data = await r.json().catch(() => ({}));
     if (r.status === 429) throw new Error(data.error || "busy");
     if (r.status === 422 && data.error) throw Object.assign(new Error(data.error), { nothing: true }); // nothing from our brands fits

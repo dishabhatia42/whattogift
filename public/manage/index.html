@@ -193,6 +193,14 @@
         <label class="f" style="flex-direction:row;align-items:center;gap:8px;color:var(--fg)"><input type="checkbox" name="board"> Put on the home-page board (shows as a sticker, max 10)</label>
         <label class="f" style="flex-direction:row;align-items:center;gap:8px;color:var(--fg);padding-left:24px"><input type="checkbox" name="phone"> Also show it on phones (phones have room for 6) <span class="muted" data-phone-count></span></label>
         <label class="f">Your line (the cheeky one-liner people see when they tap it on the board)<input type="text" name="line" maxlength="140" placeholder="My most-gifted thing this year. No regrets."></label>
+        <div class="f">Who is it for?
+          <div class="occ" data-gender style="display:flex;gap:14px">
+            <label><input type="radio" name="gender" value="" checked> Anyone</label>
+            <label><input type="radio" name="gender" value="him"> Him only</label>
+            <label><input type="radio" name="gender" value="her"> Her only</label>
+          </div>
+          <span class="muted" style="font-size:13px">"Him only" never shows when someone shops for a her, and the other way round. Pick it for things like a men's grooming kit.</span>
+        </div>
         <div class="f">Show for (nothing ticked in a row = all)<div data-occ style="display:flex;flex-direction:column;gap:6px"></div></div>
         <div class="row">
           <img class="preview" data-preview hidden alt="">
@@ -716,7 +724,7 @@
   function describeTargets(item) {
     const who = item.recipients.length ? label(RECIPIENTS, item.recipients) : "anyone";
     const why = item.occasions.length ? label(OCCASIONS, item.occasions) : "any occasion";
-    return `${who} · ${why}`;
+    return `${item.gender === "him" ? "Him only · " : item.gender === "her" ? "Her only · " : ""}${who} · ${why}`;
   }
 
   // ---- products
@@ -756,6 +764,9 @@
       resetPickForm();
       const f = pickForm.elements;
       f.name.value = p.name; f.price.value = p.price; f.url.value = p.url; f.note.value = p.note; f.tags.value = p.tags.join(", ");
+      // A first guess from the page's wording ("Essentials for Him", "women's"); Disha can change it.
+      const words = `${p.name} ${p.tags.join(" ")}`;
+      f.gender.value = /\b(for (him|men)|men'?s|mens|gentlemen)\b/i.test(words) ? "him" : /\b(for (her|women)|women'?s|womens|ladies)\b/i.test(words) ? "her" : "";
       setImage(pickForm, p.image); occasionBoxes($("[data-occ]", pickForm), p);
       note.textContent = p.check ? "Check before saving: " + p.check : "All filled in from the page. Have a quick look, then save.";
       note.hidden = false; $("#af-url").value = "";
@@ -772,6 +783,7 @@
       board: f.board.checked, phone: f.board.checked && f.phone.checked, line: f.line.value,
       tags: f.tags.value.split(",").map((t) => t.trim()).filter(Boolean),
       recipients: checked(pickForm, "recipients"), occasions: checked(pickForm, "occasions"), active: true,
+      gender: f.gender.value,
     };
     const existing = data.products.find((p) => p.id === pick.id);
     if (existing) pick.active = existing.active;
@@ -808,6 +820,7 @@
         const f = pickForm.elements;
         f.id.value = p.id; f.name.value = p.name; f.price.value = p.price; f.url.value = p.url; f.note.value = p.note; f.tags.value = p.tags.join(", ");
         f.board.checked = !!p.board; f.phone.checked = !!p.phone; f.line.value = p.line || "";
+        f.gender.value = p.gender || "";
         syncPhoneBox();
         setImage(pickForm, p.image); occasionBoxes($("[data-occ]", pickForm), p);
         openPickForm();

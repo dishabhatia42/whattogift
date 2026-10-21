@@ -60,9 +60,22 @@ export function brandLeanings(catalog) {
   return lean;
 }
 
+// Said in so many words: "Essentials for Him", "men's grooming kit", "for women". Anything,
+// worn or not (a grooming box made for men isn't for a sister either).
+const SAYS_HIM = /\b(for (him|men|gents)|men'?s|mens|gentlemen|gents)\b/i;
+const SAYS_HER = /\b(for (her|women|ladies)|women'?s|womens)\b/i; // not bare "ladies": ladies finger pickle
+export function explicitGender(item) {
+  const t = text(item);
+  if (UNISEX.test(t)) return "";
+  const him = SAYS_HIM.test(t), her = SAYS_HER.test(t);
+  return him && !her ? "him" : her && !him ? "her" : "";
+}
+
 // Should this product be left out when shopping for `gender` ("him" / "her")?
 export function wrongFit(item, gender, lean) {
   if (gender !== "him" && gender !== "her") return false;
+  const says = explicitGender(item);
+  if (says && says !== gender) return true;
   // From a women's jewellery label, for "him": its jewellery, and pieces whose listing says
   // nothing at all ("Knot Forever" with no type or tags), are left out. Boxes, trays and
   // anything listed under another type (a candle, a cushion) stay.
