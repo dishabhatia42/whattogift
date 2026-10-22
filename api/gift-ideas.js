@@ -15,7 +15,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { interestScorer } from "./_lib/vocabulary.js";
 import { brandLeanings, wrongFit, mensJewelleryCount, MIN_MENS_JEWELLERY } from "./_lib/audience.js";
-import { placeOf, placesOf, fitsCity, CITY_NAMES } from "./_lib/places.js";
+import { placeOf, placesOf, fitsCity, isExperience, CITY_NAMES } from "./_lib/places.js";
 import { readData } from "./_lib/store.js";
 import { readCatalog } from "./_lib/catalog.js";
 import { cleanInterests } from "./_lib/interests.js";
@@ -296,7 +296,11 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   // Shopping for him (or her): leave out clothes and accessories made for the other. Most shop
   // data doesn't say, so the brand's leaning decides for unlabelled pieces (see _lib/audience.js).
   const lean = gender ? brandLeanings(catalog) : null;
-  const items = catalog.items.filter((i) => inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)) && fitsCity(i, city));
+  // Experiences is their only interest: show experiences and nothing else. Topping up with
+  // chocolates and coffee that the AI then calls "a tasting experience" isn't what they asked
+  // for; a short, honest list is better. (With other interests too, those products still come.)
+  const expOnly = tags.length > 0 && tags.every((t) => t.toLowerCase() === "experiences");
+  const items = catalog.items.filter((i) => inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)) && fitsCity(i, city) && (!expOnly || isExperience(i)));
 
   // Interest matches first, then a fair share of every brand, so a big shop can't drown the rest.
   const byBrand = new Map();

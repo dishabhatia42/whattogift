@@ -311,7 +311,8 @@
       const data = await fetchIdeas();
       loading(false);
       list.textContent = "";
-      show(data.ideas, list);
+      // A short list means that's all our brands have for these picks: no "Show more" to a dead end.
+      if (show(data.ideas, list) < 6) outOfGifts = true;
       $("title").textContent = finalTitle;
       if (data.vibe) { $("vibe").textContent = data.vibe; $("vibe").hidden = false; }
       // What we picked out of their note, so they can see it was read.
@@ -338,10 +339,10 @@
   // One round of ideas. Round 1 is the same for everyone with these answers, so it's cached;
   // later rounds list what's already on the page so the server skips it.
   async function fetchIdeas(round = batch) {
-    // The catalog version busts cached searches whenever products or ads change; p=26 is the answer format (26: experiences filtered by city).
+    // The catalog version busts cached searches whenever products or ads change; p=27 is the answer format (27: Experiences alone shows experiences only).
     await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
     const seen = round > 1 ? `&x=${encodeURIComponent(shownIds.join(","))}&xi=${encodeURIComponent(shownIdeas.join("|"))}` : "";
-    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=26${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=27${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
     const data = await r.json().catch(() => ({}));
     if (r.status === 429) throw new Error(data.error || "busy");
     if (r.status === 422 && data.error) throw Object.assign(new Error(data.error), { nothing: true }); // nothing from our brands fits
