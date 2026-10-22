@@ -163,6 +163,9 @@ h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 24px; le
 .fine { font-size: 13px; color: var(--muted); }
 
 .gender { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 15px; color: var(--muted); }
+.where-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 15px; color: var(--muted); margin: 14px 0 4px; }
+.where-row[hidden] { display: none; }
+.where-row .pill { min-height: 38px; padding: 0 16px; font-size: 14px; }
 .gender .pill { min-height: 38px; padding: 0 16px; font-size: 14px; }
 
 .tagbox { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-bottom: 1.5px solid var(--line); padding-bottom: 6px; transition: border-color .18s; }

@@ -94,6 +94,8 @@
     // The "Tell us about them" note is paused (the box is off the home page), so an old link's
     // note isn't carried forward where it can't be seen or removed. To bring it back:
     // const about = cleanAbout(s.about); if (about) p.set("about", about);
+    // "Where are they?" only means something when Experiences is picked.
+    if (s.city && tags.includes("experiences")) p.set("city", s.city);
     if (s.discover) p.set("new", "1");
     const tune = TUNES.filter((t) => (s.tune || []).includes(t.id)).map((t) => t.id);
     if (tune.length) p.set("tune", tune.join(","));
@@ -146,7 +148,8 @@
     const discover = p.get("new") === "1";
     const tune = (p.get("tune") || "").split(",").filter((t) => TUNES.some((x) => x.id === t));
     const about = cleanAbout(p.get("about") || "");
-    return { recipient, gender, occasion, budget, tags, about, discover, tune };
+    const city = /^[A-Z][A-Za-z ]{1,20}$/.test(p.get("city") || "") ? p.get("city") : null; // the server checks it's a real one
+    return { recipient, gender, occasion, budget, tags, about, discover, tune, city };
   }
 
   function resultsTitle(s) {
@@ -164,12 +167,13 @@
   }
 
   // ---- ads (and the version stamp that refreshes cached searches after admin changes)
-  const catalog = { ads: [], board: [], version: "", mensJewellery: 0 };
+  const catalog = { ads: [], board: [], version: "", mensJewellery: 0, experienceCities: {} };
   const catalogReady = fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((d) => {
     if (d && Array.isArray(d.ads)) catalog.ads = d.ads;
     if (d && Array.isArray(d.board)) catalog.board = d.board;
     if (d && d.version) catalog.version = d.version;
     if (d && Number.isFinite(d.mensJewellery)) catalog.mensJewellery = d.mensJewellery;
+    if (d && d.experienceCities && typeof d.experienceCities === "object") catalog.experienceCities = d.experienceCities;
   }).catch(() => {});
 
   // An ad with nothing ticked for a field matches everything for that field.

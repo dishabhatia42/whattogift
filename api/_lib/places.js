@@ -55,7 +55,41 @@ export const isExperience = (i) => experience({ title: i.title || "", type: i.ty
 // description), or from its name, short description and photo name if it hasn't been yet.
 export function placesOf(i) {
   if (!isExperience(i)) return [];
-  if (Array.isArray(i.places)) return i.places;
-  return placesIn(`${i.title} ${i.blurb || ""} ${i.url || ""} ${i.image || ""}`);
+  const found = Array.isArray(i.places) ? i.places : placesIn(`${i.title} ${i.blurb || ""} ${i.url || ""} ${i.image || ""}`);
+  return found.length ? found : BRAND_PLACES[i.brandId] || [];
 }
+// Brands whose experience listings don't name the place: where they happen.
+const BRAND_PLACES = {
+  subko: ["Mumbai"], // tastings and workshops at their Bandra roastery
+  araku: ["Bengaluru"], // at the Araku café, Indiranagar
+};
+
+// "Near Mumbai" counts for Mumbai.
+const cityOf = (place) => place.replace(/^Near /, "");
+
+// Would this experience work for someone in `city` ("Mumbai", or "Online" for online only)?
+// Not an experience: always fine. An experience with no known place: left out, since it
+// could be anywhere.
+export function fitsCity(i, city) {
+  if (!city || !isExperience(i)) return true;
+  const places = placesOf(i);
+  if (city === "Online") return places.includes("Online");
+  return places.some((p) => p === "Online" || cityOf(p) === city);
+}
+
+// How many experiences each city has (and Online), for the form's "Where are they?" choice.
+// Memoised per catalogue version.
+let cityMemo = { at: -1, counts: {} };
+export function experienceCities(catalog) {
+  if (cityMemo.at === catalog.updatedAt) return cityMemo.counts;
+  const counts = {};
+  for (const i of catalog.items || []) {
+    if (!isExperience(i)) continue;
+    for (const c of new Set(placesOf(i).map(cityOf))) counts[c] = (counts[c] || 0) + 1;
+  }
+  cityMemo = { at: catalog.updatedAt, counts };
+  return counts;
+}
+// Every city name the form may send (plus "Online").
+export const CITY_NAMES = [...CITIES.map(([c]) => c), "Online"];
 export const placeOf = (i) => placeLabel(placesOf(i));

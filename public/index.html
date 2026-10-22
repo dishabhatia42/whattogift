@@ -70,6 +70,11 @@
     <section class="step rise" style="--i:3" aria-labelledby="s2">
       <div class="step-head"><h2 id="s2">What makes them tick?</h2><p class="sub" id="s2-sub">Tell us what they're into. We'll do the digging.</p></div>
       <div class="suggest" id="suggest" aria-label="Suggested keywords"></div>
+      <!-- Picked Experiences: where they are. Only cities with enough experiences are offered. -->
+      <div class="where-row" id="where-row" hidden>
+        <span>Where are they?</span>
+        <div class="suggest" id="cities" role="group" aria-label="Where they are"></div>
+      </div>
       <div class="tagbox" id="tagbox">
         <input id="taginput" type="text" maxlength="30" placeholder="+ Oddly specific? Pottery, F1, frogs…" aria-label="Add something they're into" enterkeyhint="done">
       </div>
@@ -183,6 +188,21 @@
     for (const b of occBox.children) b.setAttribute("aria-pressed", String(b.dataset.id === state.occasion));
     show($("occasion-step"), !!state.recipient);
     show($("gender-row"), asksGender(state.recipient));
+    // Experiences picked: offer the cities we have enough experiences in (5+; online 3+), so a
+    // choice never leads to an empty page. More appear on their own as experiences are added.
+    const counts = WTG.catalog.experienceCities || {};
+    const wantsExp = state.tags.some((t) => t.toLowerCase() === "experiences");
+    const cities = Object.entries(counts).filter(([c, n]) => n >= (c === "Online" ? 3 : 5)).sort((a, b) => b[1] - a[1]).map(([c]) => c);
+    if (state.city && !cities.includes(state.city)) cities.push(state.city);
+    const cityBox = $("cities"); cityBox.textContent = "";
+    for (const c of cities) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "pill";
+      b.textContent = c === "Online" ? "💻 Online" : `📍 ${c}`;
+      b.setAttribute("aria-pressed", String(state.city === c));
+      b.addEventListener("click", () => { state.city = state.city === c ? null : c; render(); });
+      cityBox.appendChild(b);
+    }
+    show($("where-row"), wantsExp && cities.length > 0);
     for (const b of $("genders").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.gender));
     for (const b of $("budgets").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.budget));
     $("discover").setAttribute("aria-pressed", String(!!state.discover));

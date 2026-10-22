@@ -15,7 +15,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { interestScorer } from "./_lib/vocabulary.js";
 import { brandLeanings, wrongFit, mensJewelleryCount, MIN_MENS_JEWELLERY } from "./_lib/audience.js";
-import { placeOf, placesOf } from "./_lib/places.js";
+import { placeOf, placesOf, fitsCity, CITY_NAMES } from "./_lib/places.js";
 import { readData } from "./_lib/store.js";
 import { readCatalog } from "./_lib/catalog.js";
 import { cleanInterests } from "./_lib/interests.js";
@@ -167,6 +167,8 @@ export default async function handler(req, res) {
   if (gender === "him" && tags.some((t) => t.toLowerCase() === "jewellery") && mensJewelleryCount(await readCatalog()) < MIN_MENS_JEWELLERY) {
     tags = tags.filter((t) => t.toLowerCase() !== "jewellery");
   }
+  // Picked Experiences and "Where are they?": only experiences there (or online) are shown.
+  const city = CITY_NAMES.includes(q.city) ? q.city : "";
   const about = cleanAbout(q.about); // "Tell us about them", in the shopper's own words
   const budget = BUDGETS[q.budget] || null;
   const discover = q.new === "1";
@@ -187,7 +189,7 @@ export default async function handler(req, res) {
 
   // The affiliate rules come with the stored products; storage trouble just means the defaults.
   const [shortlist, affiliates, policies] = await Promise.all([
-    buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags: steer, range, variant, gender, seen, size: variant > 1 ? SHORTLIST_MORE : SHORTLIST }),
+    buildShortlist({ recipient: q.recipient, occasion: q.occasion, tags: steer, range, variant, gender, seen, city, size: variant > 1 ? SHORTLIST_MORE : SHORTLIST }),
     readData().then((d) => d.affiliates, () => undefined),
     readPolicies().catch(() => ({})), // return labels are a nice-to-have
   ]);
@@ -206,7 +208,7 @@ export default async function handler(req, res) {
       ? "Mix: open a new world for them. About half familiar picks, a few \"new\" ones that introduce something they've never tried but connects to what they love, and one wildcard."
       : "Mix: mostly familiar picks, with at most one gentle wildcard.",
     ...tunes.map((t) => `Refinement: ${TUNES[t]}`),
-    wantsExperiences ? "Experiences: the shopper wants experiences. Pick the real ones in the shortlist first (tours, workshops, tastings, classes, courses, like a cacao mill tour); they're bookable straight from the brand." : "",
+    wantsExperiences ? `Experiences: the shopper wants experiences. Pick the real ones in the shortlist first (tours, workshops, tastings, classes, courses, like a cacao mill tour); they're bookable straight from the brand.${city ? ` They're ${city === "Online" ? "after online experiences only" : `in ${city}: every experience on the shortlist is there or online`}.` : ""}` : "",
     variant > 1 ? `More ideas (round ${variant} of ${BATCHES}): the shopper has already seen ${(variant - 1) * RESULTS} gifts and wants more, different options. The shortlist leaves out what they've seen.` : "",
     "",
     `Shortlist (${shortlist.length} products):\n${shortlist.map((s) => s.line).join("\n")}`,
@@ -275,7 +277,7 @@ export function priceRange(budget, cheaper) {
 }
 
 // Step 1: the products the AI may choose from. Everything here is real and verified in code.
-export async function buildShortlist({ recipient, occasion, tags, range, variant, gender = "", seen = new Set(), size = SHORTLIST }) {
+export async function buildShortlist({ recipient, occasion, tags, range, variant, gender = "", seen = new Set(), city = "", size = SHORTLIST }) {
   const [own, catalog] = await Promise.all([ownPicks(recipient, occasion), readCatalog()]);
   const inRange = (price) => price >= range.min && price <= range.max;
 
@@ -294,7 +296,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   // Shopping for him (or her): leave out clothes and accessories made for the other. Most shop
   // data doesn't say, so the brand's leaning decides for unlabelled pieces (see _lib/audience.js).
   const lean = gender ? brandLeanings(catalog) : null;
-  const items = catalog.items.filter((i) => inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)));
+  const items = catalog.items.filter((i) => inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)) && fitsCity(i, city));
 
   // Interest matches first, then a fair share of every brand, so a big shop can't drown the rest.
   const byBrand = new Map();

@@ -2,6 +2,7 @@
 import { readData } from "./_lib/store.js";
 import { catalogVersion, readCatalog } from "./_lib/catalog.js";
 import { mensJewelleryCount } from "./_lib/audience.js";
+import { experienceCities } from "./_lib/places.js";
 import { policiesVersion } from "./_lib/returns.js";
 import { outbound, isAffiliate, isAmazon } from "./_lib/links.js";
 
@@ -18,6 +19,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       version: `${updatedAt || 0}-${brandsAt}-${policiesAt}`, // any change refreshes cached searches
       mensJewellery: mensJewelleryCount(items), // the form only offers "Jewellery" for him when there's enough of it
+      experienceCities: experienceCities(items), // { Mumbai: 7, Online: 3 }: the cities "Where are they?" offers
       ads: ads.filter((a) => a.active && (!a.endsOn || a.endsOn >= today)).map((a) => ({ ...a, url: out(a.url) })),
       board: products.filter((p) => p.active && p.board).slice(0, 10)
         .map(({ id, name, line, url, image, price, phone }) => {
