@@ -62,6 +62,8 @@ export function placesOf(i) {
 const BRAND_PLACES = {
   subko: ["Mumbai"], // tastings and workshops at their Bandra roastery
   araku: ["Bengaluru"], // at the Araku café, Indiranagar
+  joinin: ["Delhi NCR"], // a Delhi NCR workshops marketplace
+  planterie: ["Delhi NCR"], // terrarium workshops at their New Delhi studio
 };
 
 // "Near Mumbai" counts for Mumbai.
@@ -93,3 +95,34 @@ export function experienceCities(catalog) {
 // Every city name the form may send (plus "Online").
 export const CITY_NAMES = [...CITIES.map(([c]) => c), "Online"];
 export const placeOf = (i) => placeLabel(placesOf(i));
+
+// ---- Dates on experiences: studios often leave last month's sessions marked "available".
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+const MON = "(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?";
+const DAY = "(\\d{1,2})(?:st|nd|rd|th)?";
+const YEAR = "(?:,?\\s*(20\\d\\d))?";
+// Every session date in a listing ("14 Nov", "Nov 14th, 2026", "14/11/2026").
+export function datesIn(text, now = new Date()) {
+  const t = String(text || "").toLowerCase();
+  const out = [];
+  const add = (d, m, y) => {
+    if (!(d >= 1 && d <= 31 && m >= 0 && m <= 11)) return;
+    let date = new Date(Date.UTC(y || now.getUTCFullYear(), m, d));
+    // No year: a date more than half a year back means next year's ("5 Jan", said in December).
+    if (!y && now - date > 183 * 864e5) date = new Date(Date.UTC(now.getUTCFullYear() + 1, m, d));
+    out.push(date);
+  };
+  for (const m of t.matchAll(new RegExp(`\\b${DAY}\\s*(?:-|of)?\\s*${MON}${YEAR}`, "g"))) add(+m[1], MONTHS.indexOf(m[2].slice(0, 3)), +m[3] || 0);
+  for (const m of t.matchAll(new RegExp(`\\b${MON}\\s+${DAY}\\b${YEAR}`, "g"))) add(+m[2], MONTHS.indexOf(m[1].slice(0, 3)), +m[3] || 0);
+  for (const m of t.matchAll(/\b(\d{1,2})[/.-](\d{1,2})[/.-](20\d\d)\b/g)) add(+m[1], +m[2] - 1, +m[3]);
+  return out;
+}
+// A session that's over: every date it names has passed (or, with no dates, it names only past
+// years: "Christmas 2024 workshop"). Undated listings count as current.
+export function isPastDated(text, now = new Date()) {
+  const dates = datesIn(text, now);
+  const yesterday = now - 864e5;
+  if (dates.length) return dates.every((d) => d < yesterday);
+  const years = [...String(text || "").matchAll(/\b(20\d\d)\b/g)].map((m) => +m[1]);
+  return years.length > 0 && years.every((y) => y < now.getUTCFullYear());
+}

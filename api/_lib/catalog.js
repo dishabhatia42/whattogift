@@ -6,7 +6,7 @@
 import { head } from "@vercel/blob";
 import { readFresh, updateJson } from "./store.js";
 import { readBrands, NOT_GIFTS } from "./brands.js";
-import { isExperience, placesIn } from "./places.js";
+import { isExperience, placesIn, isPastDated } from "./places.js";
 
 const CATALOG_PATH = "gift-finder/catalog.json";
 const PER_BRAND = 400;     // plenty for gifting; stops one huge shop crowding out the rest
@@ -161,6 +161,7 @@ export function wooItem(brand, p) {
   if (!url) return null;
   const cats = (p.categories || []).map((c) => text(stripHtml(c.name), 24)).filter(Boolean);
   if (NOT_GIFTS.test(`${cats.join(" ")} ${p.name}`)) return null;
+  if (isExperience({ title: p.name, type: cats[0] || "", tags: cats }) && isPastDated(p.name)) return null; // a session that's over
   return withPlace({
     id: `${brand.id}-${p.id}`,
     brandId: brand.id,
@@ -190,7 +191,11 @@ function withPlace(item, fullText) {
 export function toItem(brand, p) {
   if (!p || typeof p.handle !== "string" || !p.title) return null;
   // Under ₹99 is a freebie, add-on or a shop's ₹1 test item, never a gift on its own.
-  const variants = (Array.isArray(p.variants) ? p.variants : []).filter((v) => v.available !== false && Number(v.price) >= 99);
+  // Workshops and classes: sessions whose dates have passed are left out (studios often leave
+  // last month's dates "available"); a listing with only past sessions isn't shown at all.
+  const exp = isExperience({ title: p.title, type: p.product_type || "", tags: Array.isArray(p.tags) ? p.tags : String(p.tags || "").split(",") });
+  const variants = (Array.isArray(p.variants) ? p.variants : []).filter((v) => v.available !== false && Number(v.price) >= 99
+    && !(exp && isPastDated(`${p.title} ${v.title === "Default Title" ? "" : v.title || ""}`)));
   const prices = variants.map((v) => Number(v.price)).filter((n) => Number.isFinite(n));
   if (!prices.length) return null;                       // sold out or no real price
   const image = p.images?.[0]?.src;
