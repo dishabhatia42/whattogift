@@ -406,7 +406,7 @@
     }
     // Never let a sticker sit on the words: shrink one that touches the headline, lede or
     // typewriter line, and hide it if it still does (only happens on short or narrow screens).
-    const words = () => [...document.querySelectorAll(".board-copy h1, .board-copy .lede, .board-copy .type, .diwali-sticker:not([hidden])")].map((n) => n.getBoundingClientRect());
+    const words = () => [...document.querySelectorAll(".board-copy h1, .board-copy .lede, .board-copy .type")].map((n) => n.getBoundingClientRect());
     function keepClear() {
       const zones = words();
       const hits = (r) => zones.some((z) => r.left < z.right + 8 && r.right > z.left - 8 && r.top < z.bottom + 8 && r.bottom > z.top - 8);
