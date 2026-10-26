@@ -28,17 +28,20 @@
     { id: "wedding", t: "Wedding" },
     { id: "just-because", t: "Just because" },
     { id: "win", t: "A win to celebrate" },
+    { id: "diwali", t: "🪔 Diwali" },
   ];
+  // Diwali is offered (first, for everyone) until the end of 10 Nov 2026, then disappears on its own.
+  const DIWALI = Date.now() < Date.parse("2026-11-11T00:00:00+05:30");
   // A couple doesn't share a birthday; a child has no anniversary or wedding. A treat for yourself
   // is a birthday, a win or just because (and "a win" is only offered there, for now).
   const only = (...ids) => ids.map((id) => OCCASIONS.find((o) => o.id === id));
-  const occasionsFor = (r) =>
+  const occasionsFor = (r) => (DIWALI ? only("diwali") : []).concat(
     r === "self" ? only("birthday", "win", "just-because")
     : r === "couple" ? only("anniversary", "wedding", "just-because")
     : r === "child" ? only("birthday", "just-because")
     // You don't buy your parents a wedding gift; their anniversary is the one that matters.
     : ["mom", "dad", "parents"].includes(r) ? only("birthday", "anniversary", "just-because")
-    : only("birthday", "anniversary", "wedding", "just-because");
+    : only("birthday", "anniversary", "wedding", "just-because"));
   // What the brands in the catalogue actually sell most (see api/_lib/vocabulary.js for what each
   // one matches). Ordered long + short in pairs, so on a phone two always share a line.
   // "Experiences" mostly brings experience ideas (classes, tastings, outings) that link to a web search.
@@ -403,7 +406,7 @@
     }
     // Never let a sticker sit on the words: shrink one that touches the headline, lede or
     // typewriter line, and hide it if it still does (only happens on short or narrow screens).
-    const words = () => [...document.querySelectorAll(".board-copy h1, .board-copy .lede, .board-copy .type")].map((n) => n.getBoundingClientRect());
+    const words = () => [...document.querySelectorAll(".board-copy h1, .board-copy .lede, .board-copy .type, .diwali-sticker:not([hidden])")].map((n) => n.getBoundingClientRect());
     function keepClear() {
       const zones = words();
       const hits = (r) => zones.some((z) => r.left < z.right + 8 && r.right > z.left - 8 && r.top < z.bottom + 8 && r.bottom > z.top - 8);
@@ -501,7 +504,7 @@
   }
 
   window.WTG = {
-    RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES, TUNES,
+    RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, DIWALI, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES, TUNES,
     asksGender, safeHref, toParams, fromParams, resultsTitle, cleanInterests, cleanAbout,
     catalog, catalogReady, pickAds, mountFeatured, mountBoard, adMedia, track, SITE,
   };

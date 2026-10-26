@@ -42,6 +42,12 @@
   <div class="board-inner">
     <div class="stickers" id="stickers"></div>
     <div class="board-copy">
+      <!-- Diwali season only (until 10 Nov): a die-cut sticker that starts the finder. -->
+      <a class="diwali-sticker" id="diwali-sticker" href="#s1" hidden data-umami-event="Diwali sticker">
+        <svg class="diya" viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="dg" cx="50%" cy="60%" r="55%"><stop offset="0" stop-color="#fff6c2"/><stop offset=".45" stop-color="#ffc83d"/><stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/></radialGradient><linearGradient id="bowl" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f2a33a"/><stop offset="1" stop-color="#b8551b"/></linearGradient></defs><circle class="glow" cx="32" cy="24" r="20" fill="url(#dg)"/><path class="flame" d="M32 8c5 7 8 11 8 16a8 8 0 0 1-16 0c0-5 3-9 8-16z" fill="#ffb21f"/><path class="flame core" d="M32 15c2.6 3.8 4 6 4 8.6a4 4 0 0 1-8 0c0-2.6 1.4-4.8 4-8.6z" fill="#fff3b0"/><path d="M6 36h52c-1 11-12 18-26 18S7 47 6 36z" fill="url(#bowl)"/><path d="M6 36h52" stroke="#7a2e10" stroke-width="2.5" stroke-linecap="round"/><path d="M14 44c4 2 10 3 18 3s14-1 18-3" stroke="#ffd98a" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/></svg>
+        <span class="dw-words"><strong>Diwali gifting</strong><span>is here ✦ find yours</span></span>
+        <i class="spark s1"></i><i class="spark s2"></i><i class="spark s3"></i>
+      </a>
       <p class="type rise" style="--i:2">Really good gifts. Zero guesswork. Maximum brownie points.</p>
       <div class="board-hero rise" style="--i:1">
         <h1>Less ordinary. More <span>“OH MY GOD, YOU REMEMBERED!”</span></h1>
@@ -255,6 +261,12 @@
     if (!state.occasion) return nudge($("occasions"));
     location.href = "/ideas?" + toParams(state).toString();
   });
+  // Diwali season: the sticker on the board, which jumps to the first question (Diwali is the
+  // first occasion offered, so it's picked as soon as they choose who it's for).
+  if (WTG.DIWALI) {
+    $("diwali-sticker").hidden = false;
+    $("diwali-sticker").addEventListener("click", (e) => { e.preventDefault(); $("s1").scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "center" }); });
+  }
   // The header button jumps to the first question.
   $("header-cta").addEventListener("click", (e) => { e.preventDefault(); $("s1").scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "center" }); });
   // The button is "stuck" (following you down the page) while its real spot is still below the screen.

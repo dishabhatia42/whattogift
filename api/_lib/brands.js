@@ -66,7 +66,9 @@ const STARTER = [
   // Added here rather than from Manage: they join the saved list on its next read (unless removed or skipped).
   ["urbanmonkey", "Urban Monkey", "www.urbanmonkey.com"],
   ["johnjacobs", "John Jacobs", "www.johnjacobseyewear.com"], // lost to the stale-copy save bug (fixed in store.js)
-].map(([id, name, domain, platform]) => ({ id, name, domain, platform: platform || "shopify" }));
+  // A huge shop (16,000 products): only its Festive Gifting collection is read.
+  ["nicobar", "Nicobar", "www.nicobar.com", "shopify", "/collections/festive-gifting"],
+].map(([id, name, domain, platform, path]) => ({ id, name, domain, platform: platform || "shopify", ...(path ? { path } : {}) }));
 
 export async function readBrands() {
   // Always the latest save (see readFresh): adding or skipping right after "Find more"
@@ -98,6 +100,8 @@ function clean(d) {
     name: str(b.name, 60),
     domain: cleanDomain(b.domain),
     platform: b.platform === "woocommerce" ? "woocommerce" : "shopify",
+    // Read only one collection of a very big shop ("/collections/festive-gifting").
+    ...(typeof b.path === "string" && /^\/collections\/[\w-]{1,80}$/.test(b.path) ? { path: b.path } : {}),
   })).filter((b) => b.id && b.name && b.domain && !seen.has(b.domain) && seen.add(b.domain)).slice(0, MAX_BRANDS);
   const suggestions = (Array.isArray(d?.suggestions) ? d.suggestions : []).map((s) => ({
     name: str(s.name, 60),

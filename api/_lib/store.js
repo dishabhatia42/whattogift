@@ -7,7 +7,7 @@ import { cleanAffiliates } from "./links.js";
 const DATA_PATH = "gift-finder/data.json";
 
 export const RECIPIENT_IDS = ["partner", "friend", "mom", "dad", "parents", "sibling", "colleague", "couple", "child", "self"];
-export const OCCASION_IDS = ["birthday", "anniversary", "wedding", "just-because", "win"];
+export const OCCASION_IDS = ["birthday", "anniversary", "wedding", "just-because", "win", "diwali"];
 export const AD_SLOTS = 5;
 const MAX_PRODUCTS = 200;
 

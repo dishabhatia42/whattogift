@@ -218,10 +218,14 @@ export function toItem(brand, p) {
     price,
     was: Number.isFinite(was) && was > price ? was : 0,
     options: variants.length > 1,
+    // From a Diwali / festive range: stores say so in tags we don't keep (only 4 are kept).
+    ...(FESTIVE_RANGE.test(`${p.title} ${type} ${rawTags.join(" ")} ${brand.path || ""}`) ? { festive: true } : {}),
     url: `https://${brand.domain}${brand.path?.startsWith("/collections") ? "" : brand.path || ""}/products/${encodeURIComponent(p.handle)}`,
     image: sized(image, 600),
   }, stripHtml(p.body_html));
 }
+
+const FESTIVE_RANGE = /\b(diwali|deepavali|dhanteras|festive|festival)/i;
 
 // Shopify's image CDN resizes on the fly; 600px is sharp on a card and far lighter than the original.
 function sized(src, width) {
