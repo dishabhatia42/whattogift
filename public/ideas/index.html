@@ -185,8 +185,8 @@
     const fit = idea.fit === "new" && state.discover ? "✨ New world" : idea.fit === "wildcard" ? "🎲 Wildcard" : "";
     const badge = !exact ? "💡 Gift idea" : idea.own ? "Our pick" : fit;
     if (badge) pic.appendChild(el("span", "kind" + (exact ? " solid" : " idea-kind"), badge)); // solid: product photos are mostly white
-    // From the brand's own Diwali range: a little die-cut diya sticker on the photo.
-    if (idea.diwali) { const d = el("span", "diwali-tag"); d.innerHTML = `<svg viewBox="0 0 64 64" aria-hidden="true"><path class="flame" d="M32 8c5 7 8 11 8 16a8 8 0 0 1-16 0c0-5 3-9 8-16z" fill="#ffb21f"/><path d="M6 36h52c-1 11-12 18-26 18S7 47 6 36z" fill="#d9772a"/></svg><span>Diwali special</span>`; pic.appendChild(d); }
+    // From the brand's own Diwali range: the same badge as "Our pick", in the other corner.
+    if (idea.diwali) pic.appendChild(el("span", "kind solid diwali-kind", "🪔 Diwali special"));
     const body = el("div", "body");
     if (idea.label || idea.tag) body.appendChild(el("p", "label", idea.label || idea.tag));
     body.appendChild(el("h3", "", idea.name));

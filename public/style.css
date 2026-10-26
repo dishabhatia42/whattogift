@@ -559,10 +559,5 @@ footer .disclosure { font-size: 12px; opacity: .85; }
 }
 
 /* ---- Diwali season (until 10 Nov) ---- */
-@keyframes flicker { 0%, 100% { transform: scale(1, 1) rotate(0); } 30% { transform: scale(.94, 1.06) rotate(-3deg); } 60% { transform: scale(1.04, .95) rotate(2deg); } }
-/* On a result card: "Diwali special", a small die-cut sticker in the photo's corner. */
-.card .diwali-tag { position: absolute; top: 12px; right: 12px; display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px 5px 7px; border-radius: 999px;
-  background: #8f2d3c; color: #fff6e6; font-size: 12px; font-weight: 700; box-shadow: 0 0 0 2.5px #fff, 0 4px 10px rgba(110, 31, 44, .25); transform: rotate(4deg); z-index: 2; }
-.card .diwali-tag svg { width: 16px; height: 16px; }
-.card .diwali-tag .flame { transform-origin: 32px 32px; animation: flicker 1.6s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .card .diwali-tag .flame { animation: none; } }
+/* "Diwali special" on a result card: the usual badge, top right (left holds "Our pick"). */
+.card .kind.diwali-kind { left: auto; right: 12px; }
