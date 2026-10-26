@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Diwali gifts · Serial Gifter</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%81%3C/text%3E%3C/svg%3E">
+<meta name="description" content="Diwali gifts hand-picked from Indian brands we love: hampers, mithai, candles, décor and keepsakes.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Space+Mono&display=swap">
+<link rel="stylesheet" href="/style.css">
+<style>
+/* /diwali: the home page's header and board, then every Diwali gift with a category filter. */
+.dw { max-width: 1200px; margin: 0 auto; padding: 48px 16px 64px; display: flex; flex-direction: column; gap: 20px; }
+.dw-head h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 4vw, 36px); letter-spacing: -.02em; line-height: 1.15; color: var(--fg); }
+.dw-head .sub { margin-top: 6px; color: var(--muted); }
+.dw-shop { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.dw-filters { position: sticky; top: 68px; z-index: 5; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 8px 0; background: var(--bg); }
+.dw-filters::-webkit-scrollbar { display: none; }
+.dw-filters h3 { display: none; }
+.dw-filters .pill { flex: none; white-space: nowrap; }
+.dw-filters .n { margin-left: 6px; opacity: .6; font-weight: 500; }
+.dw-count { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+.dw-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+.dw-grid .card .pic { aspect-ratio: 1; }
+@media (max-width: 719px) {
+  .dw-grid .card .body { padding: 10px 12px 12px; }
+  .dw-grid .card h3 { font-size: 15px; }
+  .dw-grid .card .merchant { display: none; }
+}
+@media (min-width: 720px) { .dw-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; } }
+@media (min-width: 1000px) {
+  .dw-shop { grid-template-columns: 230px 1fr; gap: 36px; align-items: start; }
+  .dw-filters { top: 96px; flex-direction: column; gap: 2px; overflow: visible; padding: 18px 12px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); }
+  .dw-filters h3 { display: block; margin: 0 0 8px 12px; font: 700 12px var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .dw-filters .pill { width: 100%; justify-content: space-between; min-height: 40px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; box-shadow: none; }
+  .dw-filters .pill:hover { background: var(--tint); }
+  .dw-filters .pill[aria-pressed="true"] { background: var(--tint); color: var(--primary); font-weight: 700; }
+}
+</style>
+</head>
+<body>
+<header class="site-header" id="site-header">
+  <div class="site-header-inner">
+    <a class="logo" href="/" aria-label="Serial Gifter home">
+      <span class="wordmark"><span class="name">serialgifter</span></span>
+    </a>
+    <a class="header-cta" href="/#s1" id="header-cta"><span class="long">Find something special</span><span class="short">Find a gift</span> <span class="arr" aria-hidden="true">→</span></a>
+  </div>
+</header>
+<section class="board" id="board" aria-label="Diwali gifts we love">
+  <div class="board-inner">
+    <div class="stickers" id="stickers"></div>
+    <div class="board-copy">
+      <p class="type rise" style="--i:2">Diwali 2026. Hand-picked from Indian brands we love.</p>
+      <div class="board-hero rise" style="--i:1">
+        <h1>Diwali gifts they'll <span>actually remember.</span></h1>
+        <p class="lede">Hampers, mithai, candles and keepsakes for everyone on your list.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main class="dw">
+  <div class="dw-head">
+    <h2>All Diwali gifts</h2>
+    <p class="sub">Every festive pick from our brands, in one place.</p>
+  </div>
+  <div class="dw-shop">
+    <nav class="dw-filters" id="filters" aria-label="Filter by category"><h3>Category</h3></nav>
+    <div><p class="dw-count" id="count"></p><div class="cards dw-grid" id="grid"></div></div>
+  </div>
+  <footer class="site-footer" id="site-footer">
+    <p class="foot-disclosure">Some links may earn us a commission at no extra cost to you. As an Amazon Associate I earn from qualifying purchases. <a href="/legal">Terms &amp; Privacy</a></p>
+  </footer>
+</main>
+
+<script src="/common.js"></script>
+<script>
+(() => {
+  // Preview data: real products, prices and photos from the brands (26 Oct). The built page
+  // would read these from the catalogue (every product a brand marks Diwali or festive).
+  const NB = "https://www.nicobar.com/products/", BS = "https://www.bombaysweetshop.com/products/", CDN = "https://cdn.shopify.com/s/files/1/";
+  const nb = (h) => NB + h, bs = (h) => BS + h, ni = (f) => CDN + "0270/5129/4854/" + f, bi = (f) => CDN + "0301/1923/1620/files/" + f;
+  const GIFTS = [
+    ["food", "Grand Diwali Gift Hamper", "Bombay Sweet Shop", 4350, bs("grand-diwali-gift-hamper"), bi("BSS_2026_GRAND-DIWALI-GIFT-HAMPER-HAZELNUT_1.1.jpg?v=1792906381")],
+    ["food", "Ultimate Diwali Gourmet Hamper", "Bombay Sweet Shop", 5200, bs("ultimate-diwali-gourmet-hamper"), bi("Ultimate-Diwali-Gourmet-Hamper-HAZELNUT_1.1.jpg?v=1792905576")],
+    ["food", "Festive Diwali Gift Box", "Bombay Sweet Shop", 3200, bs("festive-diwali-gift-box"), bi("BSS_2026_FESTIVE-DIWALI-GIFT-BOX-7.5.jpg?v=1791546511")],
+    ["food", "Diwali Party Treats Box", "Bombay Sweet Shop", 2800, bs("diwali-party-treats-box"), bi("BSS_2026_DIWALI_DIWALI-PARTY-TREATS-BOX-WITH-ASM-9_HERO_CHILLICHEESEBHUJIA_1.1.jpg?v=1792742260")],
+    ["food", "Chocolatey Diwali Hamper", "Bombay Sweet Shop", 1950, bs("chocolatey-diwali-hamper"), bi("BSS_2026_CHOCOLATEY-DIWALI-HAMPER-1.1_85e234b2-3d42-485b-ae15-b3a94e73ebbd.jpg?v=1792905168")],
+    ["food", "Diwali Celebration Hamper", "Bombay Sweet Shop", 1750, bs("diwali-celebration-hamper"), bi("BSS_2026_DIWALI_CELEBRATION-HAMPER_TOMYUM_1.1.jpg?v=1792741638")],
+    ["food", "Best of Diwali Gift Hamper", "Bombay Sweet Shop", 1350, bs("best-of-diwali-gift-hamper"), bi("BEST-OF-DIWALI-GIFT-HAMPER---7.5_89b7d5f7-6e9d-48ea-bf0c-2bcb793260a1.jpg?v=1791546692")],
+    ["food", "Assorted Mithai Box of 18", "Bombay Sweet Shop", 1300, bs("assorted-mithai-box-of-18"), bi("BSS_2026_DIWALI_ASM18-HERO-1.1_a08f3e63-4954-413d-9f30-cd898ebef37f.jpg?v=1790836911")],
+    ["kitchen", "Waadi Gift Set", "Nicobar", 4500, nb("waadi-gift-set"), ni("files/NBI051798_1.jpg?v=1789039263")],
+    ["kitchen", "Harappa Gift Set", "Nicobar", 5500, nb("harappa-gift-set"), ni("files/NBI051821_1.jpg?v=1754321080")],
+    ["kitchen", "Nadi Gift Set", "Nicobar", 3850, nb("nadi-gift-set"), ni("files/NBI037855_5_0a77ecf1-7bca-4705-bb2b-21ebf7a688b5.jpg?v=1752745337")],
+    ["kitchen", "Ceylon Lush Gift Set", "Nicobar", 2500, nb("ceylon-lush-gift-set"), ni("files/NBI051794_1.jpg?v=1785093424")],
+    ["bar", "Mehfil Bar Gift Set", "Nicobar", 7250, nb("mehfil-bar-gift-set"), ni("files/NBI051424_1.jpg?v=1789039260")],
+    ["bar", "Gilded Palm Gift Set", "Nicobar", 7250, nb("gilded-palm-gift-set"), ni("files/NBI051417_1.jpg?v=1789039262")],
+    ["bar", "Vira Cocktail Glass, Set of 4", "Nicobar", 6500, nb("vira-cocktail-glass-set-of-4"), ni("files/8_1c5d54f2-56ca-4221-8c19-c86234ec855a.jpg?v=1788524449")],
+    ["bar", "Avi Bar Gift Set", "Nicobar", 4800, nb("avi-bar-gift-set"), ni("files/1_63035bc3-2112-4569-935a-19d9770a19e0.jpg?v=1788527444")],
+    ["bar", "Rit Tumbler, Set of 4", "Nicobar", 3800, nb("rit-tumbler-set-of-4"), ni("files/8_cb66eb11-b51b-479e-9fc5-5b3856a602b0.jpg?v=1788841327")],
+    ["light", "Hibiscus Candle Holder", "Nicobar", 3850, nb("hibiscus-candle-holder"), ni("files/NBI030426_1.jpg?v=1696737712")],
+    ["light", "Wildflower Lantern", "Nicobar", 2250, nb("wildflower-lantern"), ni("products/3_03c49134-9f8d-4c9d-af04-ba0519634383.jpg?v=1649357014")],
+    ["light", "Emerged Candle Set", "Nicobar", 2000, nb("emerged-candle-set"), ni("files/NBI028579_1.jpg?v=1710320466")],
+    ["light", "Zebra Candle Holder", "Nicobar", 1500, nb("zebra-candle-holder"), ni("files/NBI021659_1.jpg?v=1683277103")],
+    ["light", "Anglesey Pillar Candle", "Nicobar", 1100, nb("anglesey-pillar-candle"), ni("files/NBI034449_1.jpg?v=1725292009")],
+    ["home", "Reesha Toran", "Nicobar", 1800, nb("reesha-toran"), ni("files/2_46acab5f-52dd-4074-bbda-cb6c3ccc143a.jpg?v=1788527194")],
+    ["home", "Madhumalti Jewellery Box", "Nicobar", 2800, nb("madhumalti-jewellery-box"), ni("files/2_259cfb6f-9f6b-4d7e-9836-21be037ef876.jpg?v=1788527273")],
+    ["home", "Gilded Palm Bookends", "Nicobar", 4400, nb("gilded-palm-bookends"), ni("files/2_5d4f09aa-8f0b-484a-82f5-328feca2a15c.jpg?v=1788527338")],
+    ["home", "Leap Photo Frame with Stand", "Nicobar", 2450, nb("leap-photo-frame-with-stand"), ni("files/NBI052189_1.jpg?v=1790595715")],
+    ["home", "Aloe Vera Vase", "Nicobar", 2350, nb("aloe-vera-vase"), ni("files/NBI020733_1.jpg?v=1710675777")],
+    ["home", "Flamingo Wind Chime", "Nicobar", 2250, nb("flamingo-wind-chime"), ni("files/NBI049905_1.jpg?v=1766192395")],
+    ["fashion", "Patakha Bag Charm", "Ciceroni", 1499, "https://ciceroni.in/products/patakha-bag-charm", CDN + "0639/2741/9138/files/patakha-bag-charmeconockbag-charmsciceroni-7171497.png?v=1778860093"],
+    ["fashion", "Flight Cufflinks, Gold", "Nicobar", 3000, nb("flight-cufflinks-gold"), ni("files/NBI052536_1.jpg?v=1785133029")],
+    ["fashion", "Twilight Pocket Square, Set of 2", "Nicobar", 1500, nb("twilight-pocket-square-set-of-2-blue"), ni("files/NBI052474_1.jpg?v=1785307011")],
+    ["games", "Nico Ludo", "Nicobar", 2650, nb("nico-ludo"), ni("products/3_4e785e6f-79dd-41f5-a66d-2967a6e3ea16.jpg?v=1710310863")],
+  ].map(([cat, name, brand, price, url, image]) => ({ cat, name, brand, price, url, image }));
+  const CATS = [["all", "All gifts"], ["food", "Hampers & mithai"], ["kitchen", "Kitchen & serveware"], ["bar", "Bar & glassware"], ["light", "Candles & lights"], ["home", "Home & décor"], ["fashion", "Fashion & accessories"], ["games", "Games & fun"]];
+
+  // The board: ten on desktop, the six marked `phone` on phones (same rule as the home page).
+  const pick = (n, phone) => ({ ...GIFTS.find((g) => g.name === n), phone });
+  WTG.mountBoard([
+    pick("Grand Diwali Gift Hamper", true), pick("Patakha Bag Charm", true), pick("Reesha Toran", true), pick("Nico Ludo", true),
+    pick("Mehfil Bar Gift Set", false), pick("Hibiscus Candle Holder", true), pick("Assorted Mithai Box of 18", true),
+    pick("Wildflower Lantern", false), pick("Flight Cufflinks, Gold", false), pick("Waadi Gift Set", false),
+  ]);
+
+  const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+  let cat = "all";
+  function render() {
+    const f = document.getElementById("filters"); f.querySelectorAll(".pill").forEach((n) => n.remove());
+    for (const [id, t] of CATS) {
+      const b = el("button", "pill"); b.type = "button"; b.setAttribute("aria-pressed", String(id === cat));
+      b.append(el("span", "", t), el("span", "n", id === "all" ? GIFTS.length : GIFTS.filter((g) => g.cat === id).length));
+      b.onclick = () => { cat = id; render(); }; f.append(b);
+    }
+    const list = GIFTS.filter((g) => cat === "all" || g.cat === cat), grid = document.getElementById("grid"); grid.textContent = "";
+    document.getElementById("count").textContent = `${list.length} gifts`;
+    for (const g of list) {
+      const c = el("article", "card exact"), pic = el("div", "pic photo"), img = el("img"); img.alt = g.name; img.loading = "lazy"; img.src = g.image; img.className = "fill"; pic.append(img);
+      const body = el("div", "body"); body.append(el("p", "label", g.brand), el("h3", "", g.name));
+      const meta = el("div", "meta"); meta.append(el("span", "merchant", `by ${g.brand}`), el("span", "price", "₹" + g.price.toLocaleString("en-IN"))); body.append(meta);
+      const a = el("a", "shop", "Shop now ↗"); a.href = g.url; a.target = "_blank"; a.rel = "noopener noreferrer"; body.append(a);
+      c.append(pic, body); grid.append(c);
+    }
+  }
+  render();
+})();
+</script>
+</body>
+</html>

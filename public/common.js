@@ -346,14 +346,15 @@
     [8, 52, 92, 6], [50, 48, 96, -5], [92, 53, 92, 8],
   ];
   const FILLERS = ["🎁", "🧸", "💐", "🍫", "📚", "🕯️", "🎀", "☕", "🪴", "💌"];
-  function mountBoard() {
+  // `own` (optional): a page's own list of board products instead of the home page's.
+  function mountBoard(own) {
     const box = document.getElementById("stickers");
     if (!box) return;
     const wide = matchMedia("(min-width: 720px)");
     const calm = matchMedia("(prefers-reduced-motion: reduce)");
     function draw() {
       const slots = wide.matches ? SLOTS_WIDE : SLOTS_NARROW;
-      const live = catalog.board.filter((p) => safeHref(p.url));
+      const live = (own || catalog.board).filter((p) => safeHref(p.url));
       // Phones have room for six: the ones Disha ticked "Also show it on phones" first, then the rest in order.
       const items = (wide.matches ? live : [...live.filter((p) => p.phone), ...live.filter((p) => !p.phone)]).slice(0, slots.length);
       box.textContent = "";
@@ -431,7 +432,7 @@
     document.addEventListener("click", (e) => { if (!e.target.closest(".sticker")) box.querySelectorAll(".open").forEach((o) => o.classList.remove("open")); });
     // Draw only once the products have arrived. Drawing straight away showed the emoji
     // placeholders for a moment on every load before the real products replaced them.
-    catalogReady.then(() => { draw(); wide.addEventListener("change", draw); });
+    (own ? Promise.resolve() : catalogReady).then(() => { draw(); wide.addEventListener("change", draw); });
   }
 
   // Header gets a soft line and shadow once the page scrolls.
