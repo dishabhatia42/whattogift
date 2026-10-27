@@ -54,8 +54,10 @@ const DIWALI_NOTE = "Diwali gifting: choose gifts that feel festive, beautiful a
 const FESTIVE = /\b(diwali|deepavali|dhanteras|festive|festival|diyas?|rangoli|torans?|lakshmi|laxmi|pooja|puja|mithai|patakha|pataka|phuljhadi|lantern)\b/i;
 // What people actually gift at Diwali: sweets, candles and lights, cards and games. These lead a
 // Diwali search, ahead of everything else the brands sell.
-const DIWALI_LOVES = /\b(mithai|sweets?|barfi|burfi|laddoos?|ladoos?|katli|kaju|pista|pistachios?|halwa|pedas?|soan|gajak|chikki|ghevar|baklava|hampers?|gift ?box(es)?|candles?|diyas?|tea ?lights?|t-lights?|votives?|lanterns?|playing cards?|cards? games?|deck of cards|card decks?|ludo|chess|board games?|poker|rummy|teen patti)\b/i;
-const lovedAtDiwali = (i) => DIWALI_LOVES.test(`${i.title || i.name || ""} ${i.type || ""} ${(i.tags || []).join(" ")}`);
+const DIWALI_LOVES = /\b(mithai|sweets?|barfi|burfi|laddoos?|ladoos?|katli|kaju|pista|pistachios?|halwa|pedas?|soan|gajak|chikki|ghevar|baklava|hampers?|gift ?box(es)?|candles?|diyas?|tea ?lights?|t-lights?|votives?|lanterns?|playing cards?|cards? games?|deck of cards|card decks?|ludo|chess|board games?|poker|rummy|teen patti|fairy lights?|string lights?|lamps?|gift sets?)\b/i;
+// A gift box that tucks diyas or mithai in with something else says so in its description.
+const DIWALI_INSIDE = /\b(diyas?|mithai|hampers?|playing cards|ludo)\b/i;
+const lovedAtDiwali = (i) => DIWALI_LOVES.test(`${i.title || i.name || ""} ${i.type || ""} ${(i.tags || []).join(" ")}`) || DIWALI_INSIDE.test(i.blurb || "");
 // Stationery isn't a Diwali gift unless they asked for it (journals kept turning up for everyone).
 const STATIONERY = /\b(journals?|notebooks?|planners?|diar(y|ies)|stationery|pens?|pencils?|notepads?|sketchbooks?|bookmarks?|calendars?|stickers?|washi|notecards?|letter sets?)\b/i;
 const isStationery = (i) => STATIONERY.test(`${i.title || i.name || ""} ${i.type || ""}`);
