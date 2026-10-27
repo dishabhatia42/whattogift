@@ -124,6 +124,9 @@ export function clean(data) {
     occasions: oneOf(p.occasions, OCCASION_IDS),
     tags: (Array.isArray(p.tags) ? p.tags : []).map((t) => str(t, 30)).filter(Boolean).slice(0, 10),
     gender: p.gender === "him" || p.gender === "her" ? p.gender : "", // who it's made for; "" = anyone
+    // Shown with the "Our pick" badge. Products saved before this choice existed keep it; new ones
+    // get it only when Disha ticks the box (some are added just because a whole shop can't be).
+    pick: p.pick !== false,
     board: p.board === true,   // shown as a sticker on the home-page board
     phone: p.board === true && p.phone === true, // one of the six the board shows on phones
     line: str(p.line, 140),    // Disha's one-liner shown when a sticker is opened

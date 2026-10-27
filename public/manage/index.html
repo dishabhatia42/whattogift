@@ -190,6 +190,7 @@
         <label class="f">Link to buy * (your affiliate link is fine)<input type="url" name="url" required placeholder="https://"></label>
         <label class="f">What makes it a good gift (helps it show up for the right searches)<textarea name="note" maxlength="300"></textarea></label>
         <label class="f">Keywords (comma separated, e.g. what kind of person would love it)<input type="text" name="tags" placeholder="clothes, minimal, office"></label>
+        <label class="f" style="flex-direction:row;align-items:center;gap:8px;color:var(--fg)"><input type="checkbox" name="pick"> Show it as "Our pick" (one of your favourites; leave it off for products you're just adding)</label>
         <label class="f" style="flex-direction:row;align-items:center;gap:8px;color:var(--fg)"><input type="checkbox" name="board"> Put on the home-page board (shows as a sticker, max 10)</label>
         <label class="f" style="flex-direction:row;align-items:center;gap:8px;color:var(--fg);padding-left:24px"><input type="checkbox" name="phone"> Also show it on phones (phones have room for 6) <span class="muted" data-phone-count></span></label>
         <label class="f">Your line (the cheeky one-liner people see when they tap it on the board)<input type="text" name="line" maxlength="140" placeholder="My most-gifted thing this year. No regrets."></label>
@@ -780,7 +781,7 @@
     const pick = {
       id: f.id.value || Math.random().toString(36).slice(2, 10),
       name: f.name.value, price: f.price.value, url: f.url.value, note: f.note.value, image: f.image.value,
-      board: f.board.checked, phone: f.board.checked && f.phone.checked, line: f.line.value,
+      board: f.board.checked, phone: f.board.checked && f.phone.checked, line: f.line.value, pick: f.pick.checked,
       tags: f.tags.value.split(",").map((t) => t.trim()).filter(Boolean),
       recipients: checked(pickForm, "recipients"), occasions: checked(pickForm, "occasions"), active: true,
       gender: f.gender.value,
@@ -812,7 +813,7 @@
       row.innerHTML = `<div class="ph"></div><div class="txt"><strong></strong><span></span></div><button type="button" data-edit>Edit</button><button type="button" data-toggle></button><button type="button" class="danger" data-del>Delete</button>`;
       if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = ""; row.firstChild.replaceWith(img); }
       $("strong", row).textContent = p.name;
-      $("span", row).textContent = [p.board ? "📌 On the board" + (p.phone ? " + 📱 phones" : "") : "", p.price, describeTargets(p)].filter(Boolean).join(" · ");
+      $("span", row).textContent = [p.pick !== false ? "⭐ Our pick" : "", p.board ? "📌 On the board" + (p.phone ? " + 📱 phones" : "") : "", p.price, describeTargets(p)].filter(Boolean).join(" · ");
       $("[data-toggle]", row).textContent = p.active ? "Hide" : "Show";
       $("[data-toggle]", row).addEventListener("click", () => save({ ...data, products: data.products.map((x) => x.id === p.id ? { ...x, active: !x.active } : x) }));
       $("[data-del]", row).addEventListener("click", () => { if (confirm(`Delete "${p.name}"?`)) save({ ...data, products: data.products.filter((x) => x.id !== p.id) }); });
@@ -820,6 +821,7 @@
         const f = pickForm.elements;
         f.id.value = p.id; f.name.value = p.name; f.price.value = p.price; f.url.value = p.url; f.note.value = p.note; f.tags.value = p.tags.join(", ");
         f.board.checked = !!p.board; f.phone.checked = !!p.phone; f.line.value = p.line || "";
+        f.pick.checked = p.pick !== false;
         f.gender.value = p.gender || "";
         syncPhoneBox();
         setImage(pickForm, p.image); occasionBoxes($("[data-occ]", pickForm), p);

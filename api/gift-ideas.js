@@ -357,7 +357,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
     own: true,
     product: p,
     brand: "Serial Gifter pick",
-    line: `d${n} | ★ | ${clip(p.name, 90)} | ${p.tags.slice(0, 3).join(", ")} | ${p.price || "price on site"} | ${clip(p.note, 110)}`,
+    line: `d${n} | ${p.pick ? "★" : "—"} | ${clip(p.name, 90)} | ${p.tags.slice(0, 3).join(", ")} | ${p.price || "price on site"} | ${clip(p.note, 110)}`,
   }));
   n = 0;
   for (const i of [...chosen].slice(0, size - list.length)) {
@@ -402,7 +402,7 @@ export function assemble(data, shortlist, { roomForIdeas = 0, discover = false }
     const words = { label: clip(pick.label, 40), why: clip(pick.why, 180), emoji: clip(pick.emoji, 8) || "🎁", fit: fitOf(pick.fit) };
     const p = s.product;
     out.push(s.own
-      ? { ...words, kind: "product", own: true, pid: `o-${p.id}`, name: p.name, brand: "", url: p.url, image: p.image, price_range: p.price || "" }
+      ? { ...words, kind: "product", own: true, pick: p.pick, pid: `o-${p.id}`, name: p.name, brand: "", url: p.url, image: p.image, price_range: p.price || "" }
       : { ...words, kind: "product", pid: p.id, name: p.title, brand: p.brand, url: p.url, image: p.image, price: Math.round(p.price), was: Math.round(p.was || 0), from: !!p.options, price_range: `${p.options ? "From " : ""}₹${Math.round(p.price).toLocaleString("en-IN")}`, ...(placeOf(p) ? { where: placeOf(p), places: placesOf(p) } : {}) }); // whole rupees (some shops list paise); where = an experience's city
   }
   for (const idea of data.ideas || []) {

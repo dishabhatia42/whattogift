@@ -195,7 +195,7 @@
     }
     else { pic.classList.add("tile"); pic.style.background = TILES[n % TILES.length]; pic.appendChild(el("span", "emoji", idea.emoji || "🎁")); }
     const fit = idea.fit === "new" && state.discover ? "✨ New world" : idea.fit === "wildcard" ? "🎲 Wildcard" : "";
-    const badge = !exact ? "💡 Gift idea" : idea.own ? "Our pick" : fit;
+    const badge = !exact ? "💡 Gift idea" : idea.own && idea.pick ? "Our pick" : fit;
     if (badge) pic.appendChild(el("span", "kind" + (exact ? " solid" : " idea-kind"), badge)); // solid: product photos are mostly white
     const body = el("div", "body");
     if (idea.label || idea.tag) body.appendChild(el("p", "label", idea.label || idea.tag));
@@ -353,10 +353,10 @@
   // One round of ideas. Round 1 is the same for everyone with these answers, so it's cached;
   // later rounds list what's already on the page so the server skips it.
   async function fetchIdeas(round = batch) {
-    // The catalog version busts cached searches whenever products or ads change; p=30 is the answer format (30: Diwali shows Diwali gifts only; no "Diwali special" tag).
+    // The catalog version busts cached searches whenever products or ads change; p=31 is the answer format (31: "Our pick" only on products ticked as picks).
     await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
     const seen = round > 1 ? `&x=${encodeURIComponent(shownIds.join(","))}&xi=${encodeURIComponent(shownIdeas.join("|"))}` : "";
-    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=30${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=31${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
     const data = await r.json().catch(() => ({}));
     if (r.status === 429) throw new Error(data.error || "busy");
     if (r.status === 422 && data.error) throw Object.assign(new Error(data.error), { nothing: true }); // nothing from our brands fits
