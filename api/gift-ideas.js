@@ -14,7 +14,7 @@
 // are served free. Needs ANTHROPIC_API_KEY in the Vercel project's environment variables.
 import Anthropic from "@anthropic-ai/sdk";
 import { interestScorer } from "./_lib/vocabulary.js";
-import { brandLeanings, wrongFit, mensJewelleryCount, MIN_MENS_JEWELLERY } from "./_lib/audience.js";
+import { brandLeanings, wrongFit, isJewellery, mensJewelleryCount, MIN_MENS_JEWELLERY } from "./_lib/audience.js";
 import { placeOf, placesOf, fitsCity, isExperience, CITY_NAMES } from "./_lib/places.js";
 import { readData } from "./_lib/store.js";
 import { readCatalog } from "./_lib/catalog.js";
@@ -49,17 +49,21 @@ const OCCASIONS = {
   diwali: "Diwali",
 };
 // Diwali: festive, beautiful and a little unexpected, never another dry-fruit box.
-const DIWALI_NOTE = "Diwali gifting: choose gifts that feel festive, beautiful and a little unexpected, the kind people photograph before they open. Lines marked 🪔 are from a brand's Diwali or festive range: favour them when they fit the person. The heart of Diwali gifting: sweets from proper sweet shops (mithai boxes, pistachio and kaju sweets, festive hampers), beautiful candles, diyas and lanterns, and playing cards and games for the family card nights. Lead with these, then add festive home decor, serveware for hosting, and festive accessories (bag charms, jewellery boxes). Never pick stationery (journals, notebooks, planners, pens) unless the shopper asked for it, and avoid plain chocolates and everyday basics.";
+const DIWALI_NOTE = "Diwali gifting: pick what people in India actually give at Diwali, the kind of gift that looks generous and beautiful the moment it's opened, that the whole family can share, or that dresses up the home for hosting. That means: sweets from proper sweet shops (mithai, pistachio and kaju sweets, festive hampers), chocolate gift boxes, crockery and serveware, glassware and barware, torans and festive decor, candles, diyas, lanterns and fairy lights, and playing cards and games for the family card nights. Lines marked 🪔 are from a brand's Diwali or festive range: favour them. Never pick jewellery, clothes, skincare, stationery or gadgets for Diwali unless the shopper's interests ask for them.";
 // Diwali or festive range: said in the listing (stores tag these clearly in the season).
 const FESTIVE = /\b(diwali|deepavali|dhanteras|festive|festival|diyas?|rangoli|torans?|lakshmi|laxmi|pooja|puja|mithai|patakha|pataka|phuljhadi|lantern)\b/i;
 // What people actually gift at Diwali: sweets, candles and lights, cards and games. These lead a
 // Diwali search, ahead of everything else the brands sell.
-const DIWALI_LOVES = /\b(mithai|sweets?|barfi|burfi|laddoos?|ladoos?|katli|kaju|pista|pistachios?|halwa|pedas?|soan|gajak|chikki|ghevar|baklava|hampers?|gift ?box(es)?|candles?|diyas?|tea ?lights?|t-lights?|votives?|lanterns?|playing cards?|cards? games?|deck of cards|card decks?|ludo|chess|board games?|poker|rummy|teen patti|fairy lights?|string lights?|lamps?|gift sets?)\b/i;
+const DIWALI_LOVES = /\b(mithai|sweets?|barfi|burfi|laddoos?|ladoos?|katli|kaju|pista|pistachios?|halwa|pedas?|soan|gajak|chikki|ghevar|baklava|hampers?|gift ?box(es)?|candles?|diyas?|tea ?lights?|t-lights?|votives?|lanterns?|playing cards?|cards? games?|deck of cards|card decks?|ludo|chess|board games?|poker|rummy|teen patti|fairy lights?|string lights?|lamps?|gift sets?|chocolates?|truffles?|pralines?|bonbons?|dry ?fruits?|crockery|dinnerware|dinner sets?|serveware|serving (bowls?|platters?|trays?|sets?)|platters?|trays?|tea sets?|tea ?cups?|cups? (and|&) saucers?|kulha[dr]s?|glassware|barware|drinkware|tumblers?|decanters?|carafes?|(wine|whiskey|whisky|cocktail|highball|drinking) glass(es)?|torans?|bandhanwars?|urlis?|rangoli)\b/i;
+// "Bowls" and "trays" for a dog, or a "cup" that isn't for tea, aren't Diwali gifts.
+const NOT_DIWALI = /\b(dog|dogs|cat|cats|pet|pets|puppy|kitten|menstrual)\b/i;
 // A gift box that tucks diyas or mithai in with something else says so in its description.
 const DIWALI_INSIDE = /\b(diyas?|mithai|hampers?|playing cards|ludo)\b/i;
-const lovedAtDiwali = (i) => DIWALI_LOVES.test(`${i.title || i.name || ""} ${i.type || ""} ${(i.tags || []).join(" ")}`) || DIWALI_INSIDE.test(i.blurb || "");
+const lovedAtDiwali = (i) => !NOT_DIWALI.test(`${i.title || i.name || ""} ${i.type || ""}`) && (DIWALI_LOVES.test(`${i.title || i.name || ""} ${i.type || ""} ${(i.tags || []).join(" ")}`) || DIWALI_INSIDE.test(i.blurb || ""));
 // Stationery isn't a Diwali gift unless they asked for it (journals kept turning up for everyone).
 const STATIONERY = /\b(journals?|notebooks?|planners?|diar(y|ies)|stationery|pens?|pencils?|notepads?|sketchbooks?|bookmarks?|calendars?|stickers?|washi|notecards?|letter sets?)\b/i;
+// Festive ranges include clothes and jewellery; those aren't what people give at Diwali.
+const WEARABLE = /\b(kurtas?|sarees?|sari|dress(es)?|shirts?|tops?|dupattas?|lehengas?|skirts?|pants|trousers|jackets?|cufflinks?|pocket squares?|scarf|scarves|stoles?|shoes?|juttis?|socks)\b/i;
 const isStationery = (i) => STATIONERY.test(`${i.title || i.name || ""} ${i.type || ""}`);
 export const isFestive = (i) => !!i.festive || FESTIVE.test(`${i.title || i.name || ""} ${i.type || ""} ${(i.tags || []).join(" ")} ${i.blurb || i.note || ""}`);
 // Shopping for yourself changes what makes a good pick and who the words speak to.
@@ -268,7 +272,6 @@ export default async function handler(req, res) {
         const product = i.kind === "product" && !i.own ? byPid.get(i.pid) : null;
         const label = product ? returnsLabel(policies[product.brandId]?.approved, product) : "";
         if (label) out.returns = label;
-        if (q.occasion === "diwali" && product && isFestive(product)) out.diwali = true; // "🪔 Diwali special" on the card
         return out;
       });
     if (!ideas.length) return res.status(422).json({ error: NOTHING_FITS });
@@ -302,6 +305,9 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   const diwali = occasion === "diwali";
   // Diwali: no stationery unless they picked "Journals & stationery".
   const noStationery = diwali && !tags.some((t) => /stationery|journal/i.test(t));
+  // Diwali with no interests named: only Diwali gifts (sweets, chocolates, crockery, glassware,
+  // torans, candles and lights, cards and games, festive ranges), never a ring or a face serum.
+  const strictDiwali = diwali && !tags.length;
 
   // What the shopper's interests mean in product words (see _lib/vocabulary.js).
   const scorer = interestScorer(tags);
@@ -312,6 +318,8 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
     .filter((p) => p.image && (p.priceNum == null || inRange(p.priceNum)) && !seen.has(`o-${p.id}`))
     .filter((p) => !scorer || score({ title: p.name, tags: p.tags, blurb: `${p.note} ${p.line || ""}` }) >= 1)
     .filter((p) => !(noStationery && isStationery({ title: p.name })))
+    // Diwali with no interests named: your picks too must be Diwali gifts or ticked for Diwali (a ring isn't).
+    .filter((p) => !strictDiwali || p.occasions.includes("diwali") || lovedAtDiwali({ title: p.name, tags: p.tags }))
     // Your own picks follow the same him/her rule as brand products (a ring for "him" is left out).
     // (and "Him only" / "Her only", set in Manage, always wins)
     .filter((p) => !gender || (p.gender ? p.gender === gender : !wrongFit({ title: p.name, tags: p.tags || [], url: p.url }, gender, new Map())))
@@ -323,7 +331,8 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   // chocolates and coffee that the AI then calls "a tasting experience" isn't what they asked
   // for; a short, honest list is better. (With other interests too, those products still come.)
   const expOnly = tags.length > 0 && tags.every((t) => t.toLowerCase() === "experiences");
-  const items = catalog.items.filter((i) => inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)) && fitsCity(i, city) && (!expOnly || isExperience(i)) && !(noStationery && isStationery(i)));
+  let items = catalog.items.filter((i) => inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)) && fitsCity(i, city) && (!expOnly || isExperience(i)) && !(noStationery && isStationery(i)));
+  if (strictDiwali) items = items.filter((i) => lovedAtDiwali(i) || (isFestive(i) && !WEARABLE.test(`${i.title} ${i.type}`) && !isJewellery(i)));
 
   // Interest matches first, then a fair share of every brand, so a big shop can't drown the rest.
   const byBrand = new Map();
@@ -427,8 +436,9 @@ async function ownPicks(recipient, occasion) {
     return products
       .filter((p) => p.active)
       .filter((p) => !p.recipients.length || p.recipients.includes(recipient))
-      // Everyone gifts at Diwali: your picks show then whatever occasions you ticked.
-      .filter((p) => !p.occasions.length || p.occasions.includes(occasion) || occasion === "diwali");
+      // For Diwali, also your picks that are plainly Diwali gifts (a candle, a mithai box), whatever
+      // occasions you ticked; anything else only when you ticked Diwali on it.
+      .filter((p) => !p.occasions.length || p.occasions.includes(occasion) || (occasion === "diwali" && lovedAtDiwali({ title: p.name, tags: p.tags })));
   } catch (err) {
     console.error("Couldn't load curated products", err);
     return [];

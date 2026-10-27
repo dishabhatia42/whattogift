@@ -557,7 +557,3 @@ footer .disclosure { font-size: 12px; opacity: .85; }
 @media (min-width: 900px) {
   .site-footer.wide-foot { width: min(1040px, calc(100vw - 64px)); margin-left: 50%; transform: translateX(-50%); }
 }
-
-/* ---- Diwali season (until 10 Nov) ---- */
-/* "Diwali special" on a result card: the usual badge, top right (left holds "Our pick"). */
-.card .kind.diwali-kind { left: auto; right: 12px; }
