@@ -49,9 +49,16 @@ const OCCASIONS = {
   diwali: "Diwali",
 };
 // Diwali: festive, beautiful and a little unexpected, never another dry-fruit box.
-const DIWALI_NOTE = "Diwali gifting: choose gifts that feel festive, beautiful and a little unexpected, the kind people photograph before they open. Lines marked 🪔 are from a brand's Diwali or festive range: favour them when they fit the person. Great Diwali gifts: festive hampers and gift sets, mithai and gourmet treats, candles, diyas, lanterns, torans and decor for the home, serveware for hosting, festive wear and accessories (bag charms, jewellery boxes), games for family card and ludo nights. Avoid generic dry-fruit boxes, plain chocolates and everyday basics.";
+const DIWALI_NOTE = "Diwali gifting: choose gifts that feel festive, beautiful and a little unexpected, the kind people photograph before they open. Lines marked 🪔 are from a brand's Diwali or festive range: favour them when they fit the person. The heart of Diwali gifting: sweets from proper sweet shops (mithai boxes, pistachio and kaju sweets, festive hampers), beautiful candles, diyas and lanterns, and playing cards and games for the family card nights. Lead with these, then add festive home decor, serveware for hosting, and festive accessories (bag charms, jewellery boxes). Never pick stationery (journals, notebooks, planners, pens) unless the shopper asked for it, and avoid plain chocolates and everyday basics.";
 // Diwali or festive range: said in the listing (stores tag these clearly in the season).
 const FESTIVE = /\b(diwali|deepavali|dhanteras|festive|festival|diyas?|rangoli|torans?|lakshmi|laxmi|pooja|puja|mithai|patakha|pataka|phuljhadi|lantern)\b/i;
+// What people actually gift at Diwali: sweets, candles and lights, cards and games. These lead a
+// Diwali search, ahead of everything else the brands sell.
+const DIWALI_LOVES = /\b(mithai|sweets?|barfi|burfi|laddoos?|ladoos?|katli|kaju|pista|pistachios?|halwa|pedas?|soan|gajak|chikki|ghevar|baklava|hampers?|gift ?box(es)?|candles?|diyas?|tea ?lights?|t-lights?|votives?|lanterns?|playing cards?|cards? games?|deck of cards|card decks?|ludo|chess|board games?|poker|rummy|teen patti)\b/i;
+const lovedAtDiwali = (i) => DIWALI_LOVES.test(`${i.title || i.name || ""} ${i.type || ""} ${(i.tags || []).join(" ")}`);
+// Stationery isn't a Diwali gift unless they asked for it (journals kept turning up for everyone).
+const STATIONERY = /\b(journals?|notebooks?|planners?|diar(y|ies)|stationery|pens?|pencils?|notepads?|sketchbooks?|bookmarks?|calendars?|stickers?|washi|notecards?|letter sets?)\b/i;
+const isStationery = (i) => STATIONERY.test(`${i.title || i.name || ""} ${i.type || ""}`);
 export const isFestive = (i) => !!i.festive || FESTIVE.test(`${i.title || i.name || ""} ${i.type || ""} ${(i.tags || []).join(" ")} ${i.blurb || i.note || ""}`);
 // Shopping for yourself changes what makes a good pick and who the words speak to.
 const SELF_NOTE = "This is a treat for the shopper themselves. Favour things people want but rarely buy for themselves: the nicer version of an everyday thing, a small luxury, an experience. Skip gifts that only make sense from someone else (photo frames, \"best friend\" or \"world's best\" items, name-personalised keepsakes). Write every label and why straight to the shopper as \"you\" (e.g. \"For your slow-morning era\", \"You've earned softer mornings.\"); never describe them in the third person (no \"a reader who…\", \"someone who…\", \"they\"). The vibe can describe them.";
@@ -89,7 +96,7 @@ const SHORTLIST_MORE = 300; // for "Show more ideas" rounds: a shorter read, so 
 // Per-visitor limit on NEW searches (cached ones never reach this code). Kept in this server
 // instance's memory, so it's a soft guard against bots looping through combinations; the hard
 // ceiling is the monthly spend limit set in the Anthropic Console.
-const SEARCHES_PER_HOUR = 40; // a search plus its three "Show more ideas" rounds is 4
+const SEARCHES_PER_HOUR = 60; // a search plus its "Show more ideas" rounds is 4 (Diwali: up to 12)
 const recent = new Map(); // ip -> timestamps of recent searches (in memory only, never stored)
 let lastSweep = 0;
 function overLimit(ip) {
@@ -106,6 +113,7 @@ function overLimit(ip) {
 }
 const NOTHING_FITS = "Nothing from our brands fits these picks just yet. Try a wider budget or different interests?";
 const BATCHES = 4; // the first 9, then "Show more ideas" three times: 36 gifts at most
+const DIWALI_BATCHES = 12; // Diwali: keep going through the whole festive assortment (up to 108)
 
 const SCHEMA = {
   type: "object",
@@ -159,8 +167,9 @@ export default async function handler(req, res) {
 
   const q = req.query || {};
   // "Show more ideas": which round this is, and everything already on their page, so nothing repeats.
-  const variant = Math.min(Math.max(parseInt(q.b, 10) || 1, 1), BATCHES);
-  const seen = new Set((typeof q.x === "string" ? q.x.split(",") : []).filter((id) => /^[\w.-]{1,90}$/.test(id)).slice(0, 40));
+  const rounds = q.occasion === "diwali" ? DIWALI_BATCHES : BATCHES;
+  const variant = Math.min(Math.max(parseInt(q.b, 10) || 1, 1), rounds);
+  const seen = new Set((typeof q.x === "string" ? q.x.split(",") : []).filter((id) => /^[\w.-]{1,90}$/.test(id)).slice(0, rounds * RESULTS));
   const recipient = RECIPIENTS[q.recipient];
   const occasion = OCCASIONS[q.occasion];
   if (!recipient || !occasion) return res.status(400).json({ error: "Pick who it's for and the occasion." });
@@ -216,7 +225,7 @@ export default async function handler(req, res) {
       : "Mix: mostly familiar picks, with at most one gentle wildcard.",
     ...tunes.map((t) => `Refinement: ${TUNES[t]}`),
     wantsExperiences ? `Experiences: the shopper wants experiences. Pick the real ones in the shortlist first (tours, workshops, tastings, classes, courses, like a cacao mill tour); they're bookable straight from the brand.${city ? ` They're ${city === "Online" ? "after online experiences only" : `in ${city}: every experience on the shortlist is there or online`}.` : ""}` : "",
-    variant > 1 ? `More ideas (round ${variant} of ${BATCHES}): the shopper has already seen ${(variant - 1) * RESULTS} gifts and wants more, different options. The shortlist leaves out what they've seen.` : "",
+    variant > 1 ? `More ideas (round ${variant} of ${rounds}): the shopper has already seen ${(variant - 1) * RESULTS} gifts and wants more, different options. The shortlist leaves out what they've seen.` : "",
     "",
     `Shortlist (${shortlist.length} products):\n${shortlist.map((s) => s.line).join("\n")}`,
   ].filter((l) => l !== "").join("\n");
@@ -289,6 +298,8 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   const [own, catalog] = await Promise.all([ownPicks(recipient, occasion), readCatalog()]);
   const inRange = (price) => price >= range.min && price <= range.max;
   const diwali = occasion === "diwali";
+  // Diwali: no stationery unless they picked "Journals & stationery".
+  const noStationery = diwali && !tags.some((t) => /stationery|journal/i.test(t));
 
   // What the shopper's interests mean in product words (see _lib/vocabulary.js).
   const scorer = interestScorer(tags);
@@ -298,6 +309,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
     .map((p) => ({ ...p, priceNum: rupees(p.price) }))
     .filter((p) => p.image && (p.priceNum == null || inRange(p.priceNum)) && !seen.has(`o-${p.id}`))
     .filter((p) => !scorer || score({ title: p.name, tags: p.tags, blurb: `${p.note} ${p.line || ""}` }) >= 1)
+    .filter((p) => !(noStationery && isStationery({ title: p.name })))
     // Your own picks follow the same him/her rule as brand products (a ring for "him" is left out).
     // (and "Him only" / "Her only", set in Manage, always wins)
     .filter((p) => !gender || (p.gender ? p.gender === gender : !wrongFit({ title: p.name, tags: p.tags || [], url: p.url }, gender, new Map())))
@@ -309,13 +321,14 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   // chocolates and coffee that the AI then calls "a tasting experience" isn't what they asked
   // for; a short, honest list is better. (With other interests too, those products still come.)
   const expOnly = tags.length > 0 && tags.every((t) => t.toLowerCase() === "experiences");
-  const items = catalog.items.filter((i) => inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)) && fitsCity(i, city) && (!expOnly || isExperience(i)));
+  const items = catalog.items.filter((i) => inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)) && fitsCity(i, city) && (!expOnly || isExperience(i)) && !(noStationery && isStationery(i)));
 
   // Interest matches first, then a fair share of every brand, so a big shop can't drown the rest.
   const byBrand = new Map();
   for (const i of items) {
-    // For Diwali, a brand's Diwali or festive range goes first.
-    const s = score(i) + (diwali && isFestive(i) ? 2 : 0) + seeded(`${i.id}:${variant}`) * 0.5; // the variant reshuffles ties
+    // For Diwali, a brand's Diwali or festive range goes first, and sweets, candles and cards lead
+    // (a gentler nudge when they named interests, which come first).
+    const s = score(i) + (diwali ? (isFestive(i) ? 2 : 0) + (lovedAtDiwali(i) ? (scorer ? 1 : 3) : 0) : 0) + seeded(`${i.id}:${variant}`) * 0.5; // the variant reshuffles ties
     if (!byBrand.has(i.brandId)) byBrand.set(i.brandId, []);
     byBrand.get(i.brandId).push({ i, s });
   }

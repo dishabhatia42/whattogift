@@ -100,12 +100,20 @@
   let key = toParams(state).toString();
   let busy = false;
   // "Show more ideas": the first 9, then up to three more rounds (36 gifts), never repeating one.
-  const BATCHES = 4;
+  // Diwali keeps going through the whole festive assortment (up to 12 rounds), ending when it runs out.
+  const diwali = state.occasion === "diwali";
+  const BATCHES = diwali ? 12 : 4;
   let batch = 0, shownIds = [], shownIdeas = [], total = 0;
   // The next round is fetched quietly as they near the end of the cards, so "Show more ideas"
   // is usually instant. ahead = { batch, promise }; generation drops answers for an older search.
   let ahead = null, generation = 0, outOfGifts = false;
-  const MORE_LINES = [
+  const MORE_LINES = diwali ? [
+    ["Raiding the mithai shelf…", "Sneaking one kaju katli…"],
+    ["Shuffling the deck for teen patti night…", "Lighting a few more diyas…"],
+    ["Untangling the fairy lights…", "Dodging stray phuljhadi sparks…"],
+    ["Checking Mummy's group chat for tips…", "Hiding the good mithai from the cousins…"],
+    ["Bargaining like it's Dhanteras…", "Finding gifts that won't get re-gifted…"],
+  ] : [
     ["Digging a little deeper…", "Checking the back shelves…"],
     ["Going off the beaten path…", "Asking our most opinionated friend…"],
     ["One last lap around the shops…", "Saving something good for last…"],
@@ -117,12 +125,16 @@
   const plural = state.recipient === "parents" || state.recipient === "couple";
   // "The couple are/is…" reads awkwardly either way, so a couple gets "These two are going to love it!"
   const self = state.recipient === "self"; // shopping for themselves: the page talks to "you"
-  const finalTitle = self ? "Go on, you deserve this!"
+  const Who = `${who.charAt(0).toUpperCase()}${who.slice(1)}`;
+  const finalTitle = diwali
+    ? (self ? "Go on, light up your own Diwali!" : state.recipient === "couple" ? "These two are in for a sparkly Diwali!" : `${Who} ${plural ? "are" : "is"} in for a sparkly Diwali!`)
+    : self ? "Go on, you deserve this!"
     : state.recipient === "couple" ? "These two are going to love it!"
-    : `${who.charAt(0).toUpperCase()}${who.slice(1)} ${plural ? "are" : "is"} going to love it!`;
+    : `${Who} ${plural ? "are" : "is"} going to love it!`;
   document.title = `${resultsTitle(state)} · Serial Gifter`;
   $("edit").href = "/?" + key;
   $("kicker").textContent = `The gift edit / ${who}`;
+  if (diwali) $("more-out").textContent = "🪔 That's the whole Diwali haul from our brands. Happy gifting!";
   if (self) { $("again").textContent = "Not quite your vibe? Refine ↓"; $("refine-h").textContent = "Not quite your vibe?"; }
 
   // What they picked, as one quiet line that takes them back to change it:
@@ -284,8 +296,10 @@
 
   // While Claude thinks: shimmering cards, and the big heading cycles through a few playful lines.
   // Shuffled fresh for every search; "Almost there" always comes last and stays until the gifts appear.
-  const LINES = ["Putting our gifting brain to work…", "Keeping only the really good stuff…", "Ooh, this could be good…", "Wait till you see what we found…"];
-  const LAST_LINE = "Almost there. Good things take a second…";
+  const LINES = diwali
+    ? ["Polishing the diyas…", "Taste-testing the mithai (strictly for research)…", "Dusting off the good playing cards…", "Hunting for the fanciest candles…"]
+    : ["Putting our gifting brain to work…", "Keeping only the really good stuff…", "Ooh, this could be good…", "Wait till you see what we found…"];
+  const LAST_LINE = diwali ? "Almost there. Lighting the last diya…" : "Almost there. Good things take a second…";
   let lineTimer;
   function loading(on) {
     clearInterval(lineTimer);
@@ -341,10 +355,10 @@
   // One round of ideas. Round 1 is the same for everyone with these answers, so it's cached;
   // later rounds list what's already on the page so the server skips it.
   async function fetchIdeas(round = batch) {
-    // The catalog version busts cached searches whenever products or ads change; p=28 is the answer format (28: Diwali occasion and festive tags).
+    // The catalog version busts cached searches whenever products or ads change; p=29 is the answer format (29: Diwali sweets, candles and cards first; more rounds).
     await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
     const seen = round > 1 ? `&x=${encodeURIComponent(shownIds.join(","))}&xi=${encodeURIComponent(shownIdeas.join("|"))}` : "";
-    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=28${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=29${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
     const data = await r.json().catch(() => ({}));
     if (r.status === 429) throw new Error(data.error || "busy");
     if (r.status === 422 && data.error) throw Object.assign(new Error(data.error), { nothing: true }); // nothing from our brands fits
@@ -361,12 +375,12 @@
       into.appendChild(card(idea, n++));
     }
     total += n;
-    $("count").textContent = `${total} little ways to ${self ? "treat yourself" : "make their day"}`; $("count").hidden = false;
+    $("count").textContent = `${total} little ways to ${diwali ? (self ? "light up your Diwali" : "light up their Diwali") : self ? "treat yourself" : "make their day"}`; $("count").hidden = false;
     return n;
   }
   function setButtons() {
     const done = (batch >= BATCHES || outOfGifts) && !busy; // only once the last round's cards are actually on the page
-    $("more-jam").hidden = outOfGifts; $("more-out").hidden = !outOfGifts;
+    $("more-jam").hidden = outOfGifts || diwali; $("more-out").hidden = !outOfGifts && !diwali;
     $("more-top").hidden = $("more-btn").hidden = done;
     $("more-end").hidden = !done;
     $("more-top").disabled = $("more-btn").disabled = $("again").disabled = busy;
@@ -375,7 +389,7 @@
     clearInterval(moreTimer);
     // While a round loads, the button tells a little story, different for each tap.
     if (busy && batch > 1) {
-      const lines = MORE_LINES[batch - 2] || MORE_LINES[0];
+      const lines = MORE_LINES[(batch - 2) % MORE_LINES.length];
       let i = 0;
       const say = () => { $("more-btn").firstChild.textContent = lines[i++ % lines.length]; $("more-btn").lastElementChild.hidden = true; };
       say(); moreTimer = setInterval(say, 2000);
