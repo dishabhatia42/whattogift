@@ -49,7 +49,7 @@ const OCCASIONS = {
   diwali: "Diwali",
 };
 // Diwali: festive, beautiful and a little unexpected, never another dry-fruit box.
-const DIWALI_NOTE = "Diwali gifting: pick what people in India actually give at Diwali, the kind of gift that looks generous and beautiful the moment it's opened, that the whole family can share, or that dresses up the home for hosting. That means: sweets from proper sweet shops (mithai, pistachio and kaju sweets, festive hampers), chocolate gift boxes, crockery and serveware, glassware and barware, torans and festive decor, candles, diyas, lanterns and fairy lights, and playing cards and games for the family card nights. Lines marked 🪔 are from a brand's Diwali or festive range: favour them. Never pick jewellery, clothes, skincare, stationery or gadgets for Diwali unless the shopper's interests ask for them.";
+const DIWALI_NOTE = "Diwali gifting: pick what people in India actually give at Diwali, the kind of gift that looks generous and beautiful the moment it's opened, that the whole family can share, or that dresses up the home for hosting. That means: sweets from proper sweet shops (mithai, pistachio and kaju sweets, festive hampers), chocolate gift boxes, crockery and serveware, glassware and barware, torans and festive decor, candles, diyas, lanterns and fairy lights, and playing cards and games for the family card nights. Lines marked 🪔 are from a brand's Diwali or festive range: favour them. Diwali gifts should feel a little extravagant and generous when handed over: a box, a hamper, a set or a bigger pack, never one small single item (one can of sweets, one chocolate bar, one small candle). Lines marked 🎁 come boxed, as a set or as a hamper: prefer them. Never pick jewellery, clothes, skincare, stationery or gadgets for Diwali unless the shopper's interests ask for them.";
 // Diwali or festive range: said in the listing (stores tag these clearly in the season).
 const FESTIVE = /\b(diwali|deepavali|dhanteras|festive|festival|diyas?|rangoli|torans?|lakshmi|laxmi|pooja|puja|mithai|patakha|pataka|phuljhadi|lantern)\b/i;
 // What people actually gift at Diwali: sweets, candles and lights, cards and games. These lead a
@@ -62,6 +62,14 @@ const DIWALI_INSIDE = /\b(diyas?|mithai|hampers?|playing cards|ludo)\b/i;
 const lovedAtDiwali = (i) => !NOT_DIWALI.test(`${i.title || i.name || ""} ${i.type || ""}`) && (DIWALI_LOVES.test(`${i.title || i.name || ""} ${i.type || ""} ${(i.tags || []).join(" ")}`) || DIWALI_INSIDE.test(i.blurb || ""));
 // Stationery isn't a Diwali gift unless they asked for it (journals kept turning up for everyone).
 const STATIONERY = /\b(journals?|notebooks?|planners?|diar(y|ies)|stationery|pens?|pencils?|notepads?|sketchbooks?|bookmarks?|calendars?|stickers?|washi|notecards?|letter sets?)\b/i;
+// A Diwali gift should feel generous: boxed, a set, a hamper or a bigger pack...
+const GIFT_FORM = /\b(box(es)?|hampers?|gift ?sets?|sets? of \d+|packs? of \d+|box of \d+|assorted|collection|combo|trio|duo|baskets?|crates?|gift packs?|kits?|platters?)\b/i;
+const giftForm = (i) => GIFT_FORM.test(`${i.title || i.name || ""} ${i.type || ""}`);
+// ...not one small thing on its own (a single can or bar, a mini, a sample, a refill).
+const SINGLE = /\b(cans?|bars?|mini|minis|sample|single|sachets?|trial|travel size|refills?|\d{2} ?(g|gm|gms|ml))\b/i;
+const tooSmall = (i) => SINGLE.test(`${i.title || i.name || ""}`) && !giftForm(i);
+// And not too cheap to hand over at Diwali: ₹900 at least (₹500 on the "Under ₹1,000" budget).
+const diwaliFloor = (range) => (range.max <= 1000 ? 500 : 900);
 // Festive ranges include clothes and jewellery; those aren't what people give at Diwali.
 const WEARABLE = /\b(kurtas?|sarees?|sari|dress(es)?|shirts?|tops?|dupattas?|lehengas?|skirts?|pants|trousers|jackets?|cufflinks?|pocket squares?|scarf|scarves|stoles?|shoes?|juttis?|socks)\b/i;
 const isStationery = (i) => STATIONERY.test(`${i.title || i.name || ""} ${i.type || ""}`);
@@ -301,8 +309,8 @@ export function priceRange(budget, cheaper) {
 // Step 1: the products the AI may choose from. Everything here is real and verified in code.
 export async function buildShortlist({ recipient, occasion, tags, range, variant, gender = "", seen = new Set(), city = "", size = SHORTLIST }) {
   const [own, catalog] = await Promise.all([ownPicks(recipient, occasion), readCatalog()]);
-  const inRange = (price) => price >= range.min && price <= range.max;
   const diwali = occasion === "diwali";
+  const inRange = (price) => price >= (diwali ? Math.max(range.min, diwaliFloor(range)) : range.min) && price <= range.max;
   // Diwali: no stationery unless they picked "Journals & stationery".
   const noStationery = diwali && !tags.some((t) => /stationery|journal/i.test(t));
   // Diwali with no interests named: only Diwali gifts (sweets, chocolates, crockery, glassware,
@@ -317,7 +325,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
     .map((p) => ({ ...p, priceNum: rupees(p.price) }))
     .filter((p) => p.image && (p.priceNum == null || inRange(p.priceNum)) && !seen.has(`o-${p.id}`))
     .filter((p) => !scorer || score({ title: p.name, tags: p.tags, blurb: `${p.note} ${p.line || ""}` }) >= 1)
-    .filter((p) => !(noStationery && isStationery({ title: p.name })))
+    .filter((p) => !(noStationery && isStationery({ title: p.name })) && !(diwali && tooSmall({ title: p.name })))
     // Diwali with no interests named: your picks too must be Diwali gifts or ticked for Diwali (a ring isn't).
     .filter((p) => !strictDiwali || p.occasions.includes("diwali") || lovedAtDiwali({ title: p.name, tags: p.tags }))
     // Your own picks follow the same him/her rule as brand products (a ring for "him" is left out).
@@ -331,7 +339,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   // chocolates and coffee that the AI then calls "a tasting experience" isn't what they asked
   // for; a short, honest list is better. (With other interests too, those products still come.)
   const expOnly = tags.length > 0 && tags.every((t) => t.toLowerCase() === "experiences");
-  let items = catalog.items.filter((i) => inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)) && fitsCity(i, city) && (!expOnly || isExperience(i)) && !(noStationery && isStationery(i)));
+  let items = catalog.items.filter((i) => inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)) && fitsCity(i, city) && (!expOnly || isExperience(i)) && !(noStationery && isStationery(i)) && !(diwali && tooSmall(i)));
   if (strictDiwali) items = items.filter((i) => lovedAtDiwali(i) || (isFestive(i) && !WEARABLE.test(`${i.title} ${i.type}`) && !isJewellery(i)));
 
   // Interest matches first, then a fair share of every brand, so a big shop can't drown the rest.
@@ -339,7 +347,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   for (const i of items) {
     // For Diwali, a brand's Diwali or festive range goes first, and sweets, candles and cards lead
     // (a gentler nudge when they named interests, which come first).
-    const s = score(i) + (diwali ? (isFestive(i) ? 2 : 0) + (lovedAtDiwali(i) ? (scorer ? 1 : 3) : 0) : 0) + seeded(`${i.id}:${variant}`) * 0.5; // the variant reshuffles ties
+    const s = score(i) + (diwali ? (isFestive(i) ? 2 : 0) + (lovedAtDiwali(i) ? (scorer ? 1 : 3) : 0) + (giftForm(i) ? 2 : 0) : 0) + seeded(`${i.id}:${variant}`) * 0.5; // the variant reshuffles ties
     if (!byBrand.has(i.brandId)) byBrand.set(i.brandId, []);
     byBrand.get(i.brandId).push({ i, s });
   }
@@ -365,7 +373,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
       ref: `p${++n}`,
       product: i,
       brand: i.brandId,
-      line: `p${n} | ${i.brand}${diwali && isFestive(i) ? " 🪔" : ""} | ${i.title} | ${i.type} | ₹${i.price.toLocaleString("en-IN")}${i.options ? "+" : ""} | ${[placesOf(i).length && `in ${placesOf(i).join(", ")}`, i.tags.join(", "), i.blurb].filter(Boolean).join(" — ")}`,
+      line: `p${n} | ${i.brand}${diwali && isFestive(i) ? " 🪔" : ""}${diwali && giftForm(i) ? " 🎁" : ""} | ${i.title} | ${i.type} | ₹${i.price.toLocaleString("en-IN")}${i.options ? "+" : ""} | ${[placesOf(i).length && `in ${placesOf(i).join(", ")}`, i.tags.join(", "), i.blurb].filter(Boolean).join(" — ")}`,
     });
   }
   return list;
