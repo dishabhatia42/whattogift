@@ -28,14 +28,14 @@
     { id: "wedding", t: "Wedding" },
     { id: "just-because", t: "Just because" },
     { id: "win", t: "A win to celebrate" },
-    { id: "diwali", t: "🪔 Diwali" },
   ];
-  // Diwali is offered (first, for everyone) until the end of 10 Nov 2026, then disappears on its own.
-  const DIWALI = Date.now() < Date.parse("2026-11-11T00:00:00+05:30");
+  // Festive seasons (Diwali ran 26 Oct to 10 Nov 2026) are added here when they come round; the
+  // search still knows what makes a good Diwali gift (api/gift-ideas.js), ready for next year.
+  const DIWALI = false;
   // A couple doesn't share a birthday; a child has no anniversary or wedding. A treat for yourself
   // is a birthday, a win or just because (and "a win" is only offered there, for now).
   const only = (...ids) => ids.map((id) => OCCASIONS.find((o) => o.id === id));
-  const occasionsFor = (r) => (DIWALI ? only("diwali") : []).concat(
+  const occasionsFor = (r) => [].concat(
     r === "self" ? only("birthday", "win", "just-because")
     : r === "couple" ? only("anniversary", "wedding", "just-because")
     : r === "child" ? only("birthday", "just-because")
