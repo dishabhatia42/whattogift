@@ -8,6 +8,7 @@ import { readBrands, updateBrands, sameShop, slug, cleanDomain } from "./_lib/br
 import { checkShop, suggestBrands, ScoutError } from "./_lib/scout.js";
 import { isShortLink, expandShortLink } from "./_lib/links.js";
 import { readPolicies, updatePolicies, refreshPolicy, readMany, dueForReading, cleanSummary } from "./_lib/returns.js";
+import { labelPending, labelStatus } from "./_lib/labels.js";
 
 // Finding brand suggestions searches the web, which can take a minute or two.
 export const config = { maxDuration: 180 };
@@ -60,11 +61,15 @@ export default async function handler(req, res) {
       }
       case "autofill":
         return res.status(200).json(await autofill(body.url));
+      // Gift labels: labels as many unlabelled products as fit in about two minutes. Manage calls
+      // this again and again until none are left (see _lib/labels.js).
+      case "labelProducts":
+        return res.status(200).json(await labelPending(120000));
       case "refreshCatalog":
         return res.status(200).json(await refreshCatalog());
       case "catalogStatus": {
-        const { updatedAt, brands, items } = await readCatalog({ fresh: true });
-        return res.status(200).json({ updatedAt, brands, total: items.length });
+        const [{ updatedAt, brands, items }, labels] = await Promise.all([readCatalog({ fresh: true }), labelStatus()]);
+        return res.status(200).json({ updatedAt, brands, total: items.length, labels });
       }
 
       // ---- Brands: Disha's list, plus AI suggestions she ticks or skips ----

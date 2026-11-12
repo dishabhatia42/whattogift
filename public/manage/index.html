@@ -233,6 +233,9 @@
       <div class="row" style="justify-content:space-between"><h2>Brand catalogue</h2><button type="button" id="cat-refresh">Refresh all now</button></div>
       <p class="muted">Real, in-stock products from your brands, re-read from their websites every night. Searches pick from these.</p>
       <div id="cat-status" class="muted">Loading…</div>
+      <!-- gift labels: AI reads each product once (see api/_lib/labels.js) -->
+      <div class="row" style="justify-content:space-between;margin-top:10px"><span id="label-status" class="muted"></span><button type="button" id="label-run">Label products</button></div>
+      <p class="muted" style="font-size:13px;margin-top:4px">Gift labels: AI reads each product once and marks whether it's a real gift, how gift-worthy it feels and who it suits. Searches skip non-gifts and show each brand's best. New products are labelled every night.</p>
 
       <!-- add a brand -->
       <form id="brand-add" class="row" style="flex-wrap:nowrap">
@@ -324,7 +327,7 @@
       showTab(tabFromUrl());
       renderProducts(); renderAds(); renderAffiliates();
       Promise.all([call({ action: "brandsLoad" }), call({ action: "catalogStatus" }), call({ action: "policiesLoad" }).catch(() => ({}))])
-        .then(([b, c, p]) => { brandData = b; report = c; policies = p || {}; renderBrands(); autoReadPolicies(); }, () => { $("#cat-status").textContent = "Couldn't load your brands."; });
+        .then(([b, c, p]) => { brandData = b; report = c; labelInfo = c.labels || null; policies = p || {}; renderBrands(); autoReadPolicies(); }, () => { $("#cat-status").textContent = "Couldn't load your brands."; });
     } catch (e) { toast(e.message, true); }
   }
 
@@ -340,6 +343,12 @@
   }
   let brandData = { brands: [], suggestions: [], skipped: [] };
   let report = { brands: [], total: 0, updatedAt: 0 };
+  let labelInfo = null; // { labelled, notGifts } from the last catalogue status
+  function renderLabels() {
+    const total = report.total || 0, done = Math.min(labelInfo?.labelled || 0, total);
+    $("#label-status").textContent = !total ? "" : !done ? "No products labelled yet. Press Label products (takes a few minutes the first time)."
+      : `${done.toLocaleString("en-IN")} of ${total.toLocaleString("en-IN")} products labelled · ${(labelInfo.notGifts || 0).toLocaleString("en-IN")} marked "not a gift"` + (done < total ? " · press Label products for the rest" : "");
+  }
   const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   const rupees = (n) => "₹" + Math.round(n).toLocaleString("en-IN");
   function mosaic(samples) {
@@ -354,6 +363,7 @@
     $("#cat-status").textContent = report.updatedAt
       ? `${report.total.toLocaleString("en-IN")} products from ${brandData.brands.length} brands · last read ${new Date(report.updatedAt).toLocaleString("en-IN")}`
       : "Not read yet. Press Refresh all now.";
+    renderLabels();
 
     // suggestions
     const sugs = $("#sugs"); sugs.textContent = "";
@@ -601,6 +611,23 @@
       if (out.found) $("#sugs").scrollTo({ left: 0, behavior: "smooth" });
     } catch (err) { toast(err.message, true); }
     finally { btn.disabled = false; btn.textContent = old; }
+  });
+
+  // Labels in rounds of about two minutes each, until every product has one.
+  $("#label-run").addEventListener("click", async (e) => {
+    const btn = e.target; btn.disabled = true;
+    try {
+      for (;;) {
+        $("#label-status").textContent = `Labelling… ${(labelInfo?.labelled || 0).toLocaleString("en-IN")} of ${(report.total || 0).toLocaleString("en-IN")} done. Keep this page open.`;
+        const out = await call({ action: "labelProducts" });
+        labelInfo = { ...(labelInfo || {}), labelled: out.labelled };
+        if (!out.left || !out.added) break; // all done, or a round got nowhere (try again later)
+      }
+      const c = await call({ action: "catalogStatus" }); report = c; labelInfo = c.labels || labelInfo;
+      renderLabels();
+      toast(report.total && labelInfo.labelled >= report.total ? "Every product is labelled." : "Labelled as many as possible. Press again later for the rest.");
+    } catch (err) { toast(err.message, true); renderLabels(); }
+    finally { btn.disabled = false; }
   });
 
   $("#cat-refresh").addEventListener("click", async (e) => {

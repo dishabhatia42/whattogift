@@ -92,7 +92,7 @@
 <script src="/common.js"></script>
 <script>
 (() => {
-  const { BUDGETS, RECIPIENTS, OCCASIONS, TUNES, adMedia, toParams, fromParams, resultsTitle, safeHref, STORE_NAMES, catalog, catalogReady, pickAds, track } = window.WTG;
+  const { BUDGETS, RECIPIENTS, OCCASIONS, TUNES, VIBES, adMedia, toParams, fromParams, resultsTitle, safeHref, STORE_NAMES, catalog, catalogReady, pickAds, track } = window.WTG;
   const $ = (id) => document.getElementById(id);
 
   const state = fromParams(new URLSearchParams(location.search));
@@ -145,7 +145,7 @@
     const tags = state.tags.map(cap);
     const tuned = TUNES.filter((t) => state.tune.includes(t.id)).length;
     // Who it's for is already in the line above ("The gift edit / your mom"), so it's left out here.
-    const bits = [occ && occ.t, BUDGETS.find((b) => b.id === state.budget)?.t,
+    const bits = [occ && occ.t, BUDGETS.find((b) => b.id === state.budget)?.t, VIBES.find((v) => v.id === state.vibe)?.t,
       tags.length ? tags[0] + (tags.length > 1 ? ` +${tags.length - 1}` : "") : "",
       state.city && state.tags.some((t) => t.toLowerCase() === "experiences") && (state.city === "Online" ? "💻 Online" : `📍 ${state.city}`),
       state.discover && "✨ New world", tuned ? `${tuned} tweak${tuned > 1 ? "s" : ""}` : ""].filter(Boolean);
@@ -353,10 +353,10 @@
   // One round of ideas. Round 1 is the same for everyone with these answers, so it's cached;
   // later rounds list what's already on the page so the server skips it.
   async function fetchIdeas(round = batch) {
-    // The catalog version busts cached searches whenever products or ads change; p=32 is the answer format (32: Diwali favours boxes, sets and hampers over single small items).
+    // The catalog version busts cached searches whenever products or ads change; p=33 is the answer format (33: gift labels and the personality choice).
     await Promise.race([catalogReady, new Promise((ok) => setTimeout(ok, 1500))]);
     const seen = round > 1 ? `&x=${encodeURIComponent(shownIds.join(","))}&xi=${encodeURIComponent(shownIdeas.join("|"))}` : "";
-    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=32${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
+    const r = await fetch(`/api/gift-ideas?${key}&b=${round}${seen}&p=33${catalog.version ? `&cv=${encodeURIComponent(catalog.version)}` : ""}`);
     const data = await r.json().catch(() => ({}));
     if (r.status === 429) throw new Error(data.error || "busy");
     if (r.status === 422 && data.error) throw Object.assign(new Error(data.error), { nothing: true }); // nothing from our brands fits

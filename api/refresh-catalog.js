@@ -3,10 +3,11 @@
 // so CRON_SECRET must be set in the project's environment variables. (The admin page has its own
 // "Refresh brand catalogue" button, behind the admin password.)
 import { refreshCatalog } from "./_lib/catalog.js";
+import { labelPending } from "./_lib/labels.js";
 import { readBrands } from "./_lib/brands.js";
 import { readPolicies, readMany, dueForReading } from "./_lib/returns.js";
 
-export const config = { maxDuration: 60 };
+export const config = { maxDuration: 300 };
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -15,10 +16,13 @@ export default async function handler(req, res) {
   try {
     const started = Date.now();
     const catalog = await refreshCatalog();
+    // Then label tonight's new products for gifting (usually a handful; see _lib/labels.js).
+    let labels = null;
+    try { labels = await labelPending(150000); } catch (err) { console.warn("Gift labelling skipped", err?.message); }
     // Then re-check a few return policies older than a week, in whatever time is left. A changed
     // policy waits for Disha's approval; cards keep the approved label meanwhile.
     let policies = { done: 0, left: 0 };
-    const spare = 50000 - (Date.now() - started);
+    const spare = 270000 - (Date.now() - started);
     if (spare > 10000) {
       try {
         const [{ brands }, current] = await Promise.all([readBrands(), readPolicies()]);
@@ -26,7 +30,7 @@ export default async function handler(req, res) {
         policies = { done, left };
       } catch (err) { console.warn("Return policy re-check skipped", err?.message); }
     }
-    return res.status(200).json({ ...catalog, policies });
+    return res.status(200).json({ ...catalog, labels, policies });
   } catch (err) {
     console.error("Catalogue refresh failed", err);
     return res.status(500).json({ error: "Couldn't refresh the catalogue." });

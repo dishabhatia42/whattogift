@@ -75,6 +75,18 @@
     { id: "no-limit", t: "Budget no bar", note: "Love it. Only the best." },
   ];
   // Results-page refinements ("Not quite their vibe?"). The ids are the API's whitelist too.
+  // "They're more…" on the home page: one personality, for when people don't pick interests. The
+  // server has the same ids, with a line each telling the AI what they mean (api/_lib/labels.js).
+  const VIBES = [
+    { id: "homebody", t: "🛋️ Cosy homebody" },
+    { id: "social", t: "🎉 Life of the party" },
+    { id: "selfcare", t: "🧖 Self-care lover" },
+    { id: "creative", t: "🎨 Creative soul" },
+    { id: "foodie", t: "🍷 Foodie" },
+    { id: "explorer", t: "🧭 Explorer" },
+    { id: "techie", t: "🎧 Gadget geek" },
+    { id: "active", t: "🏃 Active & sporty" },
+  ];
   const TUNES = [
     { id: "unusual", t: "More unusual" },
     { id: "personal", t: "More personal" },
@@ -92,6 +104,7 @@
     const p = new URLSearchParams({ recipient: s.recipient, occasion: s.occasion });
     if (asksGender(s.recipient) && (s.gender === "him" || s.gender === "her")) p.set("gender", s.gender);
     if (s.budget) p.set("budget", s.budget);
+    if (VIBES.some((v) => v.id === s.vibe)) p.set("vibe", s.vibe);
     const tags = [...new Set(s.tags.map((t) => t.toLowerCase()))].sort();
     if (tags.length) p.set("tags", tags.join(","));
     // The "Tell us about them" note is paused (the box is off the home page), so an old link's
@@ -147,12 +160,13 @@
     const occasion = recipient && occasionsFor(recipient).some((o) => o.id === p.get("occasion")) ? p.get("occasion") : null;
     const gender = asksGender(recipient) && ["him", "her"].includes(p.get("gender")) ? p.get("gender") : null;
     const budget = BUDGETS.some((b) => b.id === p.get("budget")) ? p.get("budget") : null;
+    const vibe = VIBES.some((v) => v.id === p.get("vibe")) ? p.get("vibe") : null;
     const tags = cleanInterests((p.get("tags") || "").split(","));
     const discover = p.get("new") === "1";
     const tune = (p.get("tune") || "").split(",").filter((t) => TUNES.some((x) => x.id === t));
     const about = cleanAbout(p.get("about") || "");
     const city = /^[A-Z][A-Za-z ]{1,20}$/.test(p.get("city") || "") ? p.get("city") : null; // the server checks it's a real one
-    return { recipient, gender, occasion, budget, tags, about, discover, tune, city };
+    return { recipient, gender, occasion, budget, vibe, tags, about, discover, tune, city };
   }
 
   function resultsTitle(s) {
@@ -504,7 +518,7 @@
   }
 
   window.WTG = {
-    RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, DIWALI, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES, TUNES,
+    RECIPIENTS, GENDERS, OCCASIONS, VIBES, occasionsFor, DIWALI, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES, TUNES,
     asksGender, safeHref, toParams, fromParams, resultsTitle, cleanInterests, cleanAbout,
     catalog, catalogReady, pickAds, mountFeatured, mountBoard, adMedia, track, SITE,
   };

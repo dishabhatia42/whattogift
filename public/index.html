@@ -69,6 +69,11 @@
 
     <section class="step rise" style="--i:3" aria-labelledby="s2">
       <div class="step-head"><h2 id="s2">What makes them tick?</h2><p class="sub" id="s2-sub">Tell us what they're into. We'll do the digging.</p></div>
+      <!-- One tap for people who don't pick interests: steers the search by personality. -->
+      <div class="where-row vibe-row" id="vibe-row">
+        <span id="vibe-q">They're more…</span>
+        <div class="suggest" id="vibes" role="group" aria-labelledby="vibe-q"></div>
+      </div>
       <div class="suggest" id="suggest" aria-label="Suggested keywords"></div>
       <!-- Picked Experiences: where they are. Only cities with enough experiences are offered. -->
       <div class="where-row" id="where-row" hidden>
@@ -118,7 +123,7 @@
 <script src="/common.js"></script>
 <script>
 (() => {
-  const { RECIPIENTS, GENDERS, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, asksGender, toParams, fromParams, mountFeatured } = window.WTG;
+  const { RECIPIENTS, GENDERS, VIBES, occasionsFor, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, asksGender, toParams, fromParams, mountFeatured } = window.WTG;
   const $ = (id) => document.getElementById(id);
 
   // Start from the URL, so "Edit" on the results page comes back with the answers still picked.
@@ -145,6 +150,7 @@
   });
   pills($("genders"), GENDERS, (id) => { state.gender = state.gender === id ? null : id; render(); });
   pills($("budgets"), BUDGETS, (id) => { state.budget = state.budget === id ? null : id; render(); });
+  pills($("vibes"), VIBES, (id) => { state.vibe = state.vibe === id ? null : id; render(); });
   $("discover").addEventListener("click", () => { state.discover = !state.discover; render(); });
 
   // ---- interests
@@ -176,8 +182,8 @@
 
   // Shopping for yourself: the questions talk to "you" instead of "them".
   const VOICE = {
-    them: { "gender-q": "Are they…", s2: "What makes them tick?", "s2-sub": "Tell us what they're into. We'll do the digging.", "discover-sub": "Introduce them to something they've never tried.", s3: "How much are we spoiling them?", "go-txt": "Find gifts they'll actually love" },
-    you: { "gender-q": "Are you…", s2: "What makes you tick?", "s2-sub": "Tell us what you're into. We'll do the digging.", "discover-sub": "Discover something you've never tried.", s3: "How much are we spoiling you?", "go-txt": "Find something you'll actually love" },
+    them: { "vibe-q": "They're more…", "gender-q": "Are they…", s2: "What makes them tick?", "s2-sub": "Tell us what they're into. We'll do the digging.", "discover-sub": "Introduce them to something they've never tried.", s3: "How much are we spoiling them?", "go-txt": "Find gifts they'll actually love" },
+    you: { "vibe-q": "You're more…", "gender-q": "Are you…", s2: "What makes you tick?", "s2-sub": "Tell us what you're into. We'll do the digging.", "discover-sub": "Discover something you've never tried.", s3: "How much are we spoiling you?", "go-txt": "Find something you'll actually love" },
   };
   function render() {
     const voice = state.recipient === "self" ? "you" : "them";
@@ -205,6 +211,7 @@
     show($("where-row"), wantsExp && cities.length > 0);
     for (const b of $("genders").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.gender));
     for (const b of $("budgets").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.budget));
+    for (const b of $("vibes").children) b.setAttribute("aria-pressed", String(b.dataset.id === state.vibe));
     $("discover").setAttribute("aria-pressed", String(!!state.discover));
 
     const box = $("tagbox"), input = $("taginput");
