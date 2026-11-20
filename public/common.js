@@ -494,10 +494,10 @@
     document.addEventListener("visibilitychange", () => { if (!document.hidden && !raf) raf = requestAnimationFrame(frame); });
   })();
 
-  // ---- Festive music (November and December): a soft music-box "Jingle Bells" (the tune is public
-  // domain; this arrangement was made for the site). Browsers only allow sound after a tap, so it
-  // starts on the visitor's first tap anywhere, quietly, and the 🔊 button in the header turns it
-  // off (remembered on this device). It carries on where it left off when you move between pages.
+  // ---- Festive music (November and December): a cheerful "Jingle Bells" (the tune is public
+  // domain; this arrangement was made for the site). It's on by default: it starts as soon as the
+  // browser allows (on landing where permitted, otherwise the first tap anywhere), and the 🔊
+  // button in the header turns it off (remembered on this device). It carries on where it left off when you move between pages.
   (() => {
     const inner = document.querySelector(".site-header-inner");
     if (!inner || new Date().getMonth() < 10 || location.pathname.startsWith("/manage")) return;
@@ -517,18 +517,25 @@
     const play = () => {
       const at = Number(store(() => sessionStorage.getItem("sg-music-at")));
       if (at && !audio.currentTime) audio.currentTime = at;
-      audio.play().then(show, show);
+      return audio.play().then(() => { show(); return true; }, () => { show(); return false; });
     };
     btn.addEventListener("click", () => {
       if (audio.paused) { off = false; store(() => localStorage.removeItem("sg-music")); play(); }
       else { off = true; store(() => localStorage.setItem("sg-music", "off")); audio.pause(); show(); }
     });
+    // Try to start straight away (some browsers allow it, e.g. for sites you visit often); where the
+    // browser waits for a tap, start on the first one. Touch screens only count a tap once the
+    // finger lifts, so listen for that (pointerup / touchend / click), not just the press.
+    const GESTURES = ["pointerup", "touchend", "click", "keydown"];
+    const stopListening = () => GESTURES.forEach((g) => removeEventListener(g, first, true));
     const first = (e) => {
+      if (off) return stopListening();
       if (e.target.closest && e.target.closest(".music-btn")) return; // the button handles itself
-      removeEventListener("pointerdown", first, true); removeEventListener("keydown", first, true);
-      if (!off) play();
+      if (!audio.paused) return stopListening();
+      play().then((ok) => { if (ok) stopListening(); });
     };
-    addEventListener("pointerdown", first, true); addEventListener("keydown", first, true);
+    GESTURES.forEach((g) => addEventListener(g, first, true));
+    if (!off) play().then((ok) => { if (ok) stopListening(); });
     addEventListener("pagehide", () => store(() => sessionStorage.setItem("sg-music-at", String(audio.currentTime))));
     show();
     inner.insertBefore(btn, inner.lastElementChild);
