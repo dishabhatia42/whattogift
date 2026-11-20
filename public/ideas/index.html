@@ -299,10 +299,17 @@
 
   // While Claude thinks: shimmering cards, and the big heading cycles through a few playful lines.
   // Shuffled fresh for every search; "Almost there" always comes last and stays until the gifts appear.
-  const LINES = diwali
-    ? ["Polishing the diyas…", "Taste-testing the mithai (strictly for research)…", "Dusting off the good playing cards…", "Hunting for the fanciest candles…"]
-    : ["Putting our gifting brain to work…", "Keeping only the really good stuff…", "Ooh, this could be good…", "Wait till you see what we found…"];
-  const LAST_LINE = diwali ? "Almost there. Lighting the last diya…" : "Almost there. Good things take a second…";
+  // Festive occasions get their own (Diwali, Christmas & New Year, and Secret Santa, with office
+  // jokes for a work friend and secret-keeping ones among friends).
+  const FESTIVE_LINES = {
+    diwali: [["Polishing the diyas…", "Taste-testing the mithai (strictly for research)…", "Dusting off the good playing cards…", "Hunting for the fanciest candles…"], "Almost there. Lighting the last diya…"],
+    christmas: [["Untangling the fairy lights…", "Checking the nice list twice…", "Taste-testing the plum cake (research)…", "Resolution #1: no boring gifts…"], "Almost there. Sleigh's loading up 🛷"],
+    santaOffice: [["Doing a Jim. Teapot-level thoughtful…", "You're on mute. Still finding gifts…", "Taking this offline… to the North Pole…"], "Almost there. Act natural at stand-up 🤫"],
+    santaFriends: [["Sworn to secrecy. Pinky promise…", "Making the whole group jealous…", "Planning your poker face for the reveal…", "Making them wonder who it was…"], "Almost there. Act natural 🎅"],
+  };
+  const festive = state.occasion === "secretsanta" ? (state.recipient === "colleague" ? "santaOffice" : "santaFriends") : state.occasion;
+  const [LINES, LAST_LINE] = FESTIVE_LINES[festive]
+    || [["Putting our gifting brain to work…", "Keeping only the really good stuff…", "Ooh, this could be good…", "Wait till you see what we found…"], "Almost there. Good things take a second…"];
   let lineTimer;
   function loading(on) {
     clearInterval(lineTimer);
