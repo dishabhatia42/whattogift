@@ -55,6 +55,8 @@
     : r === "child" ? only("birthday", "just-because")
     // You don't buy your parents a wedding gift; their anniversary is the one that matters.
     : ["mom", "dad", "parents"].includes(r) ? only("birthday", "anniversary", "just-because")
+    // A work friend's anniversary isn't yours to mark; their wedding is.
+    : r === "colleague" ? only("birthday", "wedding", "just-because")
     : only("birthday", "anniversary", "wedding", "just-because"),
     festiveFor(r));
   // What the brands in the catalogue actually sell most (see api/_lib/vocabulary.js for what each
