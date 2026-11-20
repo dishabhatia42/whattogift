@@ -72,6 +72,7 @@ export const INTERESTS = {
   "plants": { words: PLANTS, not: NOT_PLANTS },
   "games & puzzles": { words: GAMES },
   "tech & audio": { words: TECH },
+  "gadgets & tech": { words: [...TECH, "gamer", "playstation", "ps5", "xbox", "nintendo", "kindle", "e-reader", "instax", "camera", "tripod", "wireless"] },
   "sneakers": { words: ["sneaker", "shoe", "lows", "highs", "slides", "loafer", "trainers"] },
   "lego & models": { words: ["lego", "diecast", "model", "model car", "minifigure", "building set", "bricks", "scale model"] },
 };

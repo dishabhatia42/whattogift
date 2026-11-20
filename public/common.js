@@ -45,26 +45,29 @@
   // What the brands in the catalogue actually sell most (see api/_lib/vocabulary.js for what each
   // one matches). Ordered long + short in pairs, so on a phone two always share a line.
   // "Experiences" mostly brings experience ideas (classes, tastings, outings) that link to a web search.
-  const BASE_INTERESTS = ["Journals & stationery", "Books", "Kitchen & dining", "Jewellery", "Fashion & style", "Coffee & tea", "Beauty & fragrance", "Art & DIY", "Food & treats", "Home decor", "Experiences"];
+  // "Anything they're into?": the one question about the person. Each list is what that person
+  // is most often into, most-picked first, so the first row already covers most shoppers. Every
+  // label must be a key in api/_lib/vocabulary.js (lowercased), or it won't steer the search.
+  const BASE_INTERESTS = ["Food & treats", "Coffee & tea", "Beauty & fragrance", "Gadgets & tech", "Books", "Home decor", "Kitchen & dining", "Fashion & style", "Jewellery", "Journals & stationery", "Art & DIY", "Fitness & wellness", "Experiences"];
   const SUGGESTIONS = {
     default: BASE_INTERESTS,
-    partner: [...BASE_INTERESTS, "Bags & wallets", "Little luxuries"],
+    partner: [...BASE_INTERESTS, "Little luxuries", "Bags & wallets"],
     friend: [...BASE_INTERESTS, "Games & puzzles", "Bags & wallets"],
     self: [...BASE_INTERESTS, "Little luxuries", "Plants"],
-    mom: [...BASE_INTERESTS, "Plants", "Spiritual"],
-    dad: [...BASE_INTERESTS, "Tech & audio", "Games & puzzles"],
-    parents: [...BASE_INTERESTS, "Plants", "Spiritual"],
     sibling: [...BASE_INTERESTS, "Games & puzzles", "Sneakers"],
-    colleague: [...BASE_INTERESTS, "Desk & office", "Bags & wallets"],
-    couple: [...BASE_INTERESTS, "Games & puzzles", "Plants"],
-    child: ["Toys & games", "Books", "LEGO & models", "Art & DIY", "Learning & puzzles", "Food & treats"],
+    mom: ["Food & treats", "Coffee & tea", "Beauty & fragrance", "Home decor", "Kitchen & dining", "Plants", "Spiritual", "Jewellery", "Fashion & style", "Books", "Fitness & wellness", "Gadgets & tech", "Experiences"],
+    dad: ["Food & treats", "Coffee & tea", "Gadgets & tech", "Books", "Fitness & wellness", "Kitchen & dining", "Home decor", "Plants", "Spiritual", "Fashion & style", "Games & puzzles", "Experiences"],
+    parents: ["Food & treats", "Coffee & tea", "Home decor", "Kitchen & dining", "Plants", "Spiritual", "Books", "Fitness & wellness", "Gadgets & tech", "Games & puzzles", "Experiences"],
+    couple: ["Food & treats", "Coffee & tea", "Home decor", "Kitchen & dining", "Games & puzzles", "Plants", "Gadgets & tech", "Books", "Art & DIY", "Experiences"],
+    colleague: ["Food & treats", "Coffee & tea", "Desk & office", "Journals & stationery", "Gadgets & tech", "Plants", "Books", "Home decor", "Bags & wallets", "Beauty & fragrance", "Fitness & wellness"],
+    child: ["Toys & games", "LEGO & models", "Art & DIY", "Books", "Learning & puzzles", "Outdoor play", "Food & treats"],
   };
   // Emojis are display-only; the plain words are what the search sees.
   const INTEREST_EMOJI = {
     "Journals & stationery": "📓", "Books": "📚", "Kitchen & dining": "🍳", "Jewellery": "💍", "Fashion & style": "🧥",
     "Coffee & tea": "☕", "Beauty & fragrance": "💄", "Art & DIY": "🎨", "Food & treats": "🍫", "Home decor": "🛋️",
     "Bags & wallets": "👜", "Little luxuries": "🛁", "Games & puzzles": "🎲", "Plants": "🪴", "Spiritual": "🪔",
-    "Tech & audio": "🎧", "Sneakers": "👟", "Desk & office": "🖇️", "Toys & games": "🧸", "LEGO & models": "🧱",
+    "Tech & audio": "🎧", "Gadgets & tech": "🎧", "Fitness & wellness": "🧘", "Outdoor play": "⚽", "Sneakers": "👟", "Desk & office": "🖇️", "Toys & games": "🧸", "LEGO & models": "🧱",
     "Learning & puzzles": "🧩", "Experiences": "🎟️",
   };
   const BUDGETS = [
@@ -75,45 +78,6 @@
     { id: "no-limit", t: "Budget no bar", note: "Love it. Only the best." },
   ];
   // Results-page refinements ("Not quite their vibe?"). The ids are the API's whitelist too.
-  // "Describe them in a tap" on the home page: one personality, from a set that fits who it's for
-  // (a child isn't a gadget geek; Dad isn't a self-care lover). Sets share ids where they mean the
-  // same thing ("Traveller" for parents is "explorer"), so the server and the gift labels know
-  // one list of ids, with a line each telling the AI what they mean (api/_lib/labels.js).
-  const VIBE_SETS = {
-    default: [
-      { id: "homebody", t: "🛋️ Cosy homebody" },
-      { id: "social", t: "🎉 Life of the party" },
-      { id: "selfcare", t: "🧖 Self-care lover" },
-      { id: "creative", t: "🎨 Creative soul" },
-      { id: "foodie", t: "🍷 Foodie" },
-      { id: "explorer", t: "🧭 Explorer" },
-      { id: "techie", t: "🎧 Gadget geek" },
-      { id: "active", t: "🏃 Active & sporty" },
-    ],
-    child: [
-      { id: "creative", t: "🎨 Little artist" },
-      { id: "builder", t: "🧱 Builder & tinkerer" },
-      { id: "bookworm", t: "📚 Bookworm" },
-      { id: "active", t: "🌳 Outdoorsy" },
-      { id: "imaginative", t: "🦄 Imaginative" },
-    ],
-    parents: [
-      { id: "homebody", t: "🛋️ Homebody" },
-      { id: "foodie", t: "🍲 Foodie & host" },
-      { id: "plants", t: "🪴 Gardener" },
-      { id: "spiritual", t: "🙏 Spiritual" },
-      { id: "explorer", t: "🧳 Traveller" },
-      { id: "bookworm", t: "📖 Reader" },
-    ],
-    colleague: [
-      { id: "desk", t: "☕ Desk-life" },
-      { id: "snacker", t: "🍫 Snacker" },
-      { id: "techie", t: "🎧 Gadget person" },
-      { id: "plants", t: "🪴 Plant person" },
-      { id: "aesthetic", t: "✨ Aesthetic" },
-    ],
-  };
-  const vibesFor = (r) => VIBE_SETS[r === "child" ? "child" : ["mom", "dad", "parents"].includes(r) ? "parents" : r === "colleague" ? "colleague" : "default"];
   const TUNES = [
     { id: "unusual", t: "More unusual" },
     { id: "personal", t: "More personal" },
@@ -131,7 +95,6 @@
     const p = new URLSearchParams({ recipient: s.recipient, occasion: s.occasion });
     if (asksGender(s.recipient) && (s.gender === "him" || s.gender === "her")) p.set("gender", s.gender);
     if (s.budget) p.set("budget", s.budget);
-    if (vibesFor(s.recipient).some((v) => v.id === s.vibe)) p.set("vibe", s.vibe);
     const tags = [...new Set(s.tags.map((t) => t.toLowerCase()))].sort();
     if (tags.length) p.set("tags", tags.join(","));
     // The "Tell us about them" note is paused (the box is off the home page), so an old link's
@@ -187,13 +150,12 @@
     const occasion = recipient && occasionsFor(recipient).some((o) => o.id === p.get("occasion")) ? p.get("occasion") : null;
     const gender = asksGender(recipient) && ["him", "her"].includes(p.get("gender")) ? p.get("gender") : null;
     const budget = BUDGETS.some((b) => b.id === p.get("budget")) ? p.get("budget") : null;
-    const vibe = recipient && vibesFor(recipient).some((v) => v.id === p.get("vibe")) ? p.get("vibe") : null;
     const tags = cleanInterests((p.get("tags") || "").split(","));
     const discover = p.get("new") === "1";
     const tune = (p.get("tune") || "").split(",").filter((t) => TUNES.some((x) => x.id === t));
     const about = cleanAbout(p.get("about") || "");
     const city = /^[A-Z][A-Za-z ]{1,20}$/.test(p.get("city") || "") ? p.get("city") : null; // the server checks it's a real one
-    return { recipient, gender, occasion, budget, vibe, tags, about, discover, tune, city };
+    return { recipient, gender, occasion, budget, tags, about, discover, tune, city };
   }
 
   function resultsTitle(s) {
@@ -545,7 +507,7 @@
   }
 
   window.WTG = {
-    RECIPIENTS, GENDERS, OCCASIONS, vibesFor, occasionsFor, DIWALI, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES, TUNES,
+    RECIPIENTS, GENDERS, OCCASIONS, occasionsFor, DIWALI, SUGGESTIONS, INTEREST_EMOJI, BUDGETS, STORE_NAMES, TUNES,
     asksGender, safeHref, toParams, fromParams, resultsTitle, cleanInterests, cleanAbout,
     catalog, catalogReady, pickAds, mountFeatured, mountBoard, adMedia, track, SITE,
   };
