@@ -13,7 +13,8 @@ import { readCatalog } from "./catalog.js";
 
 const PATH = "gift-finder/labels.json";
 // Bumped when the labelling rules change, so every product is labelled again.
-const RULES = 1;
+// (2: personalities for children, parents and colleagues added)
+const RULES = 2;
 const BATCH = 80;        // products per AI call
 const WORKERS = 6;       // AI calls at once
 
@@ -23,8 +24,9 @@ export const CATEGORIES = [
   "jewellery", "bags & accessories", "beauty & skincare", "grooming", "perfume", "tech & gadgets",
   "toys & games", "art & craft kits", "experiences", "pets", "fitness & wellness", "other",
 ];
-// The personalities on the home page ("They're more…"). The page has its own copy in
-// public/common.js (VIBES): keep the ids in step.
+// The personalities on the home page ("Describe them in a tap"). The page shows a set that fits
+// who it's for, from public/common.js (VIBE_SETS): keep the ids in step. New ids go at the end
+// (stored labels keep them as bit positions).
 export const VIBES = {
   homebody: "a cosy homebody: comfort, slow mornings, nights in, making home lovely",
   social: "the life of the party: hosting, going out, friends, celebrations",
@@ -34,6 +36,14 @@ export const VIBES = {
   explorer: "an explorer: travel, outdoors, adventures, new experiences",
   techie: "a gadget geek: tech, gadgets, gaming, clever tools",
   active: "active and sporty: fitness, sport, the outdoors, staying healthy",
+  bookworm: "a bookworm: reading, stories, a cosy reading corner",
+  builder: "a builder and tinkerer: building sets, puzzles, science kits, making things work",
+  imaginative: "imaginative: make-believe, dress-up, storytelling, pretend play",
+  plants: "a plant person or gardener: plants, gardening, green corners",
+  spiritual: "spiritual: pooja, meditation, faith and calm rituals",
+  desk: "desk-life: making a work desk nicer, organisers, desk accessories",
+  snacker: "a snacker: treats, snacks and sweets to share",
+  aesthetic: "aesthetic: pretty, design-led things that look lovely on a shelf or a desk",
 };
 const VIBE_IDS = Object.keys(VIBES);
 const WHO = ["anyone", "him", "her"];
