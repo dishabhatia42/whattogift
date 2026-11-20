@@ -454,12 +454,16 @@
     catalogReady.then(() => { draw(); wide.addEventListener("change", draw); });
   }
 
+  // Snow and music set the mood on the way in; once someone is looking at gift ideas (/ideas) they
+  // step aside so the gifts have the stage (the dark theme stays). Manage never has them.
+  const quietPage = /^\/(ideas|manage)/.test(location.pathname);
+
   // ---- Festive snow (November and December, when the site wears its dark theme): soft white
   // flakes falling over the whole page, small far-away ones drifting slowly and bigger near ones
   // falling faster, each swaying a little. It never catches taps, stops when the tab is hidden,
   // and isn't shown to people who prefer less motion.
   (() => {
-    if (new Date().getMonth() < 10 || location.pathname.startsWith("/manage") || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (new Date().getMonth() < 10 || quietPage || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const cv = document.createElement("canvas");
     cv.className = "snow"; cv.setAttribute("aria-hidden", "true");
     document.body.appendChild(cv);
@@ -500,7 +504,7 @@
   // button in the header turns it off (remembered on this device). It carries on where it left off when you move between pages.
   (() => {
     const inner = document.querySelector(".site-header-inner");
-    if (!inner || new Date().getMonth() < 10 || location.pathname.startsWith("/manage")) return;
+    if (!inner || new Date().getMonth() < 10 || quietPage) return;
     const store = (fn) => { try { return fn(); } catch { return null; } };
     let off = store(() => localStorage.getItem("sg-music")) === "off";
     const audio = new Audio("/sounds/jingle-bells.mp3");
