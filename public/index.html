@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+  // Festive season (November and December): the site wears its dark theme for everyone, so the
+  // snow on the home page board shows. The rest of the year it follows the visitor's device.
+  if (new Date().getMonth() >= 10) document.documentElement.dataset.theme = "dark";
+</script>
 <title>Serial Gifter</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%81%3C/text%3E%3C/svg%3E">
 <meta name="description" content="Thoughtful gifts for your favourite humans. Even the ones who say they don't want anything.">
@@ -40,6 +45,7 @@
 <!-- The board: gifts pinned like stickers on grid paper, with the headline sitting on it -->
 <section class="board" id="board" aria-label="Gifts we love">
   <div class="board-inner">
+    <canvas class="snow" id="snow" aria-hidden="true" hidden></canvas>
     <div class="stickers" id="stickers"></div>
     <div class="board-copy">
       <p class="type rise" style="--i:2">Really good gifts. Zero guesswork. Maximum brownie points.</p>
@@ -126,6 +132,51 @@
   const state = fromParams(new URLSearchParams(location.search));
   if (state.recipient && !state.occasion) state.occasion = occasionsFor(state.recipient)[0].id;
   const renderFeatured = mountFeatured(() => state);
+
+  // Festive snow over the board (November and December): tiny flakes in the brand colours, small
+  // far-away ones drifting slowly and bigger near ones falling faster, each swaying a little.
+  // Not shown to people who prefer less motion; paused when the tab is hidden or the board is
+  // scrolled away, so it costs nothing in the background.
+  (() => {
+    const m = new Date().getMonth();
+    if (m < 10 || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const cv = $("snow"), ctx = cv.getContext("2d");
+    cv.hidden = false;
+    // Snow, softly tinted: mostly white with a whisper of the brand colours, each flake a blurred
+    // glow (not a hard dot) with a faint edge so it still shows on the light paper.
+    const TINTS = ["255,255,255", "255,255,255", "255,255,255", "253,228,234", "255,243,214", "226,240,250"];
+    let w = 0, h = 0, flakes = [], on = true, raf = 0;
+    const make = (y) => {
+      const depth = Math.random(); // 0 far, 1 near
+      return { x: Math.random() * w, y: y ?? Math.random() * h, r: 1.6 + depth * 3.4, v: 0.2 + depth * 0.7,
+        a: 0.75 + depth * 0.25, sway: Math.random() * Math.PI * 2, drift: 0.004 + Math.random() * 0.01, c: TINTS[(Math.random() * TINTS.length) | 0] };
+    };
+    function size() {
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      w = cv.clientWidth; h = cv.clientHeight;
+      cv.width = w * dpr; cv.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const n = Math.round(Math.min(220, (w * h) / 3200));
+      flakes = Array.from({ length: n }, () => make());
+    }
+    function frame() {
+      ctx.clearRect(0, 0, w, h);
+      for (const f of flakes) {
+        f.y += f.v; f.sway += f.drift; f.x += Math.sin(f.sway) * 0.35 + 0.08;
+        if (f.y > h + 4) Object.assign(f, make(-4));
+        if (f.x > w + 4) f.x = -4;
+        const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
+        g.addColorStop(0, `rgba(${f.c},${f.a})`); g.addColorStop(0.55, `rgba(${f.c},${f.a * 0.8})`); g.addColorStop(1, `rgba(${f.c},0)`);
+        ctx.shadowColor = "rgba(120,140,160,.35)"; ctx.shadowBlur = 3;
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
+      }
+      raf = on ? requestAnimationFrame(frame) : 0;
+    }
+    const run = (yes) => { on = yes && !document.hidden; if (on && !raf) raf = requestAnimationFrame(frame); };
+    size(); run(true);
+    let t; addEventListener("resize", () => { clearTimeout(t); t = setTimeout(size, 200); });
+    document.addEventListener("visibilitychange", () => run(true));
+    new IntersectionObserver(([e]) => run(e.isIntersecting)).observe(cv);
+  })();
   WTG.mountBoard();
 
   function pills(container, items, onClick) {
