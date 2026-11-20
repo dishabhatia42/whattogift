@@ -87,6 +87,9 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
   background: var(--primary); color: var(--on-primary); transition: background .15s;
 }
 .header-cta:hover { background: var(--primary-hi); }
+/* Festive music on/off (common.js). Sits just left of the header button. */
+.music-btn { margin-left: auto; flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: transparent; font-size: 18px; line-height: 1; cursor: pointer; }
+.music-btn:hover { background: var(--tint); }
 .header-cta { transition: background .15s, opacity .25s, transform .25s var(--ease), visibility .25s; }
 .header-cta.away { opacity: 0; transform: translateY(-6px); visibility: hidden; pointer-events: none; }
 .header-cta .arr { transition: transform .2s var(--ease); }

@@ -454,6 +454,46 @@
     catalogReady.then(() => { draw(); wide.addEventListener("change", draw); });
   }
 
+  // ---- Festive music (November and December): a soft music-box "Jingle Bells" (the tune is public
+  // domain; this arrangement was made for the site). Browsers only allow sound after a tap, so it
+  // starts on the visitor's first tap anywhere, quietly, and the 🔊 button in the header turns it
+  // off (remembered on this device). It carries on where it left off when you move between pages.
+  (() => {
+    const inner = document.querySelector(".site-header-inner");
+    if (!inner || new Date().getMonth() < 10 || location.pathname.startsWith("/manage")) return;
+    const store = (fn) => { try { return fn(); } catch { return null; } };
+    let off = store(() => localStorage.getItem("sg-music")) === "off";
+    const audio = new Audio("/sounds/jingle-bells.mp3");
+    audio.loop = true; audio.volume = 0.22; audio.preload = "auto";
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.className = "music-btn";
+    track(btn, "Music toggle");
+    const show = () => {
+      const playing = !audio.paused;
+      btn.textContent = playing ? "🔊" : "🔇";
+      btn.setAttribute("aria-label", playing ? "Mute the music" : "Play festive music");
+      btn.setAttribute("aria-pressed", String(playing));
+    };
+    const play = () => {
+      const at = Number(store(() => sessionStorage.getItem("sg-music-at")));
+      if (at && !audio.currentTime) audio.currentTime = at;
+      audio.play().then(show, show);
+    };
+    btn.addEventListener("click", () => {
+      if (audio.paused) { off = false; store(() => localStorage.removeItem("sg-music")); play(); }
+      else { off = true; store(() => localStorage.setItem("sg-music", "off")); audio.pause(); show(); }
+    });
+    const first = (e) => {
+      if (e.target.closest && e.target.closest(".music-btn")) return; // the button handles itself
+      removeEventListener("pointerdown", first, true); removeEventListener("keydown", first, true);
+      if (!off) play();
+    };
+    addEventListener("pointerdown", first, true); addEventListener("keydown", first, true);
+    addEventListener("pagehide", () => store(() => sessionStorage.setItem("sg-music-at", String(audio.currentTime))));
+    show();
+    inner.insertBefore(btn, inner.lastElementChild);
+  })();
+
   // Header gets a soft line and shadow once the page scrolls.
   const header = document.getElementById("site-header");
   if (header) {
