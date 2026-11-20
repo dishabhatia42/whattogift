@@ -403,22 +403,6 @@ footer .disclosure { font-size: 12px; opacity: .85; }
 .board { --grid: rgba(110, 175, 200, .28); --paper: #fbfbf8; padding: 8px 12px 0; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .board { --grid: rgba(120, 180, 200, .14); --paper: #221c18; } }
 :root[data-theme="dark"] .board { --grid: rgba(120, 180, 200, .14); --paper: #221c18; }
-/* Santa's sleigh (festive season): rides left to right above the board, pauses off-screen, repeats. */
-.sleigh-lane { position: relative; max-width: 1200px; height: 64px; margin: 0 auto 4px; overflow: hidden; }
-.sleigh-lane:hover .sleigh, .sleigh-lane:focus-within .sleigh { animation-play-state: paused; }
-.sleigh { position: absolute; top: 28px; left: 0; padding: 0; border: 0; background: none; cursor: pointer; font-size: 26px; line-height: 1;
-  animation: sleigh-ride 16s linear infinite; }
-.sleigh .ride { display: flex; align-items: flex-end; gap: 0; animation: sleigh-bob .9s ease-in-out infinite alternate; }
-.sleigh .sled { position: relative; font-size: 30px; }
-.sleigh .santa { position: absolute; left: 6px; bottom: 10px; font-size: 22px; }
-.sleigh .deer { display: inline-block; transform: scaleX(-1); } /* face the way they're going */
-.sleigh .bubble { position: absolute; bottom: calc(100% + 2px); left: 0; padding: 3px 9px; border-radius: 999px; background: var(--primary); color: var(--on-primary);
-  font: 700 12px/1.4 var(--font-display, inherit); white-space: nowrap; opacity: 0; transform: translateY(4px); transition: opacity .2s, transform .2s; pointer-events: none; }
-.sleigh.say .bubble { animation: sleigh-say 1.8s ease forwards; }
-@keyframes sleigh-ride { 0% { transform: translateX(-160px); } 75%, 100% { transform: translateX(min(1240px, 100vw)); } }
-@keyframes sleigh-bob { from { transform: translateY(0); } to { transform: translateY(-4px); } }
-@keyframes sleigh-say { 0% { opacity: 0; transform: translateY(4px); } 15%, 80% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-2px); } }
-@media (prefers-reduced-motion: reduce) { .sleigh-lane { display: none; } }
 .board-inner {
   position: relative; max-width: 1200px; margin: 0 auto; border-radius: 24px; overflow: hidden;
   background-color: var(--paper);
