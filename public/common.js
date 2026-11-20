@@ -28,6 +28,7 @@
     { id: "wedding", t: "Wedding" },
     { id: "just-because", t: "Just because" },
     { id: "win", t: "A win to celebrate" },
+    { id: "secretsanta", t: "🎅 Secret Santa" },
   ];
   // Festive seasons (Diwali ran 26 Oct to 10 Nov 2026) are added here when they come round; the
   // search still knows what makes a good Diwali gift (api/gift-ideas.js), ready for next year.
@@ -35,13 +36,20 @@
   // A couple doesn't share a birthday; a child has no anniversary or wedding. A treat for yourself
   // is a birthday, a win or just because (and "a win" is only offered there, for now).
   const only = (...ids) => ids.map((id) => OCCASIONS.find((o) => o.id === id));
+  // Secret Santa is offered in its season (November to mid-January), for the groups that play it:
+  // friends, the office and siblings. The search knows to keep it budget-strict and crowd-pleasing,
+  // and office-safe for a colleague (api/gift-ideas.js, SANTA_NOTE).
+  const today = new Date();
+  const SANTA = today.getMonth() >= 10 || (today.getMonth() === 0 && today.getDate() <= 15);
+  const santaFor = (r) => (SANTA && ["friend", "colleague", "sibling"].includes(r) ? only("secretsanta") : []);
   const occasionsFor = (r) => [].concat(
     r === "self" ? only("birthday", "win", "just-because")
     : r === "couple" ? only("anniversary", "wedding", "just-because")
     : r === "child" ? only("birthday", "just-because")
     // You don't buy your parents a wedding gift; their anniversary is the one that matters.
     : ["mom", "dad", "parents"].includes(r) ? only("birthday", "anniversary", "just-because")
-    : only("birthday", "anniversary", "wedding", "just-because"));
+    : only("birthday", "anniversary", "wedding", "just-because"),
+    santaFor(r));
   // What the brands in the catalogue actually sell most (see api/_lib/vocabulary.js for what each
   // one matches). Ordered long + short in pairs, so on a phone two always share a line.
   // "Experiences" mostly brings experience ideas (classes, tastings, outings) that link to a web search.
@@ -168,7 +176,7 @@
       child: g === "him" ? "a little boy" : g === "her" ? "a little girl" : "a little human",
       self: "you",
     }[s.recipient];
-    const why = { birthday: "Birthday", anniversary: "Anniversary", wedding: "Wedding", win: "Celebration", "just-because": "" }[s.occasion];
+    const why = { birthday: "Birthday", anniversary: "Anniversary", wedding: "Wedding", win: "Celebration", secretsanta: "Secret Santa", "just-because": "" }[s.occasion];
     return why ? `${why} ideas for ${who}` : `Ideas for ${who}, just because`;
   }
 
