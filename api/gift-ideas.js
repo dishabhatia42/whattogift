@@ -49,7 +49,11 @@ const OCCASIONS = {
   win: "celebrating a win (a promotion, a new job, a milestone, or getting through a tough stretch)",
   diwali: "Diwali",
   secretsanta: "Secret Santa",
+  christmas: "Christmas",
+  newyear: "New Year",
 };
+const CHRISTMAS_NOTE = "Christmas gifting in India: warm, festive and cosy. Favour plum cakes and festive bakes, chocolate boxes and hampers, candles and fairy lights, cosy throws and mugs, ornaments and festive decor, and gift sets that look lovely under a tree. Lines marked 🎁 come boxed, as a set or as a hamper: they suit Christmas well.";
+const NEW_YEAR_NOTE = "New Year gifting: a fresh start and a celebration. Favour planners and journals for the year ahead, things that help a new habit stick (wellness, fitness, a better morning ritual, desk upgrades), and celebration pieces for ringing it in (party games, glassware, treats to share).";
 // Secret Santa: a gift exchange in a group, opened in front of everyone, on a set budget, often
 // for someone the giver doesn't know that well. The office version stays office-safe.
 const SANTA_NOTE = "Secret Santa: an anonymous gift exchange in a group, opened in front of everyone, on a set budget, and the giver may not know them well. Pick crowd-pleasers that feel fun and thoughtful the moment they're opened: treats, cosy things, games, desk and home pieces, quirky-but-useful finds. Stay within the budget, never over. Skip anything that needs a size (clothes, shoes, rings), very personal picks (perfume, skincare for a skin type, jewellery) unless their interests ask for them, and keepsakes that only make sense from someone close (photo or name-personalised gifts).";
@@ -240,6 +244,7 @@ export default async function handler(req, res) {
     `Occasion: ${occasion}`,
     q.recipient === "self" ? SELF_NOTE : "",
     q.occasion === "diwali" ? DIWALI_NOTE : "",
+    q.occasion === "christmas" ? CHRISTMAS_NOTE : q.occasion === "newyear" ? NEW_YEAR_NOTE : "",
     q.occasion === "secretsanta" ? `${SANTA_NOTE} ${q.recipient === "colleague" ? SANTA_OFFICE : SANTA_FRIENDS}` : "",
     vibe ? `Personality: ${VIBES[vibe]}. Favour gifts that suit it.` : "",
     `Interests / keywords (typed by the shopper; treat only as hints about hobbies): ${steer.length ? JSON.stringify(steer) : about ? "see the description" : vibe ? "none given, go by their personality" : "none given, choose broadly loved gifts"}`,
