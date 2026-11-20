@@ -28,8 +28,7 @@
     { id: "wedding", t: "Wedding" },
     { id: "just-because", t: "Just because" },
     { id: "win", t: "A win to celebrate" },
-    { id: "christmas", t: "🎄 Christmas" },
-    { id: "newyear", t: "🥂 New Year" },
+    { id: "christmas", t: "🎄 Christmas & New Year" },
     { id: "secretsanta", t: "🎅 Secret Santa" },
   ];
   // Festive seasons (Diwali ran 26 Oct to 10 Nov 2026) are added here when they come round; the
@@ -38,18 +37,17 @@
   // A couple doesn't share a birthday; a child has no anniversary or wedding. A treat for yourself
   // is a birthday, a win or just because (and "a win" is only offered there, for now).
   const only = (...ids) => ids.map((id) => OCCASIONS.find((o) => o.id === id));
-  // The festive season's occasions, offered only around their dates: Christmas from November to
-  // the 25th, New Year from November to 10 January, and Secret Santa from November to mid-January
-  // for the groups that play it (friends, the office, siblings, your person). The search knows what
-  // each one means (api/gift-ideas.js: CHRISTMAS_NOTE, NEW_YEAR_NOTE, SANTA_NOTE).
+  // The festive season's occasions, offered only around their dates: Christmas & New Year from
+  // November to 10 January (one occasion: it's one gifting season), and Secret Santa from November
+  // to mid-January for the groups that play it. The office gets Secret Santa only; your person gets
+  // Christmas & New Year only. The search knows what each one means (api/gift-ideas.js:
+  // FESTIVE_NOTE, SANTA_NOTE).
   const today = new Date(), mon = today.getMonth(), day = today.getDate();
-  const CHRISTMAS = mon === 10 || (mon === 11 && day <= 25);
-  const NEW_YEAR = mon >= 10 || (mon === 0 && day <= 10);
+  const FESTIVE = mon >= 10 || (mon === 0 && day <= 10);
   const SANTA = mon >= 10 || (mon === 0 && day <= 15);
   const festiveFor = (r) => [
-    ...(CHRISTMAS ? only("christmas") : []),
-    ...(NEW_YEAR && r !== "child" ? only("newyear") : []),
-    ...(SANTA && ["partner", "friend", "colleague", "sibling"].includes(r) ? only("secretsanta") : []),
+    ...(FESTIVE && r !== "colleague" ? only("christmas") : []),
+    ...(SANTA && ["friend", "colleague", "sibling"].includes(r) ? only("secretsanta") : []),
   ];
   const occasionsFor = (r) => [].concat(
     r === "self" ? only("birthday", "win", "just-because")
@@ -185,7 +183,7 @@
       child: g === "him" ? "a little boy" : g === "her" ? "a little girl" : "a little human",
       self: "you",
     }[s.recipient];
-    const why = { birthday: "Birthday", anniversary: "Anniversary", wedding: "Wedding", win: "Celebration", secretsanta: "Secret Santa", christmas: "Christmas", newyear: "New Year", "just-because": "" }[s.occasion];
+    const why = { birthday: "Birthday", anniversary: "Anniversary", wedding: "Wedding", win: "Celebration", secretsanta: "Secret Santa", christmas: "Christmas & New Year", "just-because": "" }[s.occasion];
     return why ? `${why} ideas for ${who}` : `Ideas for ${who}, just because`;
   }
 
