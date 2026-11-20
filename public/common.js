@@ -454,6 +454,46 @@
     catalogReady.then(() => { draw(); wide.addEventListener("change", draw); });
   }
 
+  // ---- Festive snow (November and December, when the site wears its dark theme): soft white
+  // flakes falling over the whole page, small far-away ones drifting slowly and bigger near ones
+  // falling faster, each swaying a little. It never catches taps, stops when the tab is hidden,
+  // and isn't shown to people who prefer less motion.
+  (() => {
+    if (new Date().getMonth() < 10 || location.pathname.startsWith("/manage") || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const cv = document.createElement("canvas");
+    cv.className = "snow"; cv.setAttribute("aria-hidden", "true");
+    document.body.appendChild(cv);
+    const ctx = cv.getContext("2d");
+    const TINTS = ["255,255,255", "255,255,255", "255,255,255", "253,228,234", "255,243,214", "226,240,250"];
+    let w = 0, h = 0, flakes = [], raf = 0;
+    const make = (y) => {
+      const depth = Math.random(); // 0 far, 1 near
+      return { x: Math.random() * w, y: y ?? Math.random() * h, r: 1.4 + depth * 3, v: 0.2 + depth * 0.7,
+        a: 0.55 + depth * 0.4, sway: Math.random() * Math.PI * 2, drift: 0.004 + Math.random() * 0.01, c: TINTS[(Math.random() * TINTS.length) | 0] };
+    };
+    function size() {
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      w = innerWidth; h = innerHeight;
+      cv.width = w * dpr; cv.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      flakes = Array.from({ length: Math.round(Math.min(180, (w * h) / 5200)) }, () => make());
+    }
+    function frame() {
+      ctx.clearRect(0, 0, w, h);
+      for (const f of flakes) {
+        f.y += f.v; f.sway += f.drift; f.x += Math.sin(f.sway) * 0.35 + 0.08;
+        if (f.y > h + 4) Object.assign(f, make(-4));
+        if (f.x > w + 4) f.x = -4;
+        const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
+        g.addColorStop(0, `rgba(${f.c},${f.a})`); g.addColorStop(0.55, `rgba(${f.c},${f.a * 0.8})`); g.addColorStop(1, `rgba(${f.c},0)`);
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
+      }
+      raf = document.hidden ? 0 : requestAnimationFrame(frame);
+    }
+    size(); raf = requestAnimationFrame(frame);
+    let t; addEventListener("resize", () => { clearTimeout(t); t = setTimeout(size, 200); });
+    document.addEventListener("visibilitychange", () => { if (!document.hidden && !raf) raf = requestAnimationFrame(frame); });
+  })();
+
   // ---- Festive music (November and December): a soft music-box "Jingle Bells" (the tune is public
   // domain; this arrangement was made for the site). Browsers only allow sound after a tap, so it
   // starts on the visitor's first tap anywhere, quietly, and the 🔊 button in the header turns it
