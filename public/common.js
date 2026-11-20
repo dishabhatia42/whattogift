@@ -16,7 +16,7 @@
     { id: "dad", e: "🧢", t: "Dad" },
     { id: "parents", e: "🏡", t: "Parents" },
     { id: "sibling", e: "😈", t: "Sibling", ask: true },
-    { id: "colleague", e: "💻", t: "Work bestie", ask: true },
+    { id: "colleague", e: "💻", t: "Work friend", ask: true },
     { id: "couple", e: "🥂", t: "A couple" },
     { id: "child", e: "🧸", t: "Little human", ask: true },
     { id: "self", e: "✨", t: "Me, myself", ask: true },
@@ -179,7 +179,7 @@
       partner: g === "him" ? "your boyfriend or husband" : g === "her" ? "your girlfriend or wife" : "your person",
       friend: "your bestie", mom: "your mom", dad: "your dad", parents: "your parents",
       sibling: g === "him" ? "your brother" : g === "her" ? "your sister" : "your sibling",
-      colleague: "your work bestie", couple: "the couple",
+      colleague: "your work friend", couple: "the couple",
       child: g === "him" ? "a little boy" : g === "her" ? "a little girl" : "a little human",
       self: "you",
     }[s.recipient];
