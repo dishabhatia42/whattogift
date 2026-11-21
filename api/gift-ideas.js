@@ -113,6 +113,11 @@ const CACHE_SECONDS = 7 * 24 * 60 * 60;
 const RESULTS = 9;          // cards on the page (three full rows on a laptop)
 const PER_BRAND = 2;        // diversity: never more than this many from one brand
 const MAX_OWN = 3;          // Disha's own picks, at most this many per answer
+// Christmas & New Year and Secret Santa searches put Disha's festive picks first: her products in
+// Manage ticked for either occasion, or pinned on the home-page board. All of them are shown
+// (within the budget, who it's for and him/her), ahead of brand products, before anything else.
+const SEASON_OCCASIONS = new Set(["christmas", "secretsanta"]);
+const isFestivePick = (p, occasion) => SEASON_OCCASIONS.has(occasion) && (p.board === true || (p.occasions || []).some((o) => SEASON_OCCASIONS.has(o)));
 const SHORTLIST = 450;      // products the AI reads per search (~15k tokens, a fraction of a rupee)
 const SHORTLIST_MORE = 300; // for "Show more ideas" rounds: a shorter read, so they come back faster
 
@@ -255,6 +260,7 @@ export default async function handler(req, res) {
     wantsExperiences ? `Experiences: the shopper wants experiences. Pick the real ones in the shortlist first (tours, workshops, tastings, classes, courses, like a cacao mill tour); they're bookable straight from the brand.${city ? ` They're ${city === "Online" ? "after online experiences only" : `in ${city}: every experience on the shortlist is there or online`}.` : ""}` : "",
     variant > 1 ? `More ideas (round ${variant} of ${rounds}): the shopper has already seen ${(variant - 1) * RESULTS} gifts and wants more, different options. The shortlist leaves out what they've seen.` : "",
     "",
+    shortlist.some((s) => s.festive) ? "Lines marked 🎄 are Serial Gifter's own festive picks, chosen for this season: pick every one of them, first, before any other product." : "",
     `Shortlist (${shortlist.length} products):\n${shortlist.map((s) => s.line).join("\n")}`,
   ].filter((l) => l !== "").join("\n");
 
@@ -336,9 +342,9 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   const score = (i) => (scorer ? scorer(i) : 0);
   // Disha's own picks join only when they fit the interests (a book isn't "Food & treats").
   const picks = own
-    .map((p) => ({ ...p, priceNum: rupees(p.price) }))
+    .map((p) => ({ ...p, priceNum: rupees(p.price), festive: isFestivePick(p, occasion) }))
     .filter((p) => p.image && (p.priceNum == null || inRange(p.priceNum)) && !seen.has(`o-${p.id}`))
-    .filter((p) => !scorer || score({ title: p.name, tags: p.tags, blurb: `${p.note} ${p.line || ""}` }) >= 1)
+    .filter((p) => p.festive || !scorer || score({ title: p.name, tags: p.tags, blurb: `${p.note} ${p.line || ""}` }) >= 1)
     .filter((p) => !(noStationery && isStationery({ title: p.name })) && !(diwali && tooSmall({ title: p.name })))
     // Diwali with no interests named: your picks too must be Diwali gifts or ticked for Diwali (a ring isn't).
     .filter((p) => !strictDiwali || p.occasions.includes("diwali") || lovedAtDiwali({ title: p.name, tags: p.tags }))
@@ -385,12 +391,15 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   }
 
   let n = 0;
+  // Festive picks lead the list.
+  picks.sort((a, b) => b.festive - a.festive);
   const list = picks.map((p) => ({
     ref: `d${++n}`,
     own: true,
     product: p,
     brand: "Serial Gifter pick",
-    line: `d${n} | ${p.pick ? "★" : "—"} | ${clip(p.name, 90)} | ${p.tags.slice(0, 3).join(", ")} | ${p.price || "price on site"} | ${clip(p.note, 110)}`,
+    festive: p.festive,
+    line: `d${n} | ${p.festive ? "🎄" : p.pick ? "★" : "—"} | ${clip(p.name, 90)} | ${p.tags.slice(0, 3).join(", ")} | ${p.price || "price on site"} | ${clip(p.note, 110)}`,
   }));
   n = 0;
   for (const i of [...chosen].slice(0, size - list.length)) {
@@ -423,20 +432,36 @@ export function assemble(data, shortlist, { roomForIdeas = 0, discover = false }
   const used = new Set(), perBrand = new Map();
   let ownCount = 0;
   const out = [];
+  // Festive picks (Christmas & New Year, Secret Santa) are all shown, whatever the AI chose.
+  const festiveRefs = shortlist.filter((s) => s.festive).map((s) => s.ref);
+  const ownCap = festiveRefs.length ? RESULTS : MAX_OWN;
   const productSlots = RESULTS - Math.min(roomForIdeas, (data.ideas || []).length);
   for (const pick of data.picks || []) {
     if (out.length >= productSlots) break;
     let s = byRef.get(String(pick.ref || "").trim());
     if (pick.product && (!s || nameMatch(pick.product, nameOf(s)) < 0.5)) s = findByName(pick.product);
     if (!s || used.has(s.ref)) continue;                         // invented, mismatched or repeated: dropped
-    if (s.own ? ownCount >= MAX_OWN : (perBrand.get(s.brand) || 0) >= PER_BRAND) continue;
+    if (s.own ? ownCount >= ownCap : (perBrand.get(s.brand) || 0) >= PER_BRAND) continue;
     used.add(s.ref);
     if (s.own) ownCount++; else perBrand.set(s.brand, (perBrand.get(s.brand) || 0) + 1);
     const words = { label: clip(pick.label, 40), why: clip(pick.why, 180), emoji: clip(pick.emoji, 8) || "🎁", fit: fitOf(pick.fit) };
+    out.push(card(s, words));
+  }
+  // Any festive pick the AI left out still goes in, in its own words, and festive picks lead.
+  if (festiveRefs.length) {
+    const missing = festiveRefs.filter((r) => !used.has(r)).map((r) => byRef.get(r));
+    for (const s of missing) {
+      used.add(s.ref);
+      out.push(card(s, { label: "Our festive pick", why: clip(s.product.line || s.product.note || "Handpicked by us for the season.", 180), emoji: "🎄", fit: "familiar" }));
+    }
+    out.sort((a, b) => (b.festive === true) - (a.festive === true));
+    out.splice(productSlots); // the rest come with "More ideas" (what's been seen is left out)
+  }
+  function card(s, words) {
     const p = s.product;
-    out.push(s.own
-      ? { ...words, kind: "product", own: true, pick: p.pick, pid: `o-${p.id}`, name: p.name, brand: "", url: p.url, image: p.image, price_range: p.price || "" }
-      : { ...words, kind: "product", pid: p.id, name: p.title, brand: p.brand, url: p.url, image: p.image, price: Math.round(p.price), was: Math.round(p.was || 0), from: !!p.options, price_range: `${p.options ? "From " : ""}₹${Math.round(p.price).toLocaleString("en-IN")}`, ...(placeOf(p) ? { where: placeOf(p), places: placesOf(p) } : {}) }); // whole rupees (some shops list paise); where = an experience's city
+    return s.own
+      ? { ...words, kind: "product", own: true, pick: p.pick, ...(s.festive ? { festive: true } : {}), pid: `o-${p.id}`, name: p.name, brand: "", url: p.url, image: p.image, price_range: p.price || "" }
+      : { ...words, kind: "product", pid: p.id, name: p.title, brand: p.brand, url: p.url, image: p.image, price: Math.round(p.price), was: Math.round(p.was || 0), from: !!p.options, price_range: `${p.options ? "From " : ""}₹${Math.round(p.price).toLocaleString("en-IN")}`, ...(placeOf(p) ? { where: placeOf(p), places: placesOf(p) } : {}) }; // whole rupees (some shops list paise); where = an experience's city
   }
   for (const idea of data.ideas || []) {
     if (out.length >= RESULTS) break;
@@ -471,7 +496,7 @@ async function ownPicks(recipient, occasion) {
       .filter((p) => !p.recipients.length || p.recipients.includes(recipient))
       // For Diwali, also your picks that are plainly Diwali gifts (a candle, a mithai box), whatever
       // occasions you ticked; anything else only when you ticked Diwali on it.
-      .filter((p) => !p.occasions.length || p.occasions.includes(occasion) || (occasion === "diwali" && lovedAtDiwali({ title: p.name, tags: p.tags })));
+      .filter((p) => !p.occasions.length || p.occasions.includes(occasion) || isFestivePick(p, occasion) || (occasion === "diwali" && lovedAtDiwali({ title: p.name, tags: p.tags })));
   } catch (err) {
     console.error("Couldn't load curated products", err);
     return [];
