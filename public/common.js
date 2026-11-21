@@ -498,17 +498,17 @@
     document.addEventListener("visibilitychange", () => { if (!document.hidden && !raf) raf = requestAnimationFrame(frame); });
   })();
 
-  // ---- Festive music (November and December): a cheerful "Jingle Bells" (the tune is public
-  // domain; this arrangement was made for the site). It's on by default: it starts as soon as the
-  // browser allows (on landing where permitted, otherwise the first tap anywhere), and the 🔊
-  // button in the header turns it off (remembered on this device). It carries on where it left off when you move between pages.
+  // ---- Festive music (November and December): "Jingle Bells" by Kevin MacLeod (incompetech.com),
+  // licensed under Creative Commons: By Attribution 4.0, so it's credited in the footer. It's on by
+  // default: it starts as soon as the browser allows (on landing where permitted, otherwise the
+  // first tap anywhere), and the 🔊 button in the header turns it off (remembered on this device).
   (() => {
     const inner = document.querySelector(".site-header-inner");
     if (!inner || new Date().getMonth() < 10 || quietPage) return;
     const store = (fn) => { try { return fn(); } catch { return null; } };
     let off = store(() => localStorage.getItem("sg-music")) === "off";
     const audio = new Audio("/sounds/jingle-bells.mp3");
-    audio.loop = true; audio.volume = 0.22; audio.preload = "auto";
+    audio.loop = true; audio.volume = 0.18; audio.preload = "auto";
     const btn = document.createElement("button");
     btn.type = "button"; btn.className = "music-btn";
     track(btn, "Music toggle");
@@ -598,7 +598,15 @@
     top.append(brand, nav);
     const disc = mk("p", "foot-disclosure");
     disc.append("Some links may earn us a commission at no extra cost to you. ", mk("span", "", SITE.amazonDisclosure));
-    f.append(top, disc, mk("p", "foot-copy", `© ${SITE.year} Serial Gifter`));
+    f.append(top, disc);
+    // The festive music's licence asks for this credit (see "Festive music" above).
+    if (new Date().getMonth() >= 10 && !/^\/(ideas|manage)/.test(location.pathname)) {
+      const credit = mk("p", "foot-disclosure", "Music: “Jingle Bells” by Kevin MacLeod (incompetech.com), licensed under ");
+      const cc = mk("a", "", "CC BY 4.0"); cc.href = "https://creativecommons.org/licenses/by/4.0/"; cc.target = "_blank"; cc.rel = "noopener noreferrer";
+      credit.append(cc, ".");
+      f.appendChild(credit);
+    }
+    f.appendChild(mk("p", "foot-copy", `© ${SITE.year} Serial Gifter`));
   }
   mountFooter();
   // Any link marked data-site-email (e.g. on the legal page) becomes the contact email.
