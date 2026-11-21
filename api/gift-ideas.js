@@ -51,10 +51,10 @@ const OCCASIONS = {
   secretsanta: "Secret Santa",
   christmas: "Christmas and New Year",
 };
-const FESTIVE_NOTE = "Christmas and New Year gifting in India: warm, festive and cosy, with a fresh-start feel. Favour plum cakes and festive bakes, chocolate boxes and hampers, candles and fairy lights, cosy throws and mugs, festive decor, gift sets that look lovely under a tree, and for the new year planners and journals, things that help a new habit stick, and treats and games to share while ringing it in. Lines marked 🎁 come boxed, as a set or as a hamper: they suit the season well.";
+const FESTIVE_NOTE = "Christmas and New Year gifting in India: warm, festive and cosy, with a fresh-start feel. Favour plum cakes and festive bakes, chocolate boxes and hampers, candles and fairy lights, cosy throws and mugs, festive decor, gift sets that look lovely under a tree, and for the new year planners and journals, things that help a new habit stick, and treats and games to share while ringing it in. Lines marked 🎁 come boxed, as a set or as a hamper: they suit the season well. It should feel like a proper present when handed over: a gift set, a gift box, a hamper or a boxed set (lines marked 🎁 are: prefer them), never a single can, a snack packet or pouch, one chocolate bar or an everyday refill.";
 // Secret Santa: a gift exchange in a group, opened in front of everyone, on a set budget, often
 // for someone the giver doesn't know that well. The office version stays office-safe.
-const SANTA_NOTE = "Secret Santa: an anonymous gift exchange in a group, opened in front of everyone, on a set budget, and the giver may not know them well. Pick crowd-pleasers that feel fun and thoughtful the moment they're opened: treats, cosy things, games, desk and home pieces, quirky-but-useful finds. Stay within the budget, never over. Skip anything that needs a size (clothes, shoes, rings), very personal picks (perfume, skincare for a skin type, jewellery) unless their interests ask for them, and keepsakes that only make sense from someone close (photo or name-personalised gifts).";
+const SANTA_NOTE = "Secret Santa: an anonymous gift exchange in a group, opened in front of everyone, on a set budget, and the giver may not know them well. Pick crowd-pleasers that feel fun and thoughtful the moment they're opened: treats, cosy things, games, desk and home pieces, quirky-but-useful finds. Stay within the budget, never over. Skip anything that needs a size (clothes, shoes, rings), very personal picks (perfume, skincare for a skin type, jewellery) unless their interests ask for them, and keepsakes that only make sense from someone close (photo or name-personalised gifts). It should feel like a proper present when handed over: a gift set, a gift box, a hamper or a boxed set (lines marked 🎁 are: prefer them), never a single can, a snack packet or pouch, one chocolate bar or an everyday refill.";
 const SANTA_OFFICE = "This is the office Secret Santa: keep it office-safe. No alcohol or barware, nothing romantic or intimate, nothing religious. Things that brighten a work desk or a coffee break are a plus.";
 const SANTA_FRIENDS = "This is among friends or family: playful, cheeky and fun picks are welcome.";
 // Diwali: festive, beautiful and a little unexpected, never another dry-fruit box.
@@ -75,7 +75,7 @@ const STATIONERY = /\b(journals?|notebooks?|planners?|diar(y|ies)|stationery|pen
 const GIFT_FORM = /\b(box(es)?|hampers?|gift ?sets?|sets? of \d+|packs? of \d+|box of \d+|assorted|collection|combo|trio|duo|baskets?|crates?|gift packs?|kits?|platters?)\b/i;
 const giftForm = (i) => GIFT_FORM.test(`${i.title || i.name || ""} ${i.type || ""}`);
 // ...not one small thing on its own (a single can or bar, a mini, a sample, a refill).
-const SINGLE = /\b(cans?|bars?|mini|minis|sample|single|sachets?|trial|travel size|refills?|\d{2} ?(g|gm|gms|ml))\b/i;
+const SINGLE = /\b(cans?|bars?|mini|minis|sample|single|sachets?|pouch(es)?|packets?|trial|travel size|refills?|\d{2,4} ?(g|gm|gms|grams?|ml))\b/i;
 const tooSmall = (i) => SINGLE.test(`${i.title || i.name || ""}`) && !giftForm(i);
 // And not too cheap to hand over at Diwali: ₹900 at least (₹500 on the "Under ₹1,000" budget).
 const diwaliFloor = (range) => (range.max <= 1000 ? 500 : 900);
@@ -330,7 +330,12 @@ export function priceRange(budget, cheaper) {
 export async function buildShortlist({ recipient, occasion, tags, range, variant, gender = "", seen = new Set(), city = "", vibe = "", size = SHORTLIST }) {
   const [own, catalog, labels] = await Promise.all([ownPicks(recipient, occasion), readCatalog(), readLabels()]);
   const diwali = occasion === "diwali";
-  const inRange = (price) => price >= (diwali ? Math.max(range.min, diwaliFloor(range)) : range.min) && price <= range.max;
+  // Christmas & New Year and Secret Santa are handed over like Diwali gifts: a gift set, a box, a
+  // hamper, never a single can, a snack packet or a 200 g pouch, and not too cheap to hand over
+  // (₹400 at least on "Under ₹1,000", ₹700 otherwise).
+  const season = SEASON_OCCASIONS.has(occasion);
+  const floor = diwali ? diwaliFloor(range) : season ? (range.max <= 1000 ? 400 : 700) : 0;
+  const inRange = (price) => price >= Math.max(range.min, floor) && price <= range.max;
   // Diwali: no stationery unless they picked "Journals & stationery".
   const noStationery = diwali && !tags.some((t) => /stationery|journal/i.test(t));
   // Diwali with no interests named: only Diwali gifts (sweets, chocolates, crockery, glassware,
@@ -343,7 +348,8 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   // Disha's own picks join only when they fit the interests (a book isn't "Food & treats").
   const picks = own
     .map((p) => ({ ...p, priceNum: rupees(p.price), festive: isFestivePick(p, occasion) }))
-    .filter((p) => p.image && (p.priceNum == null || inRange(p.priceNum)) && !seen.has(`o-${p.id}`))
+    // (Your festive picks only need to be within the budget; the festive price floor is for brand products.)
+    .filter((p) => p.image && (p.priceNum == null || (p.festive ? p.priceNum >= range.min && p.priceNum <= range.max : inRange(p.priceNum))) && !seen.has(`o-${p.id}`))
     .filter((p) => p.festive || !scorer || score({ title: p.name, tags: p.tags, blurb: `${p.note} ${p.line || ""}` }) >= 1)
     .filter((p) => !(noStationery && isStationery({ title: p.name })) && !(diwali && tooSmall({ title: p.name })))
     // Diwali with no interests named: your picks too must be Diwali gifts or ticked for Diwali (a ring isn't).
@@ -363,7 +369,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   // labelled for the other gender is left out. Products not labelled yet are kept, as before.
   const labelOf = (i) => labels[i.id];
   const fitsLabel = (i) => { const l = labelOf(i); return !l || (l.gift && (!gender || l.who === "anyone" || l.who === gender)); };
-  let items = catalog.items.filter((i) => fitsLabel(i) && inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)) && fitsCity(i, city) && (!expOnly || isExperience(i)) && !(noStationery && isStationery(i)) && !(diwali && tooSmall(i)));
+  let items = catalog.items.filter((i) => fitsLabel(i) && inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)) && fitsCity(i, city) && (!expOnly || isExperience(i)) && !(noStationery && isStationery(i)) && !((diwali || season) && tooSmall(i)) && !(season && labelOf(i) && labelOf(i).q <= 2));
   if (strictDiwali) items = items.filter((i) => lovedAtDiwali(i) || (isFestive(i) && !WEARABLE.test(`${i.title} ${i.type}`) && !isJewellery(i)));
 
   // Interest matches first, then a fair share of every brand, so a big shop can't drown the rest.
@@ -376,7 +382,9 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
     // For Diwali, a brand's Diwali or festive range goes first, and sweets, candles and cards lead
     // (a gentler nudge when they named interests, which come first).
     const s = score(i) + (diwali ? (isFestive(i) ? 2 : 0) + (lovedAtDiwali(i) ? (scorer ? 1 : 3) : 0) + (giftForm(i) ? 2 : 0) : 0)
-      + (vibe && l && l.vibes.includes(vibe) ? (scorer ? 1 : 2) : 0);
+      + (vibe && l && l.vibes.includes(vibe) ? (scorer ? 1 : 2) : 0)
+      // For the festive season, boxed sets and hampers, and products labelled as lovely gifts, go first.
+      + (season ? (giftForm(i) ? 2 : 0) + (l && l.q >= 4 ? 1 : 0) : 0);
     const r = s + ((l ? l.q : 3) - 3) * 0.6 + seeded(`${i.id}:${variant}`) * 0.5;
     if (!byBrand.has(i.brandId)) byBrand.set(i.brandId, []);
     byBrand.get(i.brandId).push({ i, s, r });
@@ -384,7 +392,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   const queues = [...byBrand.values()].map((list) => list.sort((a, b) => b.r - a.r));
   // Without typed interests (only the season or a personality), at most 20 a brand: one big shop
   // with many matches would otherwise crowd out the rest (Nicobar alone has ~90 festive pieces).
-  const matched = items.length && (scorer || diwali || vibe) ? queues.flatMap((q) => q.filter((x) => x.s >= 1).slice(0, scorer ? undefined : 20)).sort((a, b) => b.r - a.r).slice(0, 150) : [];
+  const matched = items.length && (scorer || diwali || vibe || season) ? queues.flatMap((q) => q.filter((x) => x.s >= 1).slice(0, scorer ? undefined : 20)).sort((a, b) => b.r - a.r).slice(0, 150) : [];
   const chosen = new Set(matched.map((x) => x.i));
   for (let round = 0; chosen.size < size - picks.length && queues.some((q) => q.length > round); round++) {
     for (const q of queues) if (q[round]) chosen.add(q[round].i);
@@ -407,7 +415,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
       ref: `p${++n}`,
       product: i,
       brand: i.brandId,
-      line: `p${n} | ${i.brand}${diwali && isFestive(i) ? " 🪔" : ""}${diwali && giftForm(i) ? " 🎁" : ""} | ${i.title} | ${i.type} | ₹${i.price.toLocaleString("en-IN")}${i.options ? "+" : ""} | ${[placesOf(i).length && `in ${placesOf(i).join(", ")}`, i.tags.join(", "), i.blurb].filter(Boolean).join(" — ")}`,
+      line: `p${n} | ${i.brand}${diwali && isFestive(i) ? " 🪔" : ""}${(diwali || season) && giftForm(i) ? " 🎁" : ""} | ${i.title} | ${i.type} | ₹${i.price.toLocaleString("en-IN")}${i.options ? "+" : ""} | ${[placesOf(i).length && `in ${placesOf(i).join(", ")}`, i.tags.join(", "), i.blurb].filter(Boolean).join(" — ")}`,
     });
   }
   return list;
