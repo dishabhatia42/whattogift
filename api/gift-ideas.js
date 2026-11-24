@@ -73,7 +73,11 @@ const lovedAtDiwali = (i) => !NOT_DIWALI.test(`${i.title || i.name || ""} ${i.ty
 const STATIONERY = /\b(journals?|notebooks?|planners?|diar(y|ies)|stationery|pens?|pencils?|notepads?|sketchbooks?|bookmarks?|calendars?|stickers?|washi|notecards?|letter sets?)\b/i;
 // A Diwali gift should feel generous: boxed, a set, a hamper or a bigger pack...
 const GIFT_FORM = /\b(box(es)?|hampers?|gift ?sets?|sets? of \d+|packs? of \d+|box of \d+|assorted|collection|combo|trio|duo|baskets?|crates?|gift packs?|kits?|platters?)\b/i;
-const giftForm = (i) => GIFT_FORM.test(`${i.title || i.name || ""} ${i.type || ""}`);
+// Upkeep, not a present: descalers, cleaners, refills, spare parts, filters. Nobody wraps these,
+// for any occasion, even when the name says "kit" or "pack".
+const CHORE = /\b(descal\w*|decalcif\w*|anti-?scale|cleaning (kits?|solutions?|tablets?|brush(es)?|cloths?|gel|liquid|spray)|cleaners?|detergents?|refills?|replacements?|spare (parts?|blades?)|gaskets?|o-?rings?|seal rings?|repair kits?|maintenance kits?|water filters?|filter (cartridges?|papers?|bags?)|cartridges?)\b/i;
+const isChore = (i) => CHORE.test(`${i.title || i.name || ""} ${i.type || ""}`);
+const giftForm = (i) => !isChore(i) && GIFT_FORM.test(`${i.title || i.name || ""} ${i.type || ""}`);
 // ...not one small thing on its own (a single can or bar, a mini, a sample, a refill).
 const SINGLE = /\b(cans?|bars?|mini|minis|sample|single|sachets?|pouch(es)?|packets?|trial|travel size|refills?|\d{2,4} ?(g|gm|gms|grams?|ml))\b/i;
 const tooSmall = (i) => SINGLE.test(`${i.title || i.name || ""}`) && !giftForm(i);
@@ -173,7 +177,7 @@ You get a person to shop for and a shortlist of real, in-stock products (one per
 
 Return:
 - vibe: one short, warm line summing up the person, like "Bookish, cosy, and a little sentimental." 8 words max.
-- picks: the 12 shortlist products this person would love most, best first. Use each product's exact ref. Choose for suitability, not popularity: a gift must suit who they are, the occasion and their interests, and you must be able to say exactly why. Prefer giftable things (lovely to unwrap, a treat, beautifully made) over everyday basics. Spread across different kinds of gifts and brands; no near-duplicates (e.g. two similar coffees). Leave out anything you can't defend. ★ products are good bets when they genuinely fit.
+- picks: the 12 shortlist products this person would love most, best first. Use each product's exact ref. Choose for suitability, not popularity: a gift must suit who they are, the occasion and their interests, and you must be able to say exactly why. Prefer giftable things (lovely to unwrap, a treat, beautifully made) over everyday basics. Never pick upkeep products (descalers, cleaners, refills, spare parts, filters) or plain household consumables: nobody wraps those. Spread across different kinds of gifts and brands; no near-duplicates (e.g. two similar coffees). Leave out anything you can't defend. ★ products are good bets when they genuinely fit.
 Only shortlist products: never suggest anything that isn't on it. If few fit an interest, pick the closest good gifts on the shortlist.
 
 For every pick, product is the product's name copied from its shortlist line, and the label and why must be about that exact product.
@@ -369,7 +373,7 @@ export async function buildShortlist({ recipient, occasion, tags, range, variant
   // labelled for the other gender is left out. Products not labelled yet are kept, as before.
   const labelOf = (i) => labels[i.id];
   const fitsLabel = (i) => { const l = labelOf(i); return !l || (l.gift && (!gender || l.who === "anyone" || l.who === gender)); };
-  let items = catalog.items.filter((i) => fitsLabel(i) && inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)) && fitsCity(i, city) && (!expOnly || isExperience(i)) && !(noStationery && isStationery(i)) && !((diwali || season) && tooSmall(i)) && !(season && labelOf(i) && labelOf(i).q <= 2));
+  let items = catalog.items.filter((i) => fitsLabel(i) && !isChore(i) && inRange(i.price) && !seen.has(i.id) && !(lean && wrongFit(i, gender, lean)) && fitsCity(i, city) && (!expOnly || isExperience(i)) && !(noStationery && isStationery(i)) && !((diwali || season) && tooSmall(i)) && !(season && labelOf(i) && labelOf(i).q <= 2));
   if (strictDiwali) items = items.filter((i) => lovedAtDiwali(i) || (isFestive(i) && !WEARABLE.test(`${i.title} ${i.type}`) && !isJewellery(i)));
 
   // Interest matches first, then a fair share of every brand, so a big shop can't drown the rest.
